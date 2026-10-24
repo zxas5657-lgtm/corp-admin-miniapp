@@ -12,7 +12,13 @@ const CJK_DIRECTORIES = [
   'miniprogram/pages',
   'miniprogram/components',
   'miniprogram/behaviors',
+  'miniprogram/custom-tab-bar',
   'miniprogram/store',
+];
+const CJK_ROOT_FILES = [
+  'miniprogram/app.js',
+  'miniprogram/app.json',
+  'miniprogram/app.wxss',
 ];
 const SCANNED_EXTENSIONS = new Set(['.js', '.wxml', '.wxss', '.json']);
 const PLURAL_SUFFIXES = new Set(['one', 'other']);
@@ -210,6 +216,20 @@ function collectSourceFiles(directory) {
   return files;
 }
 
+function collectCjkSourceFiles(root) {
+  const files = [];
+  for (const relativeDirectory of CJK_DIRECTORIES) {
+    files.push(...collectSourceFiles(path.join(root, relativeDirectory)));
+  }
+  for (const relativeFile of CJK_ROOT_FILES) {
+    const filePath = path.join(root, relativeFile);
+    if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+      files.push(filePath);
+    }
+  }
+  return files.sort();
+}
+
 function loadLocale(label, relativePath) {
   const filePath = path.resolve(__dirname, '..', relativePath);
   try {
@@ -250,18 +270,15 @@ function main() {
     );
   }
 
-  for (const relativeDirectory of CJK_DIRECTORIES) {
-    const directory = path.join(root, relativeDirectory);
-    for (const filePath of collectSourceFiles(directory)) {
-      const source = fs.readFileSync(filePath, 'utf8');
-      const findings = findCjk(source);
-      for (const finding of findings) {
-        const relativePath = path.relative(root, filePath).replaceAll(path.sep, '/');
-        console.error(
-          `ERROR: ${relativePath}:${finding.line}: CJK/fullwidth literal "${finding.char}".`,
-        );
-        failed = true;
-      }
+  for (const filePath of collectCjkSourceFiles(root)) {
+    const source = fs.readFileSync(filePath, 'utf8');
+    const findings = findCjk(source);
+    for (const finding of findings) {
+      const relativePath = path.relative(root, filePath).replaceAll(path.sep, '/');
+      console.error(
+        `ERROR: ${relativePath}:${finding.line}: CJK/fullwidth literal "${finding.char}".`,
+      );
+      failed = true;
     }
   }
 
@@ -272,7 +289,12 @@ function main() {
   console.log('OK');
 }
 
-module.exports = { flattenKeys, compareLocales, findCjk };
+module.exports = {
+  flattenKeys,
+  compareLocales,
+  findCjk,
+  collectCjkSourceFiles,
+};
 
 if (require.main === module) {
   main();

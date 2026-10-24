@@ -2,8 +2,16 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
 
-const { compareLocales, findCjk, flattenKeys } = require('../scripts/check-i18n.js');
+const {
+  collectCjkSourceFiles,
+  compareLocales,
+  findCjk,
+  flattenKeys,
+} = require('../scripts/check-i18n.js');
 
 test('flattenKeys flattens nested objects and keeps arrays as leaves', () => {
   assert.deepEqual(flattenKeys({
@@ -50,4 +58,28 @@ test('findCjk reports CJK, punctuation, and fullwidth characters with lines', ()
     { char: '，', line: 2 },
     { char: 'Ａ', line: 2 },
   ]);
+});
+
+test('CJK scan includes custom-tab-bar and direct app files', () => {
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'corp-admin-cjk-'));
+  try {
+    fs.mkdirSync(path.join(fixture, 'miniprogram', 'custom-tab-bar'), { recursive: true });
+    fs.mkdirSync(path.join(fixture, 'miniprogram', 'nested'), { recursive: true });
+    for (const file of ['app.js', 'app.json', 'app.wxss']) {
+      fs.writeFileSync(path.join(fixture, 'miniprogram', file), '');
+    }
+    fs.writeFileSync(path.join(fixture, 'miniprogram', 'custom-tab-bar', 'index.js'), '');
+    fs.writeFileSync(path.join(fixture, 'miniprogram', 'nested', 'app.js'), '');
+
+    const files = collectCjkSourceFiles(fixture)
+      .map((filePath) => path.relative(fixture, filePath).replaceAll(path.sep, '/'));
+    assert.deepEqual(files, [
+      'miniprogram/app.js',
+      'miniprogram/app.json',
+      'miniprogram/app.wxss',
+      'miniprogram/custom-tab-bar/index.js',
+    ]);
+  } finally {
+    fs.rmSync(fixture, { recursive: true, force: true });
+  }
 });
