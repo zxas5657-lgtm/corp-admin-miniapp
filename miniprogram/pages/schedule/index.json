@@ -1,4 +1,8 @@
 {
   "navigationBarTitleText": "",
-  "usingComponents": {}
+  "usingComponents": {
+    "status-pill": "/components/status-pill/index",
+    "state-view": "/components/state-view/index",
+    "notice-bar": "/components/notice-bar/index"
+  }
 }

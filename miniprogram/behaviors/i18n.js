@@ -77,6 +77,7 @@ module.exports = Behavior({
       // setNavigationBarTitle affects the visible page, so a hidden tab must not call it.
       if (this._shown) this._applyNavTitle();
       this._refreshTabBar();
+      if (typeof this.onLocaleChange === 'function') this.onLocaleChange();
     },
 
     _applyNavTitle() {

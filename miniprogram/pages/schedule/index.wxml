@@ -1,3 +1,113 @@
-<view class="page-empty">
-  <text class="text-secondary">{{i18n.state.loading}}</text>
+<view class="page">
+  <block wx:if="{{loadFailed}}">
+    <state-view
+      kind="error"
+      title="{{i18n.state.genericErrorTitle}}"
+      body="{{i18n.state.genericErrorBody}}"
+      action-text="{{i18n.state.retry}}"
+      secondary-text="{{i18n.state.reset}}"
+      bind:action="onRetry"
+      bind:secondary="onReset"
+    />
+  </block>
+  <block wx:elif="{{view}}">
+    <view class="pad">
+      <notice-bar
+        wx:if="{{banner}}"
+        kind="success"
+        text="{{banner}}"
+        closable="{{true}}"
+        close-label="{{i18n.a11y.closeSheet}}"
+        bind:close="onCloseBanner"
+      />
+      <view class="head">
+        <text class="date">{{view.dayHeading}}</text>
+        <text class="count">{{view.countText}}</text>
+        <picker
+          class="cal-picker"
+          mode="date"
+          value="{{view.date}}"
+          bindchange="onPickDate"
+        >
+          <view class="cal" aria-role="button" aria-label="{{i18n.a11y.weekPicker}}">
+            <view class="cal-icon" aria-hidden="true">
+              <view class="cal-bar"></view>
+            </view>
+          </view>
+        </picker>
+        <view
+          wx:if="{{view.backToToday}}"
+          class="today"
+          aria-role="button"
+          hover-class="is-pressed"
+          bindtap="onBackToday"
+        >{{view.backToToday}}</view>
+      </view>
+    </view>
+
+    <view class="week">
+      <view
+        class="nav-chev"
+        data-date="{{view.week.prevDate}}"
+        aria-role="button"
+        hover-class="is-pressed"
+        bindtap="onSelectDate"
+      >
+        <view class="chevron is-left" aria-hidden="true"></view>
+      </view>
+      <view class="days">
+        <view
+          wx:for="{{view.week.days}}"
+          wx:key="date"
+          class="day {{item.isSelected ? 'is-on' : ''}} {{item.isToday && !item.isSelected ? 'is-today' : ''}}"
+          data-date="{{item.date}}"
+          aria-role="button"
+          hover-class="is-pressed"
+          bindtap="onSelectDate"
+        >
+          <text class="weekday">{{item.weekday}}</text>
+          <text class="day-num">{{item.dayNum}}</text>
+          <view class="dot {{item.hasItems ? 'is-on' : ''}}"></view>
+        </view>
+      </view>
+      <view
+        class="nav-chev"
+        data-date="{{view.week.nextDate}}"
+        aria-role="button"
+        hover-class="is-pressed"
+        bindtap="onSelectDate"
+      >
+        <view class="chevron is-right" aria-hidden="true"></view>
+      </view>
+    </view>
+
+    <view class="pad">
+      <state-view
+        wx:if="{{view.empty}}"
+        kind="empty"
+        title="{{view.empty.title}}"
+        body="{{view.empty.body}}"
+      />
+      <block wx:else>
+        <view
+          wx:for="{{view.items}}"
+          wx:key="id"
+          id="item-{{item.id}}"
+          class="card {{item.kind === 'vehicle' ? 'vehicle' : ''}} {{item.kind === 'meeting' ? 'is-link' : ''}} {{item.focused ? 'is-focus' : ''}}"
+          data-kind="{{item.kind}}"
+          data-url="{{item.url}}"
+          hover-class="{{item.kind === 'meeting' ? 'is-pressed' : 'none'}}"
+          bindtap="onOpenItem"
+        >
+          <view class="card-line">
+            <text class="time">{{item.timeText}}</text>
+            <status-pill class="pill-host" text="{{item.statusText}}" tone="{{item.tone}}" />
+          </view>
+          <view class="card-title">{{item.title}}</view>
+          <text class="card-sub text-secondary">{{item.subtitle}}</text>
+          <view wx:if="{{item.kind === 'meeting'}}" class="card-chev" aria-hidden="true"></view>
+        </view>
+      </block>
+    </view>
+  </block>
 </view>
