@@ -116,7 +116,7 @@ Order matters. B-tasks unblock F-tasks. **Every task passes the gates in §5 bef
 | S1-F6 | done, reviewed | `e3c3f09` |
 | S1-F3 | done, reviewed | `9e0d5b6` |
 | S1-F4/F5 | done, reviewed | `f68b565` |
-| S1-F7 | **waiting on human**: WeChat DevTools QR sign-in + service port (owner resting). English layout pass + screenshots in both locales | — |
+| S1-F7 | Phase A done (7d08797): `npm run screens` captures 30 scenarios in zh-CN and en and writes `screenshots/index.html`. **Phase B is waiting on a human**: WeChat DevTools QR sign-in + service port, then the lead runs the script and reviews. | — |
 | S2-F1 | done, reviewed: vehicle list/detail/form, dispatch/reject sheets, role-aware badge, tappable vehicle cards + schedule scope | `4a4a488` |
 | S2-F2 | in progress (cursor): polish (dead code, 44px targets, spacing tokens) + README/progress/DESIGN catch-up | — |
 
