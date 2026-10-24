@@ -1,0 +1,8 @@
+{
+  "name": "corp-admin-miniapp",
+  "private": true,
+  "scripts": {
+    "test": "node --test --test-isolation=none \"tests/*.test.js\"",
+    "check": "node scripts/check-i18n.js"
+  }
+}
