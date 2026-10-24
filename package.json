@@ -3,6 +3,10 @@
   "private": true,
   "scripts": {
     "test": "node --test --test-isolation=none \"tests/*.test.js\"",
-    "check": "node scripts/check-i18n.js"
+    "check": "node scripts/check-i18n.js",
+    "screens": "node scripts/screens.js"
+  },
+  "devDependencies": {
+    "miniprogram-automator": "^0.13.0"
   }
 }
