@@ -1,4 +1,8 @@
 {
   "navigationBarTitleText": "",
-  "usingComponents": {}
+  "usingComponents": {
+    "cell-row": "/components/cell-row/index",
+    "bottom-sheet": "/components/bottom-sheet/index",
+    "notice-bar": "/components/notice-bar/index"
+  }
 }

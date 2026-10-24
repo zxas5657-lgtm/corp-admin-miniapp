@@ -4,7 +4,9 @@
     "pages/meetings/index",
     "pages/vehicles/index",
     "pages/me/index",
-    "pages/dev-gallery/index"
+    "pages/dev-gallery/index",
+    "pages/visitors/index",
+    "pages/daily/index"
   ],
   "window": {
     "navigationBarBackgroundColor": "#FFFFFF",

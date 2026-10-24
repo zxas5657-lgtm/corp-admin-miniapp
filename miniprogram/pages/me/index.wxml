@@ -1,3 +1,128 @@
-<view class="page-empty">
-  <text class="text-secondary">{{i18n.state.loading}}</text>
+<view class="page">
+  <notice-bar
+    wx:if="{{notice}}"
+    kind="error"
+    text="{{notice}}"
+    closable="{{true}}"
+    close-label="{{i18n.a11y.closeSheet}}"
+    bind:close="onCloseNotice"
+  />
+
+  <view class="profile">
+    <view class="avatar" aria-hidden="true">{{initial}}</view>
+    <view class="profile-copy">
+      <text class="name">{{name}}</text>
+      <text class="meta text-secondary">{{title}}</text>
+      <text class="meta text-secondary">{{roleLabel}}</text>
+    </view>
+  </view>
+
+  <view class="cell-group">
+    <cell-row
+      label="{{i18n.me.language}}"
+      value="{{locale === 'en' ? i18n.lang.en : i18n.lang.zh}}"
+      arrow="{{true}}"
+      bind:press="onOpenLanguage"
+    />
+  </view>
+
+  <view class="cell-group entries">
+    <cell-row
+      label="{{i18n.nav.visitors}}"
+      stacked="{{true}}"
+      arrow="{{true}}"
+      data-url="/pages/visitors/index"
+      bind:press="onEntry"
+    >
+      <text class="text-secondary">{{i18n.me.visitorsHint}}</text>
+    </cell-row>
+    <cell-row
+      label="{{i18n.nav.daily}}"
+      stacked="{{true}}"
+      arrow="{{true}}"
+      data-url="/pages/daily/index"
+      bind:press="onEntry"
+    >
+      <text class="text-secondary">{{i18n.me.dailyHint}}</text>
+    </cell-row>
+  </view>
+
+  <block wx:if="{{devRoleSwitch}}">
+    <text class="section-label">{{i18n.demo.title}}</text>
+    <text class="demo-hint text-secondary">{{i18n.demo.hint}}</text>
+    <view class="cell-group" aria-role="radiogroup" aria-label="{{i18n.demo.title}}">
+      <view
+        wx:for="{{roles}}"
+        wx:key="id"
+        class="role {{item.selected ? 'is-on' : ''}}"
+        data-role="{{item.id}}"
+        aria-role="radio"
+        aria-checked="{{item.selected}}"
+        hover-class="is-pressed"
+        bindtap="onRole"
+      >
+        <view class="role-copy">
+          <text class="role-label">{{item.label}}</text>
+          <text class="role-name text-secondary">{{item.name}}</text>
+          <text class="role-hint text-secondary">{{item.hint}}</text>
+        </view>
+        <view class="tick {{item.selected ? 'is-on' : ''}}" aria-hidden="true">
+          <view wx:if="{{item.selected}}" class="tick-mark"></view>
+        </view>
+      </view>
+    </view>
+    <view class="cell-group reset">
+      <cell-row
+        label="{{i18n.me.reset}}"
+        arrow="{{true}}"
+        bind:press="onOpenReset"
+      />
+    </view>
+  </block>
+
+  <bottom-sheet
+    show="{{languageOpen}}"
+    title="{{i18n.me.language}}"
+    cancel-text="{{i18n.common.cancel}}"
+    mask-label="{{i18n.a11y.closeSheet}}"
+    bind:close="onCloseLanguage"
+  >
+    <view
+      class="option"
+      data-locale="zh-CN"
+      aria-role="button"
+      hover-class="is-pressed"
+      bindtap="onPickLocale"
+    >
+      <text class="option-label">{{i18n.lang.zh}}</text>
+      <view wx:if="{{locale === 'zh-CN'}}" class="tick is-on" aria-hidden="true">
+        <view class="tick-mark"></view>
+      </view>
+    </view>
+    <view
+      class="option"
+      data-locale="en"
+      aria-role="button"
+      hover-class="is-pressed"
+      bindtap="onPickLocale"
+    >
+      <text class="option-label">{{i18n.lang.en}}</text>
+      <view wx:if="{{locale === 'en'}}" class="tick is-on" aria-hidden="true">
+        <view class="tick-mark"></view>
+      </view>
+    </view>
+  </bottom-sheet>
+
+  <bottom-sheet
+    show="{{resetOpen}}"
+    title="{{i18n.me.reset}}"
+    cancel-text="{{i18n.common.cancel}}"
+    confirm-text="{{i18n.demo.resetConfirm}}"
+    danger="{{true}}"
+    mask-label="{{i18n.a11y.closeSheet}}"
+    bind:close="onCloseReset"
+    bind:confirm="onConfirmReset"
+  >
+    <text class="sheet-copy">{{i18n.demo.resetBody}}</text>
+  </bottom-sheet>
 </view>

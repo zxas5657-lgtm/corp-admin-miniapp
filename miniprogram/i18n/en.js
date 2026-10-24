@@ -68,6 +68,12 @@ module.exports = {
     'permission.denied': 'You do not have permission to do that',
     'storage.writeFailed': 'Save failed; try again',
     'storage.readFailed': 'Read failed; try again',
+    'vehicle.seats.exceeded': 'The vehicle seats {seats}, but the request has {passengers} passengers',
+    'vehicle.complete.beforeDeparture': 'A request cannot be marked complete before departure',
+    'vehicle.car.busy': 'This vehicle is already booked for that time',
+    'vehicle.reason.tooLong': 'The reason must be 40 characters or fewer',
+    'vehicle.destination.tooLong': 'The destination must be 60 characters or fewer',
+    'vehicle.note.tooLong': 'The note must be 200 characters or fewer',
   },
   state: {
     loading: 'Loading…',
@@ -172,6 +178,8 @@ module.exports = {
   me: {
     language: '语言 / Language',
     reset: 'Reset demo data',
+    visitorsHint: 'Appointments, check-in, and records',
+    dailyHint: 'Supplies, repairs, and seals',
   },
   lang: {
     zh: '简体中文',
@@ -184,5 +192,32 @@ module.exports = {
   },
   demo: {
     resetNotice: 'Demo data reset',
+    title: 'Demo role',
+    hint: 'For the demo only. Switching opens the home tab for that role.',
+    resetBody: 'Demo data will be restored. The language setting is kept.',
+    resetConfirm: 'Restore',
+    switched: 'Role switched',
+  },
+  common: {
+    notAvailable: 'Not available yet',
+    cancel: 'Cancel',
+  },
+  visitors: {
+    lead: 'This version only keeps the entry. Appointments, check-in, and reception records will come later.',
+    bookingTitle: 'Book a visit',
+    bookingBody: 'Register the visitor and arrival time',
+    checkTitle: 'Check in',
+    checkBody: 'The front desk verifies the visitor and notifies the host',
+    recordTitle: 'Reception record',
+    recordBody: 'Leave a note when the visit ends',
+  },
+  daily: {
+    lead: 'This version only keeps the entry. Supply requests, repairs, and seals will come later.',
+    supplyTitle: 'Request supplies',
+    supplyBody: 'Stationery, consumables, and staff items',
+    repairTitle: 'Report a repair',
+    repairBody: 'Meeting room equipment and office facilities',
+    sealTitle: 'Use a seal',
+    sealBody: 'Record taking a seal out and applying it',
   },
 };

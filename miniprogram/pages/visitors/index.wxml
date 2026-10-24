@@ -1,0 +1,26 @@
+<view class="page">
+  <text class="lead">{{i18n.visitors.lead}}</text>
+  <view class="cell-group">
+    <view class="skel-row">
+      <view class="skel-copy">
+        <text class="skel-title">{{i18n.visitors.bookingTitle}}</text>
+        <text class="skel-body text-secondary">{{i18n.visitors.bookingBody}}</text>
+      </view>
+      <status-pill class="pill-host" text="{{i18n.common.notAvailable}}" tone="mute" />
+    </view>
+    <view class="skel-row">
+      <view class="skel-copy">
+        <text class="skel-title">{{i18n.visitors.checkTitle}}</text>
+        <text class="skel-body text-secondary">{{i18n.visitors.checkBody}}</text>
+      </view>
+      <status-pill class="pill-host" text="{{i18n.common.notAvailable}}" tone="mute" />
+    </view>
+    <view class="skel-row">
+      <view class="skel-copy">
+        <text class="skel-title">{{i18n.visitors.recordTitle}}</text>
+        <text class="skel-body text-secondary">{{i18n.visitors.recordBody}}</text>
+      </view>
+      <status-pill class="pill-host" text="{{i18n.common.notAvailable}}" tone="mute" />
+    </view>
+  </view>
+</view>

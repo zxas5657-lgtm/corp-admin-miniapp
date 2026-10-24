@@ -68,6 +68,12 @@ module.exports = {
     'permission.denied': '没有权限执行此操作',
     'storage.writeFailed': '保存失败，请重试',
     'storage.readFailed': '读取失败，请重试',
+    'vehicle.seats.exceeded': '车辆座位不足（可坐 {seats} 人，申请 {passengers} 人）',
+    'vehicle.complete.beforeDeparture': '出发前不能标记完成',
+    'vehicle.car.busy': '该车辆在此时段已被占用',
+    'vehicle.reason.tooLong': '用车事由不能超过 40 个字',
+    'vehicle.destination.tooLong': '目的地不能超过 60 个字',
+    'vehicle.note.tooLong': '备注不能超过 200 个字',
   },
   state: {
     loading: '加载中…',
@@ -169,6 +175,8 @@ module.exports = {
   me: {
     language: '语言 / Language',
     reset: '恢复演示数据',
+    visitorsHint: '预约、核验与接待记录',
+    dailyHint: '申领、报修与用印',
   },
   lang: {
     zh: '简体中文',
@@ -181,5 +189,32 @@ module.exports = {
   },
   demo: {
     resetNotice: '演示数据已恢复',
+    title: '演示身份',
+    hint: '仅用于演示。切换后会打开该身份的首页。',
+    resetBody: '演示数据会恢复到初始内容。语言设置会保留。',
+    resetConfirm: '确认恢复',
+    switched: '已切换身份',
+  },
+  common: {
+    notAvailable: '未开放',
+    cancel: '取消',
+  },
+  visitors: {
+    lead: '当前版本只保留入口。预约、核验和接待记录以后再做。',
+    bookingTitle: '预约来访',
+    bookingBody: '登记访客与到访时间',
+    checkTitle: '到访核验',
+    checkBody: '前台核对并通知被访人',
+    recordTitle: '接待记录',
+    recordBody: '结束后留下接待备注',
+  },
+  daily: {
+    lead: '当前版本只保留入口。申领、报修和用印以后再做。',
+    supplyTitle: '用品申领',
+    supplyBody: '文具、耗材与员工物资',
+    repairTitle: '报修',
+    repairBody: '会议室设备与办公设施',
+    sealTitle: '用印',
+    sealBody: '印章外带与盖章登记',
   },
 };

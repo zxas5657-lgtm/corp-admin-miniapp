@@ -1,5 +1,5 @@
 const i18nBehavior = require('../../behaviors/i18n');
-const i18n = require('../../i18n/index');
+const { changeLocale } = require('../../utils/locale');
 const { statusTone } = require('../../utils/status-tone');
 const { pseudo } = require('../../utils/pseudo');
 
@@ -151,7 +151,7 @@ Component({
     },
     onLocale(event) {
       const locale = event.currentTarget.dataset.locale;
-      if (locale === 'zh-CN' || locale === 'en') i18n.setLocale(locale);
+      if (locale === 'zh-CN' || locale === 'en') changeLocale(locale);
     },
     onTogglePseudo() {
       this.setData({ pseudoOn: !this.data.pseudoOn });
