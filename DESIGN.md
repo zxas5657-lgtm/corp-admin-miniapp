@@ -47,7 +47,8 @@ v1 不包含真实后端、云函数、微信登录。身份切换只存在于�
 | --- | --- | --- |
 | 墨色文字 | `#1C2430` | 标题、正文 |
 | 次级文字 | `#5C6778` | 说明、时间以外的辅助信息 |
-| 三级文字 | `#8B95A5` | 占位、未选中的标签 |
+| 三级文字 | `#6B7585` | 分组标题、脚注、禁用原因等小字（对白底约 4.6 : 1） |
+| 图标 / 占位 | `#8B95A5` | 只用于图标、边框和输入占位，不用于有意义的文字 |
 | 页面背景 | `#F3F5F8` | 导航和卡片之外的底 |
 | 卡片 / 导航 | `#FFFFFF` | 列表卡片、表单组、底部栏 |
 | 分割线 | `#E6E9EE` | 1px，不靠阴影分层 |
@@ -67,8 +68,10 @@ v1 不包含真实后端、云函数、微信登录。身份切换只存在于�
 ### 字体
 
 ```text
-PingFang SC, Hiragino Sans GB, Noto Sans SC, Microsoft YaHei, sans-serif
+system-ui, -apple-system, "Segoe UI", Roboto, PingFang SC, Hiragino Sans GB, Noto Sans SC, Microsoft YaHei, sans-serif
 ```
+
+拉丁字体放在前面，英文界面不会落到中文字体的西文字形上；中文字符仍由后面的中文字体渲染。
 
 用系统字体，不从外网拉字体文件。
 
@@ -150,7 +153,7 @@ PingFang SC, Hiragino Sans GB, Noto Sans SC, Microsoft YaHei, sans-serif
 - 筛选：全部、待开始、进行中、已结束。
 - 卡片：主题、状态、时间、会议室、发起人。
 - 底部「新建会议」。司机和前台看到禁用按钮。
-- 详情只读：时间、地点、发起人、参会人、议程。v1 不能改期或取消。
+- 详情：时间、地点、发起人、参会人、议程，以及「在日程中查看」。发起人可以在会议开始前取消（确认弹层）；取消后保留在列表里，标「已取消」。v1 不能改期。
 
 ### 新建会议 `#/meetings/new`
 
@@ -257,30 +260,49 @@ PingFang SC, Hiragino Sans GB, Noto Sans SC, Microsoft YaHei, sans-serif
 
 字段（下一步做真页面时沿用这些名字和状态）：
 
-- 会议：`title` `date` `start` `end` `room` `attendees` `organizer` `agenda` `status`（`upcoming` / `ongoing` / `done`）
-- 用车：`reason` `destination` `date` `time` `passengers` `applicant` `note` `status`（`pending` / `assigned` / `done` / `rejected`）`carId` `driverName` `rejectReason`
+原型字段（仅供对照）：
+
+- 会议：`title` `date` `start` `end` `room` `attendees` `organizer` `agenda` `status`
+- 用车：`reason` `destination` `date` `time` `passengers` `applicant` `note` `status` `carId` `driverName` `rejectReason`
+
+小程序字段（以此为准，只存 id，名称按当前语言渲染）：
+
+- 会议：`id` `title` `date` `start` `end` `roomId` `attendeeIds` `organizerId` `agenda` `cancelled` `createdAt`。状态不存储，由 `meetingStatus(meeting, now)` 按时间推出：`upcoming` / `ongoing` / `done`，取消的为 `cancelled`。
+- 用车：`id` `reason` `destination` `date` `time` `passengers` `applicantId` `note` `status`（`pending` / `assigned` / `done` / `rejected`）`carId` `driverId` `rejectReason` `createdAt` `dispatchedAt` `completedAt` `dispatchedBy`
 
 ## v1 不做
 
 - 微信登录、openid、手机号授权
 - 云函数、数据库、真实审批接口
 - 订阅消息、短信、写入手机系统日历
-- 会议改期、取消、纪要、签到、投票
-- 会议室冲突检测
+- 会议改期、纪要、签到、投票（取消在 v1 内）
+- 会议室冲突的强制拦截（v1 只在提交时给不拦截的提醒）
 - 多级审批、费用、里程、油耗
 - 地图选点、司机实时位置、车辆时间冲突
 - 来访的登记、核验、放行
 - 用品申领、报修、用印
 - 可配置权限后台（原型用身份切换代替）
-- 英文界面
+
+## 语言
+
+界面中英双语（`zh-CN` / `en`），从第一版起就有。
+
+- **切换位置：** 「我的」里一行「语言 / Language」，两种语言下都能读懂。点开是底部弹层：简体中文、English。
+- **默认语言：** 首次打开跟随微信或系统语言，`zh*` 用简体中文，其他用 English。不在启动时弹窗询问。
+- **保存：** 语言单独存一个键，「恢复演示数据」不会改它。切换后立刻生效，包括底部标签和导航标题，不需要重启；表单里已填的内容不丢。
+- **不翻译的内容：** 用户自己输入的文字（会议主题、议程、目的地、备注、驳回原因）原样显示。
+- **日期：** 中文「10月26日 周一」，英文「Mon, Oct 26」。时间两种语言都用 24 小时制 `HH:mm`。一周从周一开始（中文），英文从周日开始。
+- **英文更长：** 单元格标签不要固定 72px 宽，可以换行或改为上下排；药丸不换行，过长用省略号。
+- **术语：** 以 `miniprogram/i18n/glossary.md` 为准。底部四栏：Schedule / Meetings / Vehicles / Me。
+- **状态药丸英文：** Upcoming / In progress / Ended / Cancelled；Awaiting dispatch / Dispatched / Completed / Rejected。
 
 ## 下一步
 
-按 `progress.md`，下一步实现会议 + 日程 MVP：做成小程序页面也可以，但先保持本地数据，仍然不要后端和微信登录。
+按 `PLAN.md` 的 Sprint 1 做会议 + 日程 MVP（原生小程序）。先保持本地数据，仍然不要后端和微信登录。
 
 做的时候守住这几条：
 
-- 底部四栏名称不变：日程、会议、用车、我的
+- 底部四栏名称不变：日程、会议、用车、我的（英文 Schedule、Meetings、Vehicles、Me）
 - 新建的会议必须出现在对应日期的日程里
 - 用车状态链是：待派车 → 已派车 → 已完成，另有已驳回
-- 界面文案继续用中文
+- 界面文案中英双语，所有文案走 `t()`，不写字面量
