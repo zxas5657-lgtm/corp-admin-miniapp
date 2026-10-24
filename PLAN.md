@@ -1,4 +1,4 @@
-# PLAN — corp-admin-miniapp
+﻿# PLAN â€” corp-admin-miniapp
 
 Owner: lead (Claude Code). Last updated: 2026-10-24.
 Input: `CLAUDE_REVIEW.md` (P0/P1/P2 findings). This plan records the decisions that review asked for and orders the work.
@@ -42,14 +42,14 @@ scripts/check-i18n.js          key and {param} parity; CJK literal lint over dom
 ```
 
 Rules:
-- **Data flows one way:** `store` → `domain` selectors → page `setData`. Pages never compute status or permissions themselves.
+- **Data flows one way:** `store` â†’ `domain` selectors â†’ page `setData`. Pages never compute status or permissions themselves.
 - **Records store ids only:** `roomId`, `organizerId`, `attendeeIds`, `carId`, `driverId`, `applicantId`. Names are resolved at render time.
 - **Status is derived:** meeting status = `meetingStatus(meeting, now)`. The only stored meeting state is `cancelled`.
 - **The clock is injected:** `clock.now()` returns the fixed demo instant (2026-10-24 09:20) in demo mode and the real time otherwise.
-- **Cross-tab navigation goes through `store`:** "created → schedule at date/focus" passes through `store.ui` because `wx.switchTab` drops query strings.
+- **Cross-tab navigation goes through `store`:** "created â†’ schedule at date/focus" passes through `store.ui` because `wx.switchTab` drops query strings.
 - **The demo role switch sits behind `DEV_ROLE_SWITCH`.** All demo-only copy lives under `demo.*`.
 
-### 1.4 i18n approach (from review §5)
+### 1.4 i18n approach (from review Â§5)
 - Two locales, `zh-CN` and `en`. Keys follow `area.object.variant`.
 - Functions:
   - `t(key, params)` interpolates `{name}` placeholders.
@@ -67,38 +67,38 @@ Rules:
 - **Safeguards:**
   - The key-parity check and the CJK-literal lint run in `npm run check`.
   - A missing key shows the key and warns in dev, and falls back to zh-CN in prod.
-  - A pseudo-locale (×1.4) is used for layout checks.
+  - A pseudo-locale (Ã—1.4) is used for layout checks.
 
 ## 2. P0 fixes (all before MVP screen code)
 
 | ID | Fix | Owner | Status |
 | --- | --- | --- | --- |
-| P0-1 | Docs allow and require bilingual UI (`PROJECT_RULES.md` rule 3, `DESIGN.md` §v1不做 / §下一步 / fonts / fields, `progress.md`, `README.md`) | lead | done 2026-10-24 |
+| P0-1 | Docs allow and require bilingual UI (`PROJECT_RULES.md` rule 3, `DESIGN.md` Â§v1ä¸åš / Â§ä¸‹ä¸€æ­¥ / fonts / fields, `progress.md`, `README.md`) | lead | done 2026-10-24 |
 | P0-2 | i18n seam (`t`/`tn`, locale files, ids in data, error codes) | codex | S1-B2, S1-B3 |
 | P0-3 | Derived meeting status + injected clock | codex | S1-B4 |
-| P0-4 | Platform decided (§1.1); pure `domain/` split | lead / codex | decided; S1-B1..B5 |
-| P0-5 | MVP = meetings + schedule over `sources: [meetings, vehicles]`; vehicles read-only seed until the 用车闭环 sprint | lead | decided; in `progress.md` |
+| P0-4 | Platform decided (Â§1.1); pure `domain/` split | lead / codex | decided; S1-B1..B5 |
+| P0-5 | MVP = meetings + schedule over `sources: [meetings, vehicles]`; vehicles read-only seed until the ç”¨è½¦é—­çŽ¯ sprint | lead | decided; in `progress.md` |
 
 ## 3. Sprint 1: foundations, then the meeting + schedule MVP
 
-Order matters. B-tasks unblock F-tasks. **Every task passes the gates in §5 before the next dependent task starts.**
+Order matters. B-tasks unblock F-tasks. **Every task passes the gates in Â§5 before the next dependent task starts.**
 
 | # | Task | Owner | Depends on |
 | --- | --- | --- | --- |
-| S1-L0 | PLAN.md, P0-1 doc fixes, glossary seed | lead | — |
-| S1-B1 | Scaffold: `package.json` (scripts only), folder skeleton, `tests/` harness (`node --test`), `scripts/check-i18n.js` | codex | — |
+| S1-L0 | PLAN.md, P0-1 doc fixes, glossary seed | lead | â€” |
+| S1-B1 | Scaffold: `package.json` (scripts only), folder skeleton, `tests/` harness (`node --test`), `scripts/check-i18n.js` | codex | â€” |
 | S1-B2 | i18n runtime + `zh-CN.js` / `en.js` skeleton (tab, nav, role, status, error, state, date, me, a11y, demo) + `glossary.md` + tests | codex | B1 |
 | S1-B3 | `domain/clock.js`, `domain/dates.js`; `data/reference.js` (rooms, people, cars with seats, drivers) and `data/seed.js` (id-based, `{zh,en}` demo text) + tests | codex | B2 |
-| S1-B4 | `domain/meeting.js` (validate → codes, `meetingStatus`, cancel, room/attendee conflicts), `domain/permissions.js` (capability map), `domain/schedule.js` (`scheduleItems(date, sources)`), `domain/vehicle.js` (transition table only) + tests | codex | B3 |
+| S1-B4 | `domain/meeting.js` (validate â†’ codes, `meetingStatus`, cancel, room/attendee conflicts), `domain/permissions.js` (capability map), `domain/schedule.js` (`scheduleItems(date, sources)`), `domain/vehicle.js` (transition table only) + tests | codex | B3 |
 | S1-B5 | `store/`: adapter (wx / memory), schema v2, `migrate()`, key `corp-admin-v2`, separate locale key, `save()` returns a result + tests | codex | B3 |
-| S1-F1 | Mini-program shell: `project.config.json`, `app.*`, tab bar, design tokens (contrast fix `--ink-3` → `#6B7585` for text; Latin font fallbacks), `behaviors/i18n.js` | cursor | B2 |
+| S1-F1 | Mini-program shell: `project.config.json`, `app.*`, tab bar, design tokens (contrast fix `--ink-3` â†’ `#6B7585` for text; Latin font fallbacks), `behaviors/i18n.js` | cursor | B2 |
 | S1-F2 | Components: state (empty/error/loading/success), pill, cell (English-tolerant label width), sheet (focus handling), primary button + disabled reason | cursor | F1 |
 | S1-F3 | Schedule page: fixed locale-aware week strip with prev/next and date picker; derived list; day headings; empty state; `focus` read once from store | cursor | F2, B4, B5 |
 | S1-F4 | Meetings list + detail: date-sorted, status filter, "no data" vs "filtered" empty states, not-found, cancel (organizer), "view in schedule" | cursor | F2, B4, B5 |
 | S1-F5 | Meeting form: pickers, inline per-field errors, mounted while submitting, storage-failure state, non-blocking room-conflict warning, dirty-leave guard | cursor | F4 |
 | S1-F6 | Me page: language row + sheet, role switch behind `DEV_ROLE_SWITCH` (routes to role home), reset demo keeps locale; visitors/daily skeleton pages | cursor | F2 |
-| S1-F7 | English layout pass + pseudo-locale; screenshot every screen and state in both locales | cursor + human (DevTools) | F3–F6 |
-| S1-L1 | Review each task; final MVP acceptance against review §4 state table, in both locales | lead | all |
+| S1-F7 | English layout pass + pseudo-locale; screenshot every screen and state in both locales | cursor + human (DevTools) | F3â€“F6 |
+| S1-L1 | Review each task; final MVP acceptance against review Â§4 state table, in both locales | lead | all |
 
 ### Sprint 1 status (updated by lead)
 
@@ -107,10 +107,10 @@ Order matters. B-tasks unblock F-tasks. **Every task passes the gates in §5 bef
 | S1-L0 | done | `bf8a693` |
 | S1-B1 | done, reviewed | `bb63324` |
 | S1-B2 | done, reviewed | `27d0fa2` |
-| S1-F1 | done; review fixes in progress (S1-F1-r1: pages → `Component()`, remove dead defensive code) | `58066a0` |
-| S1-B3 | in progress (codex) | — |
+| S1-F1 | done; review fixes in progress (S1-F1-r1: pages â†’ `Component()`, remove dead defensive code) | `58066a0` |
+| S1-B3 | in progress (codex) | â€” |
 
-## 4. Sprint 2: 用车闭环 (queued)
+## 4. Sprint 2: ç”¨è½¦é—­çŽ¯ (queued)
 
 | # | Task | Owner |
 | --- | --- | --- |
@@ -128,7 +128,7 @@ P2 items (contrast details, touch targets, spacing scale, toast vs. banner rule,
 2. `domain/`, `pages/`, `components/` and `behaviors/` contain no CJK literals and no sentence concatenation.
 3. Every new key exists in both locales with the same `{params}`.
 4. `domain/` and `store/` do not touch `wx`, the DOM or copy. Pages do not compute status or permissions.
-5. Every screen has empty, loading, error and success coverage per the review §4 table.
+5. Every screen has empty, loading, error and success coverage per the review Â§4 table.
 6. The design matches `DESIGN.md` tokens, holds up in English and at 320 px width, and has 44 px touch targets.
 7. `progress.md` is updated after each completed task (rule 5).
 
@@ -139,7 +139,7 @@ P2 items (contrast details, touch targets, spacing scale, toast vs. banner rule,
   - Commits: `9861f32` is the baseline (the original ZIP); `bf8a693` holds the docs and the plan.
   - **Commit rule:** the lead commits each task after it passes review, one task per commit. Executors do not commit.
   - The GitHub remote is approved but not connected yet.
-- WeChat DevTools: installed 2026-10-24. The CLI is `C:\Program Files (x86)\Tencent\微信web开发者工具\cli.bat`.
-  - **Human step before S1-F7:** sign in once with a WeChat QR scan, and turn on Settings → Security → Service port so the CLI can open and screenshot the project.
+- WeChat DevTools: installed 2026-10-24. The CLI is `C:\Program Files (x86)\Tencent\å¾®ä¿¡webå¼€å‘è€…å·¥å…·\cli.bat`.
+  - **Human step before S1-F7:** sign in once with a WeChat QR scan, and turn on Settings â†’ Security â†’ Service port so the CLI can open and screenshot the project.
 - Standing authorization: the liaison may approve Sprint 1 tool and runtime installs on this machine. Anything destructive, paid or outside this project still needs a status-update ask first.
 - ~~cursor-exec is not logged in.~~ Resolved 2026-10-24: logged in and trusted. S1-F1 is delegated. It codes against the i18n contract in `.team/tasks/S1-B2.md` while codex builds the runtime.
