@@ -6,6 +6,7 @@ const assert = require('node:assert/strict');
 const i18n = require('../miniprogram/i18n');
 const { seed } = require('../miniprogram/data/seed');
 const clock = require('../miniprogram/domain/clock');
+const { parseLocalDateTime } = require('../miniprogram/domain/dates');
 const { findConflicts } = require('../miniprogram/domain/meeting');
 const {
   conflictWarnings,
@@ -44,6 +45,20 @@ test('form defaults and options use the current locale', () => {
   }
 });
 
+test('form defaults stay valid near midnight', () => {
+  const cases = [
+    ['2026-10-24T22:30', '2026-10-25', '09:00', '10:00'],
+    ['2026-10-24T23:10', '2026-10-25', '09:00', '10:00'],
+    ['2026-10-24T09:20', '2026-10-24', '10:00', '11:00'],
+  ];
+  for (const [input, date, start, end] of cases) {
+    const defaults = formDefaults({ now: parseLocalDateTime(input), personId: 'p-lin' });
+    assert.equal(defaults.date, date);
+    assert.equal(defaults.start, start);
+    assert.equal(defaults.end, end);
+  }
+});
+
 test('field errors map to translated text and retain the first field', () => {
   i18n.setDevMode(false);
   const result = fieldErrors([
@@ -65,9 +80,9 @@ test('conflict warnings interpolate room and attendee text and expose the sheet 
     const candidate = { id: 'new', date: '2026-10-26', start: '09:30', end: '10:00', roomId: 'f5-board', attendeeIds: ['p-lin'] };
     const conflicts = findConflicts(candidate, state.meetings, require('../miniprogram/data/reference'));
     const warnings = conflictWarnings(conflicts, { state });
-    assert.equal(warnings.length, 2);
-    assert.equal(warnings[0].includes('{'), false);
-    assert.equal(warnings[1].includes('{'), false);
+    assert.equal(warnings.warnings.length, 2);
+    assert.equal(warnings.warnings[0].includes('{'), false);
+    assert.equal(warnings.warnings[1].includes('{'), false);
     assert.equal(warnings.sheet.title, locale === 'en' ? 'Schedule conflict' : '发现日程冲突');
     assert.equal(warnings.sheet.submitAnywayText, locale === 'en' ? 'Submit anyway' : '仍然提交');
     assert.equal(warnings.sheet.backText, locale === 'en' ? 'Go back' : '返回修改');

@@ -3,7 +3,6 @@
 const i18n = require('../i18n');
 const reference = require('../data/reference');
 const { toDateStr, toTimeStr } = require('../domain/dates');
-const { validateMeeting } = require('../domain/meeting');
 
 function formOptions(options) {
   const refs = (options && options.refs) || reference;
@@ -15,10 +14,16 @@ function formOptions(options) {
 
 function formDefaults(options) {
   const config = options || {};
-  const next = new Date(config.now.getTime());
+  const current = new Date(config.now.getTime());
+  const next = new Date(current.getTime());
   next.setHours(next.getHours() + 1, 0, 0, 0);
+  if (next.getDate() !== current.getDate() || next.getHours() >= 23) {
+    next.setDate(current.getDate() + 1);
+    next.setHours(9, 0, 0, 0);
+  }
   const end = new Date(next.getTime());
   end.setHours(end.getHours() + 1);
+  if (end.getDate() !== next.getDate()) end.setHours(23, 59, 0, 0);
   return {
     title: '',
     date: toDateStr(next),
@@ -71,9 +76,7 @@ function conflictWarnings(conflicts, options) {
     submitAnywayText: i18n.t('meeting.conflict.submitAnyway'),
     backText: i18n.t('meeting.conflict.back'),
   };
-  Object.defineProperty(warnings, 'warnings', { value: warnings, enumerable: false });
-  Object.defineProperty(warnings, 'sheet', { value: sheet, enumerable: false });
-  return warnings;
+  return { warnings, sheet };
 }
 
 function labels() {
@@ -104,5 +107,4 @@ module.exports = {
   fieldErrors,
   conflictWarnings,
   labels,
-  validateMeeting,
 };

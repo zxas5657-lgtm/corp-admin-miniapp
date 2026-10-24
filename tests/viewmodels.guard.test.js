@@ -49,6 +49,6 @@ test('every viewmodel output is JSON-safe and contains no raw i18n keys', () => 
       labels(),
     ];
     for (const output of outputs) assertClean(output);
-    assertClean(conflictWarnings([], { state, refs: reference }).sheet);
+    assertClean(conflictWarnings([], { state, refs: reference }));
   }
 });
