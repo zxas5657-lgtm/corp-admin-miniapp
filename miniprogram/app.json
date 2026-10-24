@@ -6,7 +6,9 @@
     "pages/me/index",
     "pages/dev-gallery/index",
     "pages/visitors/index",
-    "pages/daily/index"
+    "pages/daily/index",
+    "pages/meeting-detail/index",
+    "pages/meeting-form/index"
   ],
   "window": {
     "navigationBarBackgroundColor": "#FFFFFF",

@@ -1,9 +1,8 @@
 <view class="wrap {{requiredError ? 'is-invalid' : ''}}">
   <view
     class="cell {{stacked ? 'cell--stacked' : ''}} {{arrow ? 'is-arrow' : ''}}"
-    hover-class="{{arrow ? 'is-hover' : 'none'}}"
+    hover-class="{{arrow && !quiet ? 'is-hover' : 'none'}}"
     aria-role="{{arrow ? 'button' : ''}}"
-    catchtap="onTap"
   >
     <text class="k">{{label}}</text>
     <view class="v">
@@ -11,6 +10,7 @@
       <slot wx:else></slot>
     </view>
     <view wx:if="{{arrow}}" class="chev" aria-hidden="true"></view>
+    <view wx:if="{{!quiet}}" class="catcher" catchtap="onTap"></view>
   </view>
   <text wx:if="{{errorText}}" class="err">{{errorText}}</text>
 </view>

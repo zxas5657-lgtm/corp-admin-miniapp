@@ -148,6 +148,7 @@ module.exports = {
       cancelConfirm: 'Confirm cancellation',
       cancelBack: 'Keep meeting',
       viewInSchedule: 'View in schedule',
+      cancelledToast: 'Meeting cancelled',
     },
     conflict: {
       room: 'The room {room} is already booked for {time} by “{title}”',

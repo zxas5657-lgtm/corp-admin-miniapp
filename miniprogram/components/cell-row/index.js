@@ -6,7 +6,8 @@ Component({
     stacked: { type: Boolean, value: false },
     arrow: { type: Boolean, value: false },
     requiredError: { type: Boolean, value: false },
-    errorText: { type: String, value: '' }
+    errorText: { type: String, value: '' },
+    quiet: { type: Boolean, value: false }
   },
   methods: {
     onTap() {

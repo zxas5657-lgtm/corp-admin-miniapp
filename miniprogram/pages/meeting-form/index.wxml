@@ -1,0 +1,178 @@
+<view class="page">
+  <top-progress active="{{submitting}}" />
+  <state-view
+    wx:if="{{!allowed}}"
+    kind="error"
+    title="{{deniedText}}"
+    action-text="{{i18n.nav.back}}"
+    bind:action="onBack"
+  />
+  <block wx:elif="{{form && labels}}">
+    <page-container
+      show="{{guardBack}}"
+      overlay="{{false}}"
+      duration="{{0}}"
+      position="center"
+      custom-style="height: 0; width: 0; overflow: hidden;"
+      bind:beforeleave="onBeforeLeave"
+    />
+    <notice-bar
+      wx:if="{{notice}}"
+      kind="error"
+      text="{{notice}}"
+      closable="{{true}}"
+      close-label="{{i18n.a11y.closeSheet}}"
+      bind:close="onCloseNotice"
+    />
+    <view class="cell-group">
+      <cell-row
+        id="field-title"
+        quiet="{{true}}"
+        label="{{labels.title}}"
+        required-error="{{errors.title ? true : false}}"
+        error-text="{{errors.title}}"
+      >
+        <input
+          class="field-input"
+          value="{{form.title}}"
+          maxlength="40"
+          placeholder="{{labels.titlePlaceholder}}"
+          disabled="{{submitting}}"
+          bindinput="onTitle"
+        />
+      </cell-row>
+      <cell-row
+        id="field-date"
+        quiet="{{true}}"
+        label="{{labels.date}}"
+        required-error="{{errors.date ? true : false}}"
+        error-text="{{errors.date}}"
+      >
+        <picker mode="date" value="{{form.date}}" disabled="{{submitting}}" bindchange="onDate">
+          <view class="picker-hit">{{form.date}}</view>
+        </picker>
+      </cell-row>
+      <cell-row
+        id="field-start"
+        quiet="{{true}}"
+        label="{{labels.start}}"
+        required-error="{{errors.start ? true : false}}"
+        error-text="{{errors.start}}"
+      >
+        <picker mode="time" value="{{form.start}}" disabled="{{submitting}}" bindchange="onStart">
+          <view class="picker-hit">{{form.start}}</view>
+        </picker>
+      </cell-row>
+      <cell-row
+        id="field-end"
+        quiet="{{true}}"
+        label="{{labels.end}}"
+        required-error="{{errors.end ? true : false}}"
+        error-text="{{errors.end}}"
+      >
+        <picker mode="time" value="{{form.end}}" disabled="{{submitting}}" bindchange="onEnd">
+          <view class="picker-hit">{{form.end}}</view>
+        </picker>
+      </cell-row>
+      <cell-row
+        id="field-room"
+        quiet="{{true}}"
+        label="{{labels.room}}"
+        required-error="{{errors.roomId ? true : false}}"
+        error-text="{{errors.roomId}}"
+      >
+        <picker
+          mode="selector"
+          range="{{options.rooms}}"
+          range-key="label"
+          value="{{roomIndex}}"
+          disabled="{{submitting}}"
+          bindchange="onRoom"
+        >
+          <view class="picker-hit">{{roomLabel}}</view>
+        </picker>
+      </cell-row>
+    </view>
+
+    <text class="section-label">{{labels.attendees}}</text>
+    <view id="field-attendees" class="cell-group">
+      <cell-row
+        quiet="{{true}}"
+        label="{{labels.attendees}}"
+        stacked="{{true}}"
+        required-error="{{errors.attendeeIds ? true : false}}"
+        error-text="{{errors.attendeeIds}}"
+      >
+        <view class="chips {{submitting ? 'is-locked' : ''}}">
+          <view
+            wx:for="{{people}}"
+            wx:key="id"
+            class="person {{item.selected ? 'is-on' : ''}}"
+            data-id="{{item.id}}"
+            aria-role="button"
+            bindtap="onTogglePerson"
+          >{{item.label}}</view>
+        </view>
+      </cell-row>
+    </view>
+
+    <text class="section-label">{{labels.agenda}}</text>
+    <view class="cell-group">
+      <cell-row
+        id="field-agenda"
+        quiet="{{true}}"
+        label="{{labels.agenda}}"
+        stacked="{{true}}"
+        required-error="{{errors.agenda ? true : false}}"
+        error-text="{{errors.agenda}}"
+      >
+        <textarea
+          class="field-area"
+          value="{{form.agenda}}"
+          maxlength="500"
+          placeholder="{{labels.agendaPlaceholder}}"
+          disabled="{{submitting}}"
+          bindinput="onAgenda"
+        />
+      </cell-row>
+    </view>
+
+    <view class="submit">
+      <primary-button
+        text="{{labels.submit}}"
+        loading="{{submitting}}"
+        loading-text="{{labels.submitting}}"
+        bind:press="onSubmit"
+      />
+    </view>
+
+    <bottom-sheet
+      show="{{conflictOpen}}"
+      title="{{conflictSheet.title}}"
+      cancel-text="{{conflictSheet.backText}}"
+      confirm-text="{{conflictSheet.submitAnywayText}}"
+      mask-label="{{i18n.a11y.closeSheet}}"
+      bind:close="onConflictBack"
+      bind:confirm="onConflictSubmit"
+    >
+      <text
+        wx:for="{{conflictList}}"
+        wx:key="*this"
+        class="sheet-copy"
+      >{{item}}</text>
+    </bottom-sheet>
+
+    <bottom-sheet
+      show="{{dirtyOpen}}"
+      title="{{labels.dirtyLeave.title}}"
+      cancel-text="{{labels.dirtyLeave.stay}}"
+      confirm-text="{{labels.dirtyLeave.leave}}"
+      danger="{{true}}"
+      mask-label="{{i18n.a11y.closeSheet}}"
+      bind:close="onDirtyStay"
+      bind:confirm="onDirtyLeave"
+    >
+      <text class="sheet-copy">{{labels.dirtyLeave.body}}</text>
+    </bottom-sheet>
+  </block>
+</view>

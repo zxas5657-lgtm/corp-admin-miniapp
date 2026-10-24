@@ -1,0 +1,74 @@
+.page {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 100vh;
+  padding: 16px 16px calc(24px + constant(safe-area-inset-bottom));
+  padding-bottom: calc(24px + env(safe-area-inset-bottom));
+}
+
+.title-row {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.title {
+  flex: 1;
+  min-width: 0;
+  margin-right: 8px;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.pill-host {
+  flex: none;
+  max-width: 46%;
+  margin-top: 2px;
+}
+
+.attendees {
+  display: block;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.is-strike {
+  color: var(--ink-3, #6B7585);
+  text-decoration: line-through;
+}
+
+.schedule-link,
+.cancel-link {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  min-height: 44px;
+  margin-top: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.schedule-link {
+  color: var(--primary, #1F4E89);
+}
+
+.cancel-link {
+  color: var(--danger, #9F1D1D);
+}
+
+.sheet-copy {
+  display: block;
+  color: var(--ink-2, #5C6778);
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.is-pressed {
+  opacity: 0.7;
+}
