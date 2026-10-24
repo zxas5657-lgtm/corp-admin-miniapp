@@ -28,6 +28,15 @@ function isTimeStr(value) {
   return hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59;
 }
 
+function parseLocalDateTime(value) {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)) return null;
+  const [datePart, timePart] = value.split('T');
+  if (!isDateStr(datePart) || !isTimeStr(timePart)) return null;
+  const [year, month, day] = datePart.split('-').map(Number);
+  const [hours, minutes] = timePart.split(':').map(Number);
+  return new Date(year, month - 1, day, hours, minutes);
+}
+
 function requireDate(value) {
   if (!(value instanceof Date) || Number.isNaN(value.getTime())) {
     throw new TypeError('Expected a valid Date');
@@ -99,6 +108,7 @@ function isSameDay(left, right) {
 module.exports = {
   isDateStr,
   isTimeStr,
+  parseLocalDateTime,
   toDateStr,
   toTimeStr,
   nowParts,

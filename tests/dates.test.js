@@ -31,6 +31,17 @@ test('formats local date and time parts', () => {
   assert.deepEqual(dates.nowParts(value), { date: '2026-10-24', time: '09:20' });
 });
 
+test('parses local date-time strings without UTC parsing', () => {
+  const value = dates.parseLocalDateTime('2026-10-24T09:20');
+  assert.equal(value.getFullYear(), 2026);
+  assert.equal(value.getMonth(), 9);
+  assert.equal(value.getDate(), 24);
+  assert.equal(value.getHours(), 9);
+  assert.equal(value.getMinutes(), 20);
+  assert.equal(dates.parseLocalDateTime('2026-02-30T09:20'), null);
+  assert.equal(dates.parseLocalDateTime('2026-10-24T24:00'), null);
+});
+
 test('compares dates, converts times, and finds weekdays', () => {
   assert.equal(dates.compareDate('2026-10-23', '2026-10-24'), -1);
   assert.equal(dates.compareDate('2026-10-24', '2026-10-24'), 0);

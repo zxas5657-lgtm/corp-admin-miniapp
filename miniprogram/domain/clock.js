@@ -1,6 +1,7 @@
 'use strict';
 
 const DEMO_NOW = '2026-10-24T09:20';
+const { parseLocalDateTime } = require('./dates');
 
 let demoMode = true;
 let overrideNow = null;
@@ -15,7 +16,7 @@ function validDate(value) {
 
 function now() {
   if (overrideNow) return cloneDate(overrideNow);
-  if (demoMode) return new Date(DEMO_NOW);
+  if (demoMode) return parseLocalDateTime(DEMO_NOW);
   return new Date();
 }
 
