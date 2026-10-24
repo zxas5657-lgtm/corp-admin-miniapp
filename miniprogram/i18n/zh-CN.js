@@ -19,6 +19,7 @@ module.exports = {
     vehicleDetail: '用车详情',
     visitors: '来访接待',
     daily: '行政日常',
+    devGallery: '组件预览',
   },
   role: {
     leader: { label: '领导', hint: '可查看全部安排，可以建会，也可以申请用车。' },

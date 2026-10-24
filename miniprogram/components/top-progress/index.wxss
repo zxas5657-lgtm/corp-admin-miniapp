@@ -1,0 +1,29 @@
+.track {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  z-index: 40;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.bar {
+  width: 36%;
+  height: 2px;
+  background: var(--primary, #1F4E89);
+  animation: progress-slide 0.8s linear infinite;
+}
+
+@keyframes progress-slide {
+  0% { transform: translateX(-120%); }
+  100% { transform: translateX(320%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bar {
+    animation: none;
+    width: 100%;
+  }
+}

@@ -1,0 +1,115 @@
+<view class="page">
+  <top-progress active="{{progressOn}}" />
+
+  <view class="tools">
+    <view
+      class="hit {{locale === 'zh-CN' ? 'is-on' : ''}}"
+      data-locale="zh-CN"
+      aria-role="button"
+      bindtap="onLocale"
+    >{{names.zh}}</view>
+    <view
+      class="hit {{locale === 'en' ? 'is-on' : ''}}"
+      data-locale="en"
+      aria-role="button"
+      bindtap="onLocale"
+    >{{names.en}}</view>
+    <view
+      class="hit pseudo {{pseudoOn ? 'is-on' : ''}}"
+      aria-role="button"
+      bindtap="onTogglePseudo"
+    >{{names.pseudo}}</view>
+  </view>
+
+  <text class="section-label">state-view</text>
+  <view class="panel" wx:for="{{view.states}}" wx:key="kind">
+    <state-view
+      kind="{{item.kind}}"
+      title="{{item.title}}"
+      body="{{item.body}}"
+      action-text="{{item.actionText}}"
+      secondary-text="{{item.secondaryText}}"
+      data-kind="{{item.kind}}"
+      bindaction="onStateAction"
+      bindsecondary="onStateSecondary"
+    />
+  </view>
+
+  <text class="section-label">status-pill</text>
+  <view class="pills">
+    <status-pill
+      class="pill-gap"
+      wx:for="{{view.pills}}"
+      wx:key="key"
+      text="{{item.text}}"
+      tone="{{item.tone}}"
+    />
+  </view>
+
+  <text class="section-label">cell-row</text>
+  <view class="cell-group">
+    <cell-row
+      wx:for="{{view.cells}}"
+      wx:key="key"
+      data-id="{{item.key}}"
+      label="{{item.label}}"
+      value="{{item.value}}"
+      stacked="{{item.stacked}}"
+      arrow="{{item.arrow}}"
+      required-error="{{item.requiredError}}"
+      error-text="{{item.errorText}}"
+      bindtap="onCellTap"
+    >
+      <status-pill wx:if="{{item.slotText}}" text="{{item.slotText}}" tone="info" />
+    </cell-row>
+  </view>
+
+  <text class="section-label">notice-bar</text>
+  <block wx:for="{{view.notices}}" wx:key="id">
+    <notice-bar
+      wx:if="{{!closed[item.id]}}"
+      kind="{{item.kind}}"
+      text="{{item.text}}"
+      closable="{{item.closable}}"
+      close-label="{{view.sheet.closeLabel}}"
+      data-id="{{item.id}}"
+      bindclose="onNoticeClose"
+    />
+  </block>
+
+  <text class="section-label">primary-button</text>
+  <primary-button text="{{view.buttons.text}}" bindtap="onPrimary" />
+  <view class="gap">
+    <primary-button
+      text="{{view.buttons.text}}"
+      disabled="{{true}}"
+      reason="{{view.buttons.reason}}"
+      bindtap="onPrimary"
+    />
+  </view>
+  <view class="gap">
+    <primary-button
+      text="{{view.buttons.text}}"
+      loading="{{true}}"
+      loading-text="{{view.buttons.loadingText}}"
+      bindtap="onPrimary"
+    />
+  </view>
+
+  <text class="section-label">bottom-sheet</text>
+  <bottom-sheet
+    show="{{sheetOpen}}"
+    title="{{sheetDanger ? view.sheet.dangerTitle : view.sheet.title}}"
+    cancel-text="{{view.sheet.cancelText}}"
+    confirm-text="{{sheetDanger ? view.sheet.dangerConfirm : view.sheet.confirmText}}"
+    confirm-disabled="{{sheetLocked}}"
+    danger="{{sheetDanger}}"
+    mask-label="{{view.sheet.maskLabel}}"
+    bindclose="onSheetClose"
+    bindconfirm="onSheetConfirm"
+  >
+    <text class="sheet-copy">{{sheetDanger ? view.sheet.dangerBody : view.sheet.body}}</text>
+  </bottom-sheet>
+
+  <primary-button fixed="{{true}}" text="{{view.buttons.text}}" bindtap="onPrimary" />
+</view>

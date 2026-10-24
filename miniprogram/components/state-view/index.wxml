@@ -1,0 +1,26 @@
+<view class="state">
+  <block wx:if="{{kind === 'loading'}}">
+    <view class="skel"></view>
+    <view class="skel skel-short"></view>
+    <view class="skel"></view>
+  </block>
+  <view wx:if="{{kind !== 'loading'}}" class="mark mark-{{kind}}" aria-hidden="true">
+    <view wx:if="{{kind === 'success'}}" class="check"></view>
+    <view wx:elif="{{kind === 'error'}}" class="bang"></view>
+    <view wx:else class="dash"></view>
+  </view>
+  <text wx:if="{{title}}" class="text-title">{{title}}</text>
+  <text wx:if="{{body}}" class="text-secondary body">{{body}}</text>
+  <view
+    wx:if="{{actionText}}"
+    class="btn-primary action"
+    aria-role="button"
+    bindtap="onAction"
+  >{{actionText}}</view>
+  <view
+    wx:if="{{secondaryText}}"
+    class="secondary"
+    aria-role="button"
+    bindtap="onSecondary"
+  >{{secondaryText}}</view>
+</view>

@@ -19,6 +19,7 @@ module.exports = {
     vehicleDetail: 'Vehicle details',
     visitors: 'Visitor reception',
     daily: 'Daily admin',
+    devGallery: 'Component gallery',
   },
   role: {
     leader: { label: 'Executive', hint: 'View all schedules, create meetings, and request vehicles.' },

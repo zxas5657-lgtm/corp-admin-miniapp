@@ -3,7 +3,8 @@
     "pages/schedule/index",
     "pages/meetings/index",
     "pages/vehicles/index",
-    "pages/me/index"
+    "pages/me/index",
+    "pages/dev-gallery/index"
   ],
   "window": {
     "navigationBarBackgroundColor": "#FFFFFF",
