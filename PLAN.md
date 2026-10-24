@@ -109,8 +109,15 @@ Order matters. B-tasks unblock F-tasks. **Every task passes the gates in §5 bef
 | S1-B2 | done, reviewed | `27d0fa2` |
 | S1-F1 | done, reviewed (+ r1 fixes: pages → `Component()`) | `58066a0`, `8ce3bbf` |
 | S1-B3 | done, reviewed | `80d3f37` |
-| S1-B4 | in progress (codex) | — |
-| S1-F2 | in progress (cursor) | — |
+| S1-B4 | done, reviewed | `2e5d451` |
+| S1-F2 | done, reviewed; event-name fix in progress (S1-F2-r1) | `6a14067` |
+| S1-B5 | done, reviewed (+ B4 fixes) | `10d0282` |
+| S1-B6 | **added**: view models for schedule and meetings (pure, tested); pages become thin bindings. In progress (codex) | — |
+| S1-F6 | next for cursor after F2-r1 (it only needs the store); F3–F5 follow once B6 lands | — |
+
+Decision log (lead, while the owner is resting):
+- 2026-10-24: added S1-B6 so that screen logic is Node-testable and cursor's pages stay thin. F6 moves ahead of F3–F5.
+- 2026-10-24: the GitHub push is deferred; it needs no decision until a push is wanted.
 
 ## 4. Sprint 2: 用车闭环 (queued)
 
