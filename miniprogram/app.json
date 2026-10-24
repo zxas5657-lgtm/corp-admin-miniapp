@@ -1,0 +1,31 @@
+{
+  "pages": [
+    "pages/schedule/index",
+    "pages/meetings/index",
+    "pages/vehicles/index",
+    "pages/me/index"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#FFFFFF",
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "",
+    "backgroundColor": "#F3F5F8",
+    "backgroundTextStyle": "dark"
+  },
+  "tabBar": {
+    "custom": true,
+    "color": "#8B95A5",
+    "selectedColor": "#1F4E89",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
+    "list": [
+      { "pagePath": "pages/schedule/index", "text": "Schedule" },
+      { "pagePath": "pages/meetings/index", "text": "Meetings" },
+      { "pagePath": "pages/vehicles/index", "text": "Vehicles" },
+      { "pagePath": "pages/me/index", "text": "Me" }
+    ]
+  },
+  "style": "v2",
+  "lazyCodeLoading": "requiredComponents",
+  "sitemapLocation": "sitemap.json"
+}

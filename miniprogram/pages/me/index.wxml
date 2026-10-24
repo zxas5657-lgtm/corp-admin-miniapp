@@ -1,0 +1,3 @@
+<view class="page-empty">
+  <text class="text-secondary">{{i18n.state.loading}}</text>
+</view>
