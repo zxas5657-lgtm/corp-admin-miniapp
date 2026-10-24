@@ -259,6 +259,12 @@ function main() {
         console.error(`ERROR: ${loaded.error}`);
         failed = true;
       }
+      // Locale files must stay human-readable: literal UTF-8, no \uXXXX escapes.
+      const escapes = fs.readFileSync(loaded.filePath, 'utf8').match(/\\u[0-9a-fA-F]{4}/g);
+      if (escapes) {
+        console.error(`ERROR: ${path.relative(root, loaded.filePath)} contains ${escapes.length} \\uXXXX escapes; write literal characters.`);
+        failed = true;
+      }
     }
     if (!zh.error && !en.error) {
       for (const error of compareLocales(zh.value, en.value)) {
