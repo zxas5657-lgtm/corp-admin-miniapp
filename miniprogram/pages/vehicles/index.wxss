@@ -2,15 +2,15 @@
   box-sizing: border-box;
   width: 100%;
   min-height: 100vh;
-  padding: 12px 16px calc(180px + constant(safe-area-inset-bottom));
+  padding: var(--space-12, 12px) var(--space-16, 16px) calc(180px + constant(safe-area-inset-bottom));
   padding-bottom: calc(180px + env(safe-area-inset-bottom));
 }
 
 .segments {
   display: flex;
   width: 100%;
-  margin-bottom: 12px;
-  padding: 4px;
+  margin-bottom: var(--space-12, 12px);
+  padding: var(--space-4, 4px);
   border-radius: 10px;
   background: var(--mute-soft, #EEF1F5);
 }
@@ -23,7 +23,7 @@
   box-sizing: border-box;
   min-width: 0;
   min-height: 44px;
-  padding: 8px 6px;
+  padding: var(--space-8, 8px) var(--space-6, 6px);
   border-radius: 8px;
   color: var(--ink-2, #5C6778);
   font-size: 13px;
@@ -46,7 +46,7 @@
 .card-title {
   flex: 1;
   min-width: 0;
-  margin-right: 8px;
+  margin-right: var(--space-8, 8px);
   font-size: 16px;
   font-weight: 600;
   line-height: 1.35;
@@ -60,7 +60,7 @@
 
 .meta {
   display: block;
-  margin-top: 4px;
+  margin-top: var(--space-4, 4px);
   word-break: break-word;
 }
 
@@ -72,7 +72,7 @@
   bottom: calc(64px + env(safe-area-inset-bottom));
   z-index: 20;
   box-sizing: border-box;
-  padding: 10px 16px;
+  padding: var(--space-10, 10px) var(--space-16, 16px);
   background: #FFFFFF;
   border-top: 1px solid var(--line, #E6E9EE);
 }

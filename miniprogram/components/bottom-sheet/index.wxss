@@ -26,9 +26,9 @@
   width: 100%;
   max-height: 78%;
   overflow: auto;
-  padding: 8px 16px 16px;
-  padding-bottom: calc(16px + constant(safe-area-inset-bottom));
-  padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  padding: var(--space-8, 8px) var(--space-16, 16px) var(--space-16, 16px);
+  padding-bottom: calc(var(--space-16, 16px) + constant(safe-area-inset-bottom));
+  padding-bottom: calc(var(--space-16, 16px) + env(safe-area-inset-bottom));
   border-radius: 16px 16px 0 0;
   background: #FFFFFF;
   transform: translateY(100%);
@@ -42,14 +42,14 @@
 .handle {
   width: 36px;
   height: 4px;
-  margin: 4px auto 12px;
+  margin: var(--space-4, 4px) auto var(--space-12, 12px);
   border-radius: 4px;
   background: #D8DEE6;
 }
 
 .title {
   display: block;
-  margin: 0 0 12px;
+  margin: 0 0 var(--space-12, 12px);
   text-align: center;
   font-size: 17px;
   font-weight: 600;
@@ -63,7 +63,7 @@
 
 .actions {
   display: flex;
-  margin-top: 16px;
+  margin-top: var(--space-16, 16px);
 }
 
 .cancel,
@@ -74,11 +74,11 @@
 }
 
 .cancel {
-  margin-right: 8px;
+  margin-right: var(--space-8, 8px);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 16px;
+  padding: 0 var(--space-16, 16px);
   border: 1px solid var(--line, #E6E9EE);
   border-radius: 8px;
   background: #FFFFFF;

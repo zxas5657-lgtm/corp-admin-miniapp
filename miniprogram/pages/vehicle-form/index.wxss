@@ -2,8 +2,8 @@
   box-sizing: border-box;
   width: 100%;
   min-height: 100vh;
-  padding: 12px 16px calc(24px + constant(safe-area-inset-bottom));
-  padding-bottom: calc(24px + env(safe-area-inset-bottom));
+  padding: var(--space-12, 12px) var(--space-16, 16px) calc(var(--space-24, 24px) + constant(safe-area-inset-bottom));
+  padding-bottom: calc(var(--space-24, 24px) + env(safe-area-inset-bottom));
 }
 
 .field-input,
@@ -47,7 +47,7 @@
 
 .step-value {
   min-width: 28px;
-  margin: 0 8px;
+  margin: 0 var(--space-8, 8px);
   font-size: 16px;
   font-weight: 600;
   text-align: center;
@@ -58,14 +58,14 @@
   box-sizing: border-box;
   width: 100%;
   min-height: 88px;
-  padding: 8px 0;
+  padding: var(--space-8, 8px) 0;
   text-align: left;
   font-size: 15px;
   line-height: 1.45;
 }
 
 .submit {
-  margin-top: 16px;
+  margin-top: var(--space-16, 16px);
 }
 
 .sheet-copy {

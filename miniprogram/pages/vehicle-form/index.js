@@ -206,12 +206,10 @@ Component({
     },
     cancelWrite() {
       this._submitting = false;
-      this._alive = false;
       if (this._writeTimer) {
         clearTimeout(this._writeTimer);
         this._writeTimer = null;
       }
-      this._alive = true;
       this.setData({ submitting: false });
     },
     beginWrite(form) {

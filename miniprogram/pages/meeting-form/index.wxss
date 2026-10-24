@@ -2,8 +2,8 @@
   box-sizing: border-box;
   width: 100%;
   min-height: 100vh;
-  padding: 12px 16px calc(24px + constant(safe-area-inset-bottom));
-  padding-bottom: calc(24px + env(safe-area-inset-bottom));
+  padding: var(--space-12, 12px) var(--space-16, 16px) calc(var(--space-24, 24px) + constant(safe-area-inset-bottom));
+  padding-bottom: calc(var(--space-24, 24px) + env(safe-area-inset-bottom));
 }
 
 .field-input,
@@ -25,7 +25,7 @@
   box-sizing: border-box;
   width: 100%;
   min-height: 88px;
-  padding: 8px 0;
+  padding: var(--space-8, 8px) 0;
   text-align: left;
   font-size: 15px;
   line-height: 1.45;
@@ -46,8 +46,8 @@
   align-items: center;
   box-sizing: border-box;
   min-height: 44px;
-  margin: 0 8px 8px 0;
-  padding: 8px 12px;
+  margin: 0 var(--space-8, 8px) var(--space-8, 8px) 0;
+  padding: var(--space-8, 8px) var(--space-12, 12px);
   border-radius: 999px;
   background: var(--mute-soft, #EEF1F5);
   color: var(--ink, #1C2430);
@@ -62,12 +62,12 @@
 }
 
 .submit {
-  margin-top: 16px;
+  margin-top: var(--space-16, 16px);
 }
 
 .sheet-copy {
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-8, 8px);
   color: var(--ink-2, #5C6778);
   font-size: 14px;
   line-height: 1.5;

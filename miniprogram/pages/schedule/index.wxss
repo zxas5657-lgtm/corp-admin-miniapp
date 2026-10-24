@@ -2,15 +2,15 @@
   box-sizing: border-box;
   width: 100%;
   min-height: 100vh;
-  padding-top: 12px;
+  padding-top: var(--space-12, 12px);
   padding-bottom: calc(88px + constant(safe-area-inset-bottom));
   padding-bottom: calc(88px + env(safe-area-inset-bottom));
 }
 
 .pad {
   box-sizing: border-box;
-  padding-right: 16px;
-  padding-left: 16px;
+  padding-right: var(--space-16, 16px);
+  padding-left: var(--space-16, 16px);
 }
 
 .head {
@@ -33,7 +33,7 @@
   flex: 0 0 auto;
   order: 2;
   margin-left: auto;
-  padding-left: 8px;
+  padding-left: var(--space-8, 8px);
   font-size: 12px;
   line-height: 1.4;
   color: var(--ink-3, #6B7585);
@@ -61,20 +61,20 @@
   height: 16px;
   border: 1.5px solid var(--primary, #1F4E89);
   border-radius: 3px;
-  padding-top: 4px;
+  padding-top: var(--space-4, 4px);
 }
 
 .cal-bar {
   height: 0;
-  margin: 0 2px;
+  margin: 0 var(--space-2, 2px);
   border-top: 1.5px solid var(--primary, #1F4E89);
 }
 
 .segments {
   display: flex;
   width: 100%;
-  margin-top: 4px;
-  padding: 2px;
+  margin-top: var(--space-4, 4px);
+  padding: var(--space-2, 2px);
   border-radius: 8px;
   background: var(--mute-soft, #EEF1F5);
 }
@@ -87,7 +87,7 @@
   box-sizing: border-box;
   min-width: 0;
   min-height: 44px;
-  padding: 6px 8px;
+  padding: var(--space-6, 6px) var(--space-8, 8px);
   border-radius: 6px;
   color: var(--ink-2, #5C6778);
   font-size: 13px;
@@ -118,8 +118,8 @@
 .week {
   display: flex;
   align-items: stretch;
-  margin-top: 4px;
-  margin-bottom: 12px;
+  margin-top: var(--space-4, 4px);
+  margin-bottom: var(--space-12, 12px);
   background: var(--card, #FFFFFF);
   box-shadow: var(--shadow, 0 1px 2px rgba(28, 36, 48, 0.04));
 }
@@ -163,7 +163,7 @@
   box-sizing: border-box;
   min-width: 0;
   min-height: 44px;
-  padding: 4px 0;
+  padding: var(--space-4, 4px) 0;
 }
 
 .weekday {
@@ -177,7 +177,7 @@
 .day-num {
   width: 28px;
   height: 28px;
-  margin-top: 2px;
+  margin-top: var(--space-2, 2px);
   border-radius: 50%;
   font-size: 14px;
   font-weight: 600;
@@ -198,7 +198,7 @@
 .dot {
   width: 4px;
   height: 4px;
-  margin-top: 2px;
+  margin-top: var(--space-2, 2px);
   border-radius: 50%;
   background: transparent;
 }
@@ -215,7 +215,7 @@
 .card-line .time {
   flex: 0 1 auto;
   min-width: 0;
-  margin-right: 8px;
+  margin-right: var(--space-8, 8px);
   font-size: 15px;
   font-weight: 600;
   line-height: 1.35;
@@ -229,7 +229,7 @@
 
 .card-title {
   display: -webkit-box;
-  margin-top: 4px;
+  margin-top: var(--space-4, 4px);
   overflow: hidden;
   font-size: 16px;
   font-weight: 600;
@@ -243,7 +243,7 @@
 .card-sub {
   display: block;
   width: 100%;
-  margin-top: 2px;
+  margin-top: var(--space-2, 2px);
   overflow: hidden;
   font-size: 13px;
   line-height: 1.45;
@@ -258,10 +258,10 @@
 .card-chev {
   position: absolute;
   top: 50%;
-  right: 14px;
+  right: var(--space-14, 14px);
   width: 8px;
   height: 8px;
-  margin-top: -4px;
+  margin-top: calc(-1 * var(--space-4, 4px));
   border-right: 1.5px solid var(--icon, #8B95A5);
   border-bottom: 1.5px solid var(--icon, #8B95A5);
   transform: rotate(-45deg);

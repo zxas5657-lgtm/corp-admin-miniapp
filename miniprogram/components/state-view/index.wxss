@@ -1,14 +1,14 @@
 .state {
   box-sizing: border-box;
   width: 100%;
-  padding: 32px 8px 12px;
+  padding: var(--space-32, 32px) var(--space-8, 8px) var(--space-12, 12px);
   text-align: center;
 }
 
 .mark {
   width: 56px;
   height: 56px;
-  margin: 0 auto 12px;
+  margin: 0 auto var(--space-12, 12px);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -38,7 +38,7 @@
   position: relative;
   width: 3px;
   height: 16px;
-  margin-top: -6px;
+  margin-top: calc(-1 * var(--space-6, 6px));
   border-radius: 2px;
   background: var(--danger, #9F1D1D);
 }
@@ -57,7 +57,7 @@
 .check {
   width: 10px;
   height: 18px;
-  margin-top: -4px;
+  margin-top: calc(-1 * var(--space-4, 4px));
   border-right: 2px solid var(--ok, #146C3F);
   border-bottom: 2px solid var(--ok, #146C3F);
   transform: rotate(45deg);
@@ -65,18 +65,18 @@
 
 .body {
   display: block;
-  margin-top: 6px;
+  margin-top: var(--space-6, 6px);
 }
 
 .action {
-  margin-top: 16px;
+  margin-top: var(--space-16, 16px);
   overflow: hidden;
 }
 
 .secondary {
   min-height: 44px;
-  margin-top: 4px;
-  padding: 0 12px;
+  margin-top: var(--space-4, 4px);
+  padding: 0 var(--space-12, 12px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -89,7 +89,7 @@
 .skel {
   height: 14px;
   width: 72%;
-  margin: 10px auto 0;
+  margin: var(--space-10, 10px) auto 0;
   border-radius: 7px;
   background: linear-gradient(90deg, #E6E9EE, #F7F9FB, #E6E9EE);
   background-size: 200% 100%;

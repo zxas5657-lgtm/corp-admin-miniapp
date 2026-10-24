@@ -2,7 +2,7 @@
   box-sizing: border-box;
   width: 100%;
   min-height: 100vh;
-  padding: 16px 16px calc(88px + constant(safe-area-inset-bottom));
+  padding: var(--space-16, 16px) var(--space-16, 16px) calc(88px + constant(safe-area-inset-bottom));
   padding-bottom: calc(88px + env(safe-area-inset-bottom));
 }
 
@@ -10,7 +10,7 @@
   display: flex;
   align-items: center;
   box-sizing: border-box;
-  padding: 4px 4px 16px;
+  padding: var(--space-4, 4px) var(--space-4, 4px) var(--space-16, 16px);
 }
 
 .avatar {
@@ -20,7 +20,7 @@
   flex: none;
   width: 56px;
   height: 56px;
-  margin-right: 12px;
+  margin-right: var(--space-12, 12px);
   border-radius: 50%;
   background: var(--primary-soft, #E7F0FA);
   color: var(--primary, #1F4E89);
@@ -44,16 +44,16 @@
 
 .meta {
   display: block;
-  margin-top: 2px;
+  margin-top: var(--space-2, 2px);
 }
 
 .entries {
-  margin-top: 16px;
+  margin-top: var(--space-16, 16px);
 }
 
 .demo-hint {
   display: block;
-  margin: 0 4px 8px;
+  margin: 0 var(--space-4, 4px) var(--space-8, 8px);
 }
 
 .role {
@@ -61,7 +61,7 @@
   align-items: center;
   box-sizing: border-box;
   min-height: 44px;
-  padding: 12px 14px;
+  padding: var(--space-12, 12px) var(--space-14, 14px);
   border-bottom: 1px solid var(--line, #E6E9EE);
 }
 
@@ -72,7 +72,7 @@
 .role-copy {
   flex: 1;
   min-width: 0;
-  margin-right: 12px;
+  margin-right: var(--space-12, 12px);
 }
 
 .role-label,
@@ -92,7 +92,7 @@
 
 .role-name,
 .role-hint {
-  margin-top: 2px;
+  margin-top: var(--space-2, 2px);
 }
 
 .is-pressed {
@@ -100,7 +100,7 @@
 }
 
 .reset {
-  margin-top: 12px;
+  margin-top: var(--space-12, 12px);
 }
 
 .option {
@@ -108,14 +108,14 @@
   align-items: center;
   box-sizing: border-box;
   min-height: 44px;
-  padding: 10px 0;
+  padding: var(--space-10, 10px) 0;
   border-bottom: 1px solid var(--line, #E6E9EE);
 }
 
 .option-label {
   flex: 1;
   min-width: 0;
-  margin-right: 12px;
+  margin-right: var(--space-12, 12px);
   font-size: 16px;
   line-height: 1.4;
 }
@@ -140,7 +140,7 @@
 .tick-mark {
   width: 6px;
   height: 10px;
-  margin-top: -2px;
+  margin-top: calc(-1 * var(--space-2, 2px));
   border-right: 2px solid #FFFFFF;
   border-bottom: 2px solid #FFFFFF;
   transform: rotate(45deg);

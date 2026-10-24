@@ -46,7 +46,7 @@
 .chev {
   width: 8px;
   height: 8px;
-  margin-left: 8px;
+  margin-left: var(--space-8, 8px);
   flex-shrink: 0;
   border-right: 1.5px solid var(--icon, #8B95A5);
   border-bottom: 1.5px solid var(--icon, #8B95A5);
@@ -68,7 +68,7 @@
 
 .err {
   display: block;
-  padding: 0 14px 12px;
+  padding: 0 var(--space-14, 14px) var(--space-12, 12px);
   color: var(--danger, #9F1D1D);
   font-size: 12px;
   line-height: 1.4;
