@@ -131,6 +131,5 @@ module.exports = {
   },
   demo: {
     resetNotice: 'Demo data reset',
-    fallbackProbe: 'Demo data',
   },
 };

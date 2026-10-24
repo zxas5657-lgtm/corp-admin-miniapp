@@ -29,13 +29,13 @@ test('keeps a missing parameter visible', () => {
 });
 
 test('falls back to zh-CN when an en key is missing', () => {
-  const original = en.demo.fallbackProbe;
-  delete en.demo.fallbackProbe;
+  const original = en.demo.resetNotice;
+  delete en.demo.resetNotice;
   try {
     i18n.setLocale('en');
-    assert.equal(i18n.t('demo.fallbackProbe'), zhCN.demo.fallbackProbe);
+    assert.equal(i18n.t('demo.resetNotice'), zhCN.demo.resetNotice);
   } finally {
-    en.demo.fallbackProbe = original;
+    en.demo.resetNotice = original;
   }
 });
 

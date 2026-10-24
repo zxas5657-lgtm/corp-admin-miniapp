@@ -128,6 +128,5 @@ module.exports = {
   },
   demo: {
     resetNotice: '演示数据已恢复',
-    fallbackProbe: '演示数据',
   },
 };

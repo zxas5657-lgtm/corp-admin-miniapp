@@ -167,9 +167,7 @@ function dayHeading(dateStr) {
   const monthShort = localizedValue('date.monthShort') || [];
   const template = localizedValue('date.dayHeading') || '{m}/{d}';
   return interpolate(template, {
-    m: monthShort[month - 1] === undefined ? month : monthShort[month - 1],
     d: day,
-    w: weekdayShort[date.getDay()] === undefined ? date.getDay() : weekdayShort[date.getDay()],
     wd: weekdayShort[date.getDay()] === undefined ? date.getDay() : weekdayShort[date.getDay()],
     mon: monthShort[month - 1] === undefined ? month : monthShort[month - 1],
   });
