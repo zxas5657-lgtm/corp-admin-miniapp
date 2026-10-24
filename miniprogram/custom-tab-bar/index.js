@@ -1,9 +1,4 @@
-let i18n = {};
-try {
-  i18n = require('../i18n/index') || {};
-} catch (err) {
-  i18n = {};
-}
+const i18n = require('../i18n/index');
 
 const ITEMS = [
   {
@@ -32,42 +27,33 @@ const ITEMS = [
   }
 ];
 
-function blankList() {
+function buildList(tab) {
+  const source = tab && typeof tab === 'object' ? tab : {};
   const list = [];
   for (let i = 0; i < ITEMS.length; i += 1) {
+    const value = source[ITEMS[i].key];
     list.push({
       key: ITEMS[i].key,
       url: ITEMS[i].url,
       icon: ITEMS[i].icon,
       activeIcon: ITEMS[i].activeIcon,
-      text: ''
+      text: typeof value === 'string' ? value : ''
     });
   }
   return list;
-}
-
-function tabDict() {
-  if (typeof i18n.dict !== 'function') return {};
-  try {
-    const value = i18n.dict('tab');
-    if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
-    return value;
-  } catch (err) {
-    return {};
-  }
 }
 
 Component({
   data: {
     selected: 0,
     badges: [0, 0, 0, 0],
-    list: blankList()
+    list: buildList(i18n.dict('tab'))
   },
 
   lifetimes: {
     attached() {
       this._offLocale = null;
-      this.setTexts(tabDict());
+      this.setTexts(i18n.dict('tab'));
       this._subscribe();
     },
     detached() {
@@ -77,21 +63,7 @@ Component({
 
   methods: {
     setTexts(tab) {
-      const source = tab && typeof tab === 'object' && !Array.isArray(tab) ? tab : {};
-      const current = this.data.list && this.data.list.length ? this.data.list : blankList();
-      const list = [];
-      for (let i = 0; i < current.length; i += 1) {
-        const item = current[i];
-        const value = source[item.key];
-        list.push({
-          key: item.key,
-          url: item.url,
-          icon: item.icon,
-          activeIcon: item.activeIcon,
-          text: typeof value === 'string' ? value : ''
-        });
-      }
-      this.setData({ list: list });
+      this.setData({ list: buildList(tab) });
     },
 
     setSelected(index) {
@@ -122,27 +94,17 @@ Component({
     },
 
     _subscribe() {
-      if (this._offLocale || typeof i18n.onChange !== 'function') return;
+      if (this._offLocale) return;
       const bar = this;
-      try {
-        const off = i18n.onChange(function () {
-          bar.setTexts(tabDict());
-        });
-        if (typeof off === 'function') this._offLocale = off;
-      } catch (err) {
-        this._offLocale = null;
-      }
+      this._offLocale = i18n.onChange(function () {
+        bar.setTexts(i18n.dict('tab'));
+      });
     },
 
     _unsubscribe() {
       const off = this._offLocale;
       this._offLocale = null;
-      if (typeof off !== 'function') return;
-      try {
-        off();
-      } catch (err) {
-        // Unsubscribe is best-effort.
-      }
+      if (typeof off === 'function') off();
     }
   }
 });
