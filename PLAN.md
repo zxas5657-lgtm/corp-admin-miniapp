@@ -114,10 +114,14 @@ Order matters. B-tasks unblock F-tasks. **Every task passes the gates in §5 bef
 | S1-B5 | done, reviewed (+ B4 fixes) | `10d0282` |
 | S1-B6 | done, reviewed. **Added task**: view models for schedule and meetings | `21527cc` |
 | S1-F6 | done, reviewed | `e3c3f09` |
-| S1-F3 | in progress (cursor) | — |
-| S1-F4/F5 | brief ready (`.team/tasks/S1-F4F5.md`), queued after F3 | — |
+| S1-F3 | done, reviewed | `9e0d5b6` |
+| S1-F4/F5 | in progress (cursor): meetings list, detail + cancel, form | — |
 | S2-B1 | done, reviewed (pulled forward while codex was free; + B6 fixes) | `0c5936c` |
-| S2-B2 | in progress (codex): vehicle view models + schedule scope | — |
+| S2-B2 | done, reviewed: vehicle view models + schedule scope | see log |
+
+Decision log (cont.):
+- 2026-10-24: codex-exec is idle on purpose after S2-B2. Its Codex 5h quota is about 31% left, and the remaining backend need is reactive (view-model gaps found by F4/F5, Sprint 2 fixes).
+- Backlog idea (not scheduled): split the locale files per namespace so the two executors stop editing the same two files. So far the collisions have been handled by append-only rules plus lead diff checks.
 
 Decision log (lead, while the owner is resting):
 - 2026-10-24: added S1-B6 so that screen logic is Node-testable and cursor's pages stay thin. F6 moves ahead of F3–F5.
