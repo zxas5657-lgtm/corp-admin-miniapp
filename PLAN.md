@@ -117,7 +117,10 @@ Order matters. B-tasks unblock F-tasks. **Every task passes the gates in §5 bef
 | S1-F3 | done, reviewed | `9e0d5b6` |
 | S1-F4/F5 | done, reviewed | `f68b565` |
 | S1-F7 | **waiting on human**: WeChat DevTools QR sign-in + service port (owner resting). English layout pass + screenshots in both locales | — |
-| S2-F1 | in progress (cursor): vehicle list/detail/form, dispatch/reject sheets, role-aware badge, tappable vehicle cards + schedule scope | — |
+| S2-F1 | done, reviewed: vehicle list/detail/form, dispatch/reject sheets, role-aware badge, tappable vehicle cards + schedule scope | `4a4a488` |
+| S2-F2 | in progress (cursor): polish (dead code, 44px targets, spacing tokens) + README/progress/DESIGN catch-up | — |
+
+**Sprint 1 and Sprint 2 are code complete.** What remains is verification in WeChat DevTools (S1-F7 and S2-L1), which waits for the owner's QR sign-in, plus fixing whatever that pass finds.
 | lead | zh-CN.js un-escaped to literal UTF-8 (`b14c1fb`); `npm run check` now rejects `\uXXXX` in locale files (`2459965`) | — |
 | S2-B1 | done, reviewed (pulled forward while codex was free; + B6 fixes) | `0c5936c` |
 | S2-B2 | done, reviewed: vehicle view models + schedule scope | see log |
