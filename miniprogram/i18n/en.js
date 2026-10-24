@@ -170,6 +170,12 @@ module.exports = {
       note: 'Note',
       notePlaceholder: 'Enter a note (optional)',
       submitting: 'Submitting?',
+      dirtyLeave: {
+        title: 'Discard changes?',
+        body: 'What you entered will not be saved if you leave.',
+        leave: 'Leave',
+        stay: 'Keep editing',
+      },
     },
     passengerCount_one: '{n} passenger',
     passengerCount_other: '{n} passengers',
@@ -228,6 +234,35 @@ module.exports = {
       confirm: 'Confirm rejection',
       cancel: 'Cancel',
     },
+    sheet: {
+      complete: {
+        title: 'Mark complete',
+        body: 'Confirm this trip has ended? The status becomes Completed, and the record is kept.',
+        confirm: 'Confirm completion',
+        cancel: 'Cancel',
+      },
+      withdraw: {
+        title: 'Withdraw request?',
+        body: 'This request will no longer be dispatched.',
+        confirm: 'Confirm withdrawal',
+        cancel: 'Cancel',
+      },
+      cancelDispatch: {
+        title: 'Cancel dispatch?',
+        body: 'The request returns to awaiting dispatch, and the assigned vehicle and driver are cleared.',
+        confirm: 'Confirm cancellation',
+        cancel: 'Cancel',
+      },
+    },
+    toast: {
+      dispatch: 'Vehicle dispatched',
+      reassign: 'Vehicle reassigned',
+      reject: 'Request rejected',
+      complete: 'Marked complete',
+      withdraw: 'Request withdrawn',
+      cancelDispatch: 'Dispatch cancelled',
+    },
+    created: 'Request submitted. It is now awaiting dispatch.',
   },
   date: {
     dayHeading: '{wd}, {mon} {d}',
@@ -252,6 +287,8 @@ module.exports = {
     weekPicker: 'Choose a date',
     filterMeetings: 'Filter meetings',
     closeSheet: 'Close sheet',
+    decrease: 'Decrease',
+    increase: 'Increase',
   },
   demo: {
     resetNotice: 'Demo data reset',

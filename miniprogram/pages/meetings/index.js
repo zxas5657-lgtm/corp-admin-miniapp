@@ -2,6 +2,7 @@ const i18nBehavior = require('../../behaviors/i18n');
 const { getStore } = require('../../store/index');
 const clock = require('../../domain/clock');
 const { meetingListView } = require('../../viewmodels/meetings');
+const { refreshVehicleBadge } = require('../../utils/badge');
 
 Component({
   behaviors: [i18nBehavior],
@@ -37,6 +38,7 @@ Component({
       this.refresh();
     },
     refresh() {
+      refreshVehicleBadge(this);
       if (typeof this.t !== 'function') return;
       const store = getStore();
       const view = meetingListView({

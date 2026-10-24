@@ -4,6 +4,7 @@ const { getStore } = require('../../store/index');
 const { ROLES, ROLE_ORDER, personById } = require('../../data/reference');
 const { DEV_ROLE_SWITCH } = require('../../config');
 const { changeLocale } = require('../../utils/locale');
+const { refreshVehicleBadge } = require('../../utils/badge');
 
 function firstCharacter(value) {
   const chars = Array.from(value || '');
@@ -68,6 +69,7 @@ Component({
   },
   methods: {
     rebuild() {
+      refreshVehicleBadge(this);
       if (typeof this.t !== 'function') return;
       const roleId = getStore().getRole();
       const person = personById(ROLES[roleId]);

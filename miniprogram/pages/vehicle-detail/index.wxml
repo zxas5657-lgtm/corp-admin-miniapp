@@ -1,0 +1,140 @@
+<view class="page {{primaryAction ? 'has-action' : ''}}">
+  <block wx:if="{{view}}">
+    <state-view
+      wx:if="{{view.notFound}}"
+      kind="empty"
+      title="{{view.title}}"
+      body="{{view.body}}"
+      action-text="{{i18n.nav.back}}"
+      bind:action="onBack"
+    />
+    <block wx:else>
+      <notice-bar
+        wx:if="{{createdBanner}}"
+        kind="success"
+        text="{{createdBanner}}"
+        closable="{{true}}"
+        close-label="{{i18n.a11y.closeSheet}}"
+        bind:close="onCloseBanner"
+      />
+      <notice-bar
+        wx:if="{{notice}}"
+        kind="error"
+        text="{{notice}}"
+        closable="{{true}}"
+        close-label="{{i18n.a11y.closeSheet}}"
+        bind:close="onCloseNotice"
+      />
+      <view class="title-row">
+        <text class="text-detail title">{{view.title}}</text>
+        <status-pill class="pill-host" text="{{view.statusText}}" tone="{{view.tone}}" />
+      </view>
+
+      <view wx:if="{{view.steps}}" class="steps">
+        <view class="step-line" aria-hidden="true"></view>
+        <view wx:for="{{view.steps}}" wx:key="key" class="step">
+          <view class="step-dot is-{{item.state}}"></view>
+          <text class="step-label">{{item.label}}</text>
+          <text wx:if="{{item.timeText}}" class="step-time">{{item.timeText}}</text>
+        </view>
+      </view>
+      <notice-bar
+        wx:elif="{{view.rejectBanner}}"
+        kind="error"
+        text="{{view.rejectBanner.text}}"
+      />
+
+      <view class="cell-group">
+        <cell-row
+          wx:for="{{view.cells}}"
+          wx:key="key"
+          label="{{item.label}}"
+          value="{{item.value}}"
+          stacked="{{item.key === 'note'}}"
+        />
+      </view>
+
+      <view wx:for="{{view.warnings}}" wx:key="*this" class="warn-note">{{item}}</view>
+
+      <view
+        wx:for="{{textActions}}"
+        wx:key="key"
+        class="text-action {{item.kind === 'danger' ? 'is-danger' : ''}}"
+        data-key="{{item.key}}"
+        aria-role="button"
+        hover-class="is-pressed"
+        bindtap="onAction"
+      >{{item.label}}</view>
+
+      <primary-button
+        wx:if="{{primaryAction}}"
+        fixed="{{true}}"
+        text="{{primaryAction.label}}"
+        bind:press="onPrimary"
+      />
+
+      <bottom-sheet
+        wx:if="{{dispatchView}}"
+        show="{{dispatchOpen}}"
+        title="{{dispatchView.title}}"
+        cancel-text="{{dispatchView.cancelText}}"
+        confirm-text="{{dispatchView.confirmText}}"
+        confirm-disabled="{{dispatchView.confirmDisabled}}"
+        mask-label="{{i18n.a11y.closeSheet}}"
+        bind:close="onCloseSheets"
+        bind:confirm="onConfirmDispatch"
+      >
+        <view
+          wx:for="{{dispatchView.cars}}"
+          wx:key="id"
+          class="car {{item.selected ? 'is-on' : ''}} {{item.available ? '' : 'is-off'}}"
+          data-id="{{item.id}}"
+          aria-role="radio"
+          aria-checked="{{item.selected}}"
+          bindtap="onPickCar"
+        >
+          <view class="radio {{item.selected ? 'is-on' : ''}}"></view>
+          <view class="car-copy">
+            <text class="car-label">{{item.label}}</text>
+            <text class="car-meta">{{item.seatsText}}</text>
+            <text wx:if="{{item.busyText}}" class="car-busy">{{item.busyText}}</text>
+          </view>
+        </view>
+        <text wx:if="{{dispatchView.seatWarning}}" class="warn-note">{{dispatchView.seatWarning}}</text>
+      </bottom-sheet>
+
+      <bottom-sheet
+        wx:if="{{rejectView}}"
+        show="{{rejectOpen}}"
+        title="{{rejectView.title}}"
+        cancel-text="{{rejectView.cancelText}}"
+        confirm-text="{{rejectView.confirmText}}"
+        mask-label="{{i18n.a11y.closeSheet}}"
+        bind:close="onCloseSheets"
+        bind:confirm="onConfirmReject"
+      >
+        <textarea
+          class="reason"
+          value="{{rejectReason}}"
+          placeholder="{{rejectView.placeholder}}"
+          bindinput="onRejectInput"
+        />
+        <text wx:if="{{rejectError}}" class="err">{{rejectError}}</text>
+      </bottom-sheet>
+
+      <bottom-sheet
+        wx:if="{{confirmSheet}}"
+        show="{{confirmOpen}}"
+        title="{{confirmSheet.title}}"
+        cancel-text="{{confirmSheet.cancelText}}"
+        confirm-text="{{confirmSheet.confirmText}}"
+        danger="{{confirmDanger}}"
+        mask-label="{{i18n.a11y.closeSheet}}"
+        bind:close="onCloseSheets"
+        bind:confirm="onConfirmAction"
+      >
+        <text class="sheet-copy">{{confirmSheet.body}}</text>
+      </bottom-sheet>
+    </block>
+  </block>
+</view>

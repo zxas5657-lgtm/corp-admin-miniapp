@@ -43,6 +43,17 @@
           bindtap="onBackToday"
         >{{view.backToToday}}</view>
       </view>
+      <view class="segments" wx:if="{{view.scopes.length}}">
+        <view
+          wx:for="{{view.scopes}}"
+          wx:key="key"
+          class="segment {{item.active ? 'is-on' : ''}}"
+          data-key="{{item.key}}"
+          aria-role="button"
+          hover-class="is-pressed"
+          bindtap="onScope"
+        >{{item.label}}</view>
+      </view>
     </view>
 
     <view class="week">
@@ -93,10 +104,10 @@
           wx:for="{{view.items}}"
           wx:key="id"
           id="item-{{item.id}}"
-          class="card {{item.kind === 'vehicle' ? 'vehicle' : ''}} {{item.kind === 'meeting' ? 'is-link' : ''}} {{item.focused ? 'is-focus' : ''}}"
+          class="card {{item.kind === 'vehicle' ? 'vehicle' : ''}} {{item.url ? 'is-link' : ''}} {{item.focused ? 'is-focus' : ''}}"
           data-kind="{{item.kind}}"
           data-url="{{item.url}}"
-          hover-class="{{item.kind === 'meeting' ? 'is-pressed' : 'none'}}"
+          hover-class="{{item.url ? 'is-pressed' : 'none'}}"
           bindtap="onOpenItem"
         >
           <view class="card-line">
@@ -105,7 +116,7 @@
           </view>
           <view class="card-title">{{item.title}}</view>
           <text class="card-sub text-secondary">{{item.subtitle}}</text>
-          <view wx:if="{{item.kind === 'meeting'}}" class="card-chev" aria-hidden="true"></view>
+          <view wx:if="{{item.url}}" class="card-chev" aria-hidden="true"></view>
         </view>
       </block>
     </view>

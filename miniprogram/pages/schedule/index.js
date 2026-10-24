@@ -1,7 +1,17 @@
 const i18nBehavior = require('../../behaviors/i18n');
 const { getStore } = require('../../store/index');
 const clock = require('../../domain/clock');
+const { ROLES } = require('../../data/reference');
 const { scheduleView } = require('../../viewmodels/schedule');
+const { refreshVehicleBadge } = require('../../utils/badge');
+
+function activeScope(view) {
+  const scopes = (view && view.scopes) || [];
+  for (let i = 0; i < scopes.length; i += 1) {
+    if (scopes[i].active) return scopes[i].key;
+  }
+  return '';
+}
 
 function readLoadFailed() {
   try {
@@ -35,6 +45,8 @@ Component({
   lifetimes: {
     attached() {
       const page = this;
+      this._role = '';
+      this._scope = '';
       if (!this._offStore) {
         this._offStore = getStore().subscribe(function () {
           page.refresh();
@@ -78,14 +90,24 @@ Component({
     },
     refresh(options) {
       const opts = options || {};
+      refreshVehicleBadge(this);
       if (typeof this.t !== 'function') return;
       const store = getStore();
+      const role = store.getRole();
+      if (this._role !== role) {
+        this._role = role;
+        this._scope = '';
+      }
       const view = scheduleView({
         state: store.getState(),
         date: store.ui.getSelectedDate(),
         now: clock.now(),
-        focusId: this._focusId || ''
+        focusId: this._focusId || '',
+        role: role,
+        personId: ROLES[role],
+        scope: this._scope || undefined
       });
+      if (!this._scope) this._scope = activeScope(view);
       const patch = {
         view: view,
         loadFailed: readLoadFailed()
@@ -138,17 +160,24 @@ Component({
       getStore().ui.setSelectedDate(date);
       this.refresh();
     },
+    onScope(event) {
+      const key = event.currentTarget.dataset.key;
+      if (!key || key === this._scope) return;
+      this._scope = key;
+      this._focusId = null;
+      this.clearHighlight();
+      this.refresh();
+    },
     onOpenItem(event) {
-      const kind = event.currentTarget.dataset.kind;
       const url = event.currentTarget.dataset.url;
-      if (kind !== 'meeting' || !url) return;
+      if (!url) return;
       try {
         wx.navigateTo({
           url: url,
           fail: function () {}
         });
       } catch (err) {
-        // The meeting detail page may not exist yet.
+        // Navigation must not break the page.
       }
     },
     onRetry() {

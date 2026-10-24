@@ -1,3 +1,55 @@
-<view class="page-empty">
-  <text class="text-secondary">{{i18n.state.loading}}</text>
+<view class="page">
+  <block wx:if="{{view}}">
+    <view class="segments" wx:if="{{view.scopes.length}}">
+      <view
+        wx:for="{{view.scopes}}"
+        wx:key="key"
+        class="segment {{item.active ? 'is-on' : ''}}"
+        data-key="{{item.key}}"
+        aria-role="button"
+        hover-class="is-pressed"
+        bindtap="onScope"
+      >{{item.label}}</view>
+    </view>
+
+    <state-view
+      wx:if="{{view.empty}}"
+      kind="empty"
+      title="{{view.empty.title}}"
+      body="{{view.empty.body}}"
+      action-text="{{view.empty.actionText}}"
+      bind:action="onCreate"
+    />
+    <block wx:else>
+      <view wx:for="{{view.groups}}" wx:key="status" wx:for-item="group">
+        <text class="section-label">{{group.heading}}</text>
+        <view
+          wx:for="{{group.items}}"
+          wx:for-item="vehicle"
+          wx:key="id"
+          class="card"
+          data-id="{{vehicle.id}}"
+          hover-class="is-pressed"
+          bindtap="onOpen"
+        >
+          <view class="card-line">
+            <view class="card-title">{{vehicle.title}}</view>
+            <status-pill class="pill-host" text="{{vehicle.statusText}}" tone="{{vehicle.tone}}" />
+          </view>
+          <text class="meta text-secondary">{{vehicle.whenText}}</text>
+          <text class="meta text-secondary">{{vehicle.destination}}</text>
+          <text class="meta text-secondary">{{vehicle.applicantName}}</text>
+        </view>
+      </view>
+    </block>
+
+    <view class="dock">
+      <primary-button
+        text="{{view.requestButton.text}}"
+        disabled="{{view.requestButton.disabled}}"
+        reason="{{view.requestButton.reason}}"
+        bind:press="onCreate"
+      />
+    </view>
+  </block>
 </view>

@@ -8,7 +8,9 @@
     "pages/visitors/index",
     "pages/daily/index",
     "pages/meeting-detail/index",
-    "pages/meeting-form/index"
+    "pages/meeting-form/index",
+    "pages/vehicle-detail/index",
+    "pages/vehicle-form/index"
   ],
   "window": {
     "navigationBarBackgroundColor": "#FFFFFF",

@@ -1,10 +1,95 @@
 const i18nBehavior = require('../../behaviors/i18n');
+const { getStore } = require('../../store/index');
+const { ROLES } = require('../../data/reference');
+const { vehicleListView } = require('../../viewmodels/vehicles');
+const { refreshVehicleBadge } = require('../../utils/badge');
+
+function activeScope(view) {
+  const scopes = (view && view.scopes) || [];
+  for (let i = 0; i < scopes.length; i += 1) {
+    if (scopes[i].active) return scopes[i].key;
+  }
+  return '';
+}
 
 Component({
   behaviors: [i18nBehavior],
   data: {
-    i18nKeys: ['tab', 'nav', 'state'],
+    i18nKeys: ['a11y'],
     navTitleKey: 'nav.vehicles',
-    tabIndex: 2
+    tabIndex: 2,
+    view: null
+  },
+  lifetimes: {
+    attached() {
+      const page = this;
+      this._role = '';
+      this._scope = '';
+      if (!this._offStore) {
+        this._offStore = getStore().subscribe(function () {
+          page.refresh();
+        });
+      }
+    },
+    detached() {
+      if (typeof this._offStore === 'function') this._offStore();
+      this._offStore = null;
+    }
+  },
+  pageLifetimes: {
+    show() {
+      this.refresh();
+    }
+  },
+  methods: {
+    onLocaleChange() {
+      this.refresh();
+    },
+    refresh() {
+      refreshVehicleBadge(this);
+      if (typeof this.t !== 'function') return;
+      const store = getStore();
+      const role = store.getRole();
+      if (this._role !== role) {
+        this._role = role;
+        this._scope = '';
+      }
+      const view = vehicleListView({
+        state: store.getState(),
+        role: role,
+        personId: ROLES[role],
+        scope: this._scope || undefined
+      });
+      if (!this._scope) this._scope = activeScope(view);
+      this.setData({ view: view });
+    },
+    onScope(event) {
+      const key = event.currentTarget.dataset.key;
+      if (!key || key === this._scope) return;
+      this._scope = key;
+      this.refresh();
+    },
+    onOpen(event) {
+      const id = event.currentTarget.dataset.id;
+      if (!id) return;
+      try {
+        wx.navigateTo({
+          url: '/pages/vehicle-detail/index?id=' + id,
+          fail: function () {}
+        });
+      } catch (err) {
+        // Navigation must not break the page.
+      }
+    },
+    onCreate() {
+      try {
+        wx.navigateTo({
+          url: '/pages/vehicle-form/index',
+          fail: function () {}
+        });
+      } catch (err) {
+        // Navigation must not break the page.
+      }
+    }
   }
 });
