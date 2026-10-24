@@ -110,10 +110,14 @@ Order matters. B-tasks unblock F-tasks. **Every task passes the gates in §5 bef
 | S1-F1 | done, reviewed (+ r1 fixes: pages → `Component()`) | `58066a0`, `8ce3bbf` |
 | S1-B3 | done, reviewed | `80d3f37` |
 | S1-B4 | done, reviewed | `2e5d451` |
-| S1-F2 | done, reviewed; event-name fix in progress (S1-F2-r1) | `6a14067` |
+| S1-F2 | done, reviewed (+ r1 event-name fix `84c327f`) | `6a14067` |
 | S1-B5 | done, reviewed (+ B4 fixes) | `10d0282` |
-| S1-B6 | **added**: view models for schedule and meetings (pure, tested); pages become thin bindings. In progress (codex) | — |
-| S1-F6 | next for cursor after F2-r1 (it only needs the store); F3–F5 follow once B6 lands | — |
+| S1-B6 | done, reviewed. **Added task**: view models for schedule and meetings | `21527cc` |
+| S1-F6 | done, reviewed | `e3c3f09` |
+| S1-F3 | in progress (cursor) | — |
+| S1-F4/F5 | brief ready (`.team/tasks/S1-F4F5.md`), queued after F3 | — |
+| S2-B1 | done, reviewed (pulled forward while codex was free; + B6 fixes) | `0c5936c` |
+| S2-B2 | in progress (codex): vehicle view models + schedule scope | — |
 
 Decision log (lead, while the owner is resting):
 - 2026-10-24: added S1-B6 so that screen logic is Node-testable and cursor's pages stay thin. F6 moves ahead of F3–F5.
