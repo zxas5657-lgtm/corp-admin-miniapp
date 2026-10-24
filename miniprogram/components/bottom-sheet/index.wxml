@@ -3,10 +3,10 @@
     class="mask"
     aria-role="button"
     aria-label="{{maskLabel}}"
-    bindtap="onClose"
+    catchtap="onClose"
     catchtouchmove="preventMove"
   ></view>
-  <view class="panel" aria-role="dialog" aria-label="{{title}}">
+  <view class="panel" aria-role="dialog" aria-label="{{title}}" catchtap="onPanel">
     <view class="handle" aria-hidden="true"></view>
     <text wx:if="{{title}}" class="title">{{title}}</text>
     <view class="body"><slot></slot></view>
@@ -15,13 +15,13 @@
         wx:if="{{cancelText}}"
         class="cancel"
         aria-role="button"
-        bindtap="onClose"
+        catchtap="onClose"
       >{{cancelText}}</view>
       <view
         wx:if="{{confirmText}}"
         class="btn-primary confirm {{danger ? 'is-danger' : ''}} {{confirmDisabled ? 'is-disabled' : ''}}"
         aria-role="button"
-        bindtap="onConfirm"
+        catchtap="onConfirm"
       >{{confirmText}}</view>
     </view>
   </view>

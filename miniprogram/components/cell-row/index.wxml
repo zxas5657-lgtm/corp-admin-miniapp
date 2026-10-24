@@ -3,7 +3,7 @@
     class="cell {{stacked ? 'cell--stacked' : ''}} {{arrow ? 'is-arrow' : ''}}"
     hover-class="{{arrow ? 'is-hover' : 'none'}}"
     aria-role="{{arrow ? 'button' : ''}}"
-    bindtap="onTap"
+    catchtap="onTap"
   >
     <text class="k">{{label}}</text>
     <view class="v">

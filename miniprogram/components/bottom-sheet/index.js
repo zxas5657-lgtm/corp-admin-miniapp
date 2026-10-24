@@ -51,6 +51,7 @@ Component({
       }, 200);
     },
     preventMove() {},
+    onPanel() {},
     onClose() {
       this.triggerEvent('close');
     },

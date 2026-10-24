@@ -11,7 +11,7 @@ Component({
   methods: {
     onTap() {
       if (!this.data.arrow) return;
-      this.triggerEvent('tap');
+      this.triggerEvent('press');
     }
   }
 });

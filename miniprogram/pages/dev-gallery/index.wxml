@@ -58,7 +58,7 @@
       arrow="{{item.arrow}}"
       required-error="{{item.requiredError}}"
       error-text="{{item.errorText}}"
-      bindtap="onCellTap"
+      bind:press="onCellTap"
     >
       <status-pill wx:if="{{item.slotText}}" text="{{item.slotText}}" tone="info" />
     </cell-row>
@@ -78,13 +78,13 @@
   </block>
 
   <text class="section-label">primary-button</text>
-  <primary-button text="{{view.buttons.text}}" bindtap="onPrimary" />
+  <primary-button text="{{view.buttons.text}}" bind:press="onPrimary" />
   <view class="gap">
     <primary-button
       text="{{view.buttons.text}}"
       disabled="{{true}}"
       reason="{{view.buttons.reason}}"
-      bindtap="onPrimary"
+      bind:press="onPrimary"
     />
   </view>
   <view class="gap">
@@ -92,7 +92,7 @@
       text="{{view.buttons.text}}"
       loading="{{true}}"
       loading-text="{{view.buttons.loadingText}}"
-      bindtap="onPrimary"
+      bind:press="onPrimary"
     />
   </view>
 
@@ -111,5 +111,5 @@
     <text class="sheet-copy">{{sheetDanger ? view.sheet.dangerBody : view.sheet.body}}</text>
   </bottom-sheet>
 
-  <primary-button fixed="{{true}}" text="{{view.buttons.text}}" bindtap="onPrimary" />
+  <primary-button fixed="{{true}}" text="{{view.buttons.text}}" bind:press="onPrimary" />
 </view>

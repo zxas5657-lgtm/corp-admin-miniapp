@@ -2,7 +2,7 @@
   <view
     class="btn-primary {{disabled ? 'is-disabled' : ''}}"
     aria-role="button"
-    bindtap="onTap"
+    catchtap="onTap"
   >{{loading && loadingText ? loadingText : text}}</view>
   <text wx:if="{{disabled && reason}}" class="fine">{{reason}}</text>
 </view>

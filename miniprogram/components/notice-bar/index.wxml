@@ -5,7 +5,7 @@
     class="close"
     aria-role="button"
     aria-label="{{closeLabel}}"
-    bindtap="onClose"
+    catchtap="onClose"
   >
     <view class="x" aria-hidden="true"></view>
   </view>

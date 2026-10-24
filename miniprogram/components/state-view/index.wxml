@@ -15,12 +15,12 @@
     wx:if="{{actionText}}"
     class="btn-primary action"
     aria-role="button"
-    bindtap="onAction"
+    catchtap="onAction"
   >{{actionText}}</view>
   <view
     wx:if="{{secondaryText}}"
     class="secondary"
     aria-role="button"
-    bindtap="onSecondary"
+    catchtap="onSecondary"
   >{{secondaryText}}</view>
 </view>
