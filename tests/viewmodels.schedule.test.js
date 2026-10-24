@@ -55,3 +55,30 @@ test('schedule view models are localized, fixed-week, focused, and complete', ()
     });
   }
 });
+
+test('schedule scopes filter rows and week dots by role', () => {
+  const now = clock.now();
+  const admin = scheduleView({
+    state,
+    date: '2026-10-24',
+    now,
+    role: 'admin',
+    personId: 'p-lin',
+  });
+  assert.deepEqual(admin.items.map((item) => item.id), ['m2', 'v3', 'm3']);
+  assert.deepEqual(admin.scopes, [
+    { key: 'all', label: '全部日程', active: false },
+    { key: 'mine', label: '我的日程', active: true },
+  ]);
+  assert.equal(admin.week.days.find((day) => day.date === '2026-10-23').hasItems, true);
+
+  const leader = scheduleView({
+    state,
+    date: '2026-10-24',
+    now,
+    role: 'leader',
+    personId: 'p-chen',
+  });
+  assert.equal(leader.scopes.find((item) => item.key === 'all').active, true);
+  assert.equal(leader.items.length, 3);
+});

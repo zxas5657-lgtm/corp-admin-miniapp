@@ -4,6 +4,7 @@ const i18n = require('../i18n');
 const reference = require('../data/reference');
 const dates = require('../domain/dates');
 const schedule = require('../domain/schedule');
+const { filterScheduleByScope, scheduleScopes } = require('../domain/roles');
 const { statusTone } = require('../utils/status-tone');
 
 function roomName(roomId, refs) {
@@ -48,8 +49,19 @@ function scheduleView(options) {
   const vehicles = state.vehicles || [];
   const sources = [schedule.meetingSource(meetings), schedule.vehicleSource(vehicles)];
   const days = dates.weekDays(date, i18n.firstDayOfWeek());
-  const itemDates = schedule.datesWithItems(sources, days, now);
-  const items = schedule.scheduleItems(date, sources, now);
+  const hasRole = Boolean(config.role);
+  const scopes = hasRole ? scheduleScopes(config.role) : [];
+  const defaultScope = scopes.find((item) => item.default);
+  const activeScope = hasRole
+    ? (scopes.some((item) => item.key === config.scope) ? config.scope : defaultScope.key)
+    : 'all';
+  const scopedItems = (day) => filterScheduleByScope(
+    schedule.scheduleItems(day, sources, now),
+    activeScope,
+    { role: config.role, personId: config.personId },
+  );
+  const itemDates = new Set(days.filter((day) => scopedItems(day).length > 0));
+  const items = scopedItems(date);
   const weekdayShort = i18n.t('date.weekdayShort');
 
   return {
@@ -70,6 +82,11 @@ function scheduleView(options) {
       nextDate: dates.addDays(date, 7),
     },
     items: items.map((item) => scheduleItemView(item, refs, config.focusId)),
+    scopes: scopes.map((item) => ({
+      key: item.key,
+      label: i18n.t(`schedule.scope.${item.key}`),
+      active: item.key === activeScope,
+    })),
     countText: i18n.tn('schedule.count', items.length),
     empty: items.length > 0
       ? null

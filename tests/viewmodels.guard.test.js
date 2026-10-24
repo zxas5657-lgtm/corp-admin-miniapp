@@ -10,6 +10,14 @@ const clock = require('../miniprogram/domain/clock');
 const { scheduleView } = require('../miniprogram/viewmodels/schedule');
 const { meetingDetailView, meetingListView } = require('../miniprogram/viewmodels/meetings');
 const { conflictWarnings, fieldErrors, formDefaults, formOptions, labels } = require('../miniprogram/viewmodels/meeting-form');
+const {
+  dispatchSheetView,
+  rejectSheetView,
+  vehicleDetailView,
+  vehicleFormDefaults,
+  vehicleFormLabels,
+  vehicleListView,
+} = require('../miniprogram/viewmodels/vehicles');
 
 function assertClean(value) {
   if (value === undefined) assert.fail('viewmodel output contains undefined');
@@ -40,6 +48,7 @@ test('every viewmodel output is JSON-safe and contains no raw i18n keys', () => 
     const now = clock.now();
     const outputs = [
       scheduleView({ state, date: '2026-10-24', now, focusId: 'm2', refs: reference }),
+      scheduleView({ state, date: '2026-10-24', now, role: 'admin', personId: 'p-lin', refs: reference }),
       meetingListView({ state, filter: 'all', now, role: 'admin', refs: reference }),
       meetingDetailView({ state, id: 'm2', now, role: 'admin', personId: 'p-lin', refs: reference }),
       formDefaults({ now, personId: 'p-lin' }),
@@ -47,6 +56,12 @@ test('every viewmodel output is JSON-safe and contains no raw i18n keys', () => 
       fieldErrors([{ field: 'title', code: 'meeting.title.required' }]),
       conflictWarnings([], { state, refs: reference }),
       labels(),
+      vehicleListView({ state, now, role: 'driver', personId: 'p-zhao', refs: reference }),
+      vehicleDetailView({ state, id: 'v3', now, role: 'driver', personId: 'p-zhao', refs: reference }),
+      dispatchSheetView({ state, id: 'v4', now, refs: reference, selectedCarId: null }),
+      rejectSheetView(),
+      vehicleFormDefaults({ now }),
+      vehicleFormLabels(),
     ];
     for (const output of outputs) assertClean(output);
     assertClean(conflictWarnings([], { state, refs: reference }));
