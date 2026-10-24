@@ -1,0 +1,21 @@
+﻿Review this repository thoroughly (read DESIGN.md, PROJECT_RULES.md, README.md, progress.md, and everything under prototype/).
+
+Context:
+- This is a corporate admin WeChat mini-program for meetings, scheduling, vehicle dispatch, visitor reception, and daily admin work.
+- Current milestone: clickable HTML prototype + design notes. Next milestone: meeting + schedule MVP with local-only data (no backend yet).
+- Product requirement: the app MUST ship with full bilingual support (Chinese and English) for all user-facing UI copy, including tabs, forms, empty/loading/error/success states, and role labels. Design and implementation recommendations should assume i18n from the start (not a later retrofit).
+
+Please produce a prioritized review with:
+1. Alignment gaps between DESIGN.md and the prototype
+2. Information architecture / navigation / role switching (admin specialist vs driver/fleet) issues
+3. Vehicle flow (pending dispatch → dispatched → completed) and meeting-to-schedule interaction issues
+4. Empty / loading / error / success state coverage
+5. Bilingual (zh/en) readiness: what is missing today, and concrete structure for locale keys / language switch before MVP coding
+6. What to change first for the meeting + schedule MVP
+
+Format:
+- P0 / P1 / P2 findings
+- Each finding: problem + concrete recommendation
+- End with a short ordered action list for the next coding sprint
+
+Write the full review to CLAUDE_REVIEW.md in the project root. Do not modify other project files.
