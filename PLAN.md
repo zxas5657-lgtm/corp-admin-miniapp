@@ -100,6 +100,16 @@ Order matters. B-tasks unblock F-tasks. **Every task passes the gates in §5 bef
 | S1-F7 | English layout pass + pseudo-locale; screenshot every screen and state in both locales | cursor + human (DevTools) | F3–F6 |
 | S1-L1 | Review each task; final MVP acceptance against review §4 state table, in both locales | lead | all |
 
+### Sprint 1 status (updated by lead)
+
+| Task | State | Commit |
+| --- | --- | --- |
+| S1-L0 | done | `bf8a693` |
+| S1-B1 | done, reviewed | `bb63324` |
+| S1-B2 | done, reviewed | `27d0fa2` |
+| S1-F1 | done; review fixes in progress (S1-F1-r1: pages → `Component()`, remove dead defensive code) | `58066a0` |
+| S1-B3 | in progress (codex) | — |
+
 ## 4. Sprint 2: 用车闭环 (queued)
 
 | # | Task | Owner |
@@ -124,8 +134,12 @@ P2 items (contrast details, touch targets, spacing scale, toast vs. banner rule,
 
 ## 6. Blockers / owner decisions needed
 
-- **git is not installed, and the folder is not a repo.** Rule 4 ("one commit per feature") cannot be followed.
-  - **Ask:** approve installing Git for Windows, then run `git init` with a baseline commit (and optionally connect the GitHub remote).
-  - **Until then:** the lead keeps a private baseline snapshot for diff review.
-- **WeChat DevTools is needed to run and screenshot the mini-program (S1-F7).** It is not installed. **Ask:** approve the install, or have a human run it.
+- ~~git is not installed.~~ Resolved 2026-10-24 with owner approval.
+  - Git 2.56.0 is installed and the repo is on branch `main`.
+  - Commits: `9861f32` is the baseline (the original ZIP); `bf8a693` holds the docs and the plan.
+  - **Commit rule:** the lead commits each task after it passes review, one task per commit. Executors do not commit.
+  - The GitHub remote is approved but not connected yet.
+- WeChat DevTools: installed 2026-10-24. The CLI is `C:\Program Files (x86)\Tencent\微信web开发者工具\cli.bat`.
+  - **Human step before S1-F7:** sign in once with a WeChat QR scan, and turn on Settings → Security → Service port so the CLI can open and screenshot the project.
+- Standing authorization: the liaison may approve Sprint 1 tool and runtime installs on this machine. Anything destructive, paid or outside this project still needs a status-update ask first.
 - ~~cursor-exec is not logged in.~~ Resolved 2026-10-24: logged in and trusted. S1-F1 is delegated. It codes against the i18n contract in `.team/tasks/S1-B2.md` while codex builds the runtime.
