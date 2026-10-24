@@ -1,7 +1,6 @@
 'use strict';
 
 const { nowParts } = require('./dates');
-const { DRIVERS } = require('../data/reference');
 const { can } = require('./permissions');
 
 const TRANSITIONS = Object.freeze({
@@ -32,6 +31,7 @@ function availableActions(vehicle, role, personId) {
 function transition(vehicle, action, payload, options) {
   const value = payload || {};
   const config = options || {};
+  const drivers = Array.isArray(config.drivers) ? config.drivers : [];
   const transitions = TRANSITIONS[vehicle && vehicle.status] || {};
   if (!Object.prototype.hasOwnProperty.call(transitions, action)) {
     return { ok: false, code: 'vehicle.alreadyHandled' };
@@ -53,7 +53,7 @@ function transition(vehicle, action, payload, options) {
   if (action === 'dispatch' || action === 'reassign') {
     const timestamp = nowParts(config.now);
     next.carId = value.carId;
-    next.driverId = DRIVERS.includes(config.personId) ? config.personId : (vehicle.driverId || null);
+    next.driverId = drivers.includes(config.personId) ? config.personId : (vehicle.driverId || null);
     next.dispatchedAt = `${timestamp.date}T${timestamp.time}`;
     next.dispatchedBy = config.personId || null;
   } else if (action === 'reject') {

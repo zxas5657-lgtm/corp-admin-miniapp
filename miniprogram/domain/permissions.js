@@ -1,7 +1,5 @@
 'use strict';
 
-const { meetingStatus } = require('./meeting');
-
 const ROLE_CAPS = {
   leader: ['meeting.create', 'meeting.cancelOwn', 'vehicle.request', 'schedule.viewAll'],
   admin: ['meeting.create', 'meeting.cancelOwn', 'vehicle.request'],
@@ -9,20 +7,16 @@ const ROLE_CAPS = {
   reception: ['vehicle.request'],
 };
 
-const CAPS = Object.freeze([...new Set(Object.values(ROLE_CAPS).flat())]);
+const caps = [];
+for (const role of Object.keys(ROLE_CAPS)) {
+  for (const capability of ROLE_CAPS[role]) {
+    if (!caps.includes(capability)) caps.push(capability);
+  }
+}
+const CAPS = Object.freeze(caps);
 
 function can(role, capability) {
   return Boolean(ROLE_CAPS[role] && ROLE_CAPS[role].includes(capability));
-}
-
-function canCancelMeeting(role, personId, meeting, now) {
-  return Boolean(
-    meeting &&
-    can(role, 'meeting.cancelOwn') &&
-    personId === meeting.organizerId &&
-    !meeting.cancelled &&
-    meetingStatus(meeting, now) === 'upcoming',
-  );
 }
 
 function meetingVisibleTo() {
@@ -33,6 +27,5 @@ module.exports = {
   ROLE_CAPS,
   CAPS,
   can,
-  canCancelMeeting,
   meetingVisibleTo,
 };

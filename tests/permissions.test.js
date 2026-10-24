@@ -9,9 +9,9 @@ const {
   CAPS,
   ROLE_CAPS,
   can,
-  canCancelMeeting,
   meetingVisibleTo,
 } = require('../miniprogram/domain/permissions');
+const { canCancelMeeting } = require('../miniprogram/domain/meeting');
 
 const now = parseLocalDateTime('2026-10-24T09:20');
 

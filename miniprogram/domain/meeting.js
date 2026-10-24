@@ -6,6 +6,7 @@ const {
   nowParts,
   toMinutes,
 } = require('./dates');
+const { can } = require('./permissions');
 
 function dateTimeKey(date, time) {
   return `${date}T${time}`;
@@ -68,6 +69,16 @@ function validateMeeting(input, refs) {
   return errors;
 }
 
+function canCancelMeeting(role, personId, meeting, now) {
+  return Boolean(
+    meeting &&
+    can(role, 'meeting.cancelOwn') &&
+    personId === meeting.organizerId &&
+    !meeting.cancelled &&
+    meetingStatus(meeting, now) === 'upcoming',
+  );
+}
+
 function createMeeting(input, options) {
   const value = input || {};
   const config = options || {};
@@ -93,7 +104,6 @@ function cancelMeeting(meeting, options) {
   if (!config.role || !config.personId || meeting.organizerId !== config.personId) {
     return { ok: false, code: 'meeting.cancel.notAllowed' };
   }
-  const { canCancelMeeting } = require('./permissions');
   if (meetingStatus(meeting, config.now) !== 'upcoming') {
     return { ok: false, code: 'meeting.cancel.alreadyStarted' };
   }
@@ -168,4 +178,5 @@ module.exports = {
   findConflicts,
   sortMeetings,
   filterMeetings,
+  canCancelMeeting,
 };

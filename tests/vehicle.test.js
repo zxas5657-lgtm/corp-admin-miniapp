@@ -4,10 +4,12 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const { seed } = require('../miniprogram/data/seed');
+const { DRIVERS } = require('../miniprogram/data/reference');
 const { parseLocalDateTime } = require('../miniprogram/domain/dates');
 const { availableActions, transition } = require('../miniprogram/domain/vehicle');
 
 const now = parseLocalDateTime('2026-10-24T09:20');
+const driverOptions = { drivers: DRIVERS };
 
 test('availableActions combines transition and capability rules', () => {
   const pending = seed().vehicles[3];
@@ -24,6 +26,7 @@ test('dispatch sets the car, driver, and dispatch audit fields', () => {
     role: 'driver',
     personId: 'p-zhao',
     now,
+    ...driverOptions,
   });
   assert.equal(result.ok, true);
   assert.equal(result.vehicle.status, 'assigned');
@@ -41,34 +44,34 @@ test('reject and withdraw enforce their payload and ownership rules', () => {
     { ok: false, code: 'vehicle.reject.reasonRequired' },
   );
   const rejected = transition(pending, 'reject', { reason: '  No capacity  ' }, {
-    role: 'driver', personId: 'p-zhao', now,
+    role: 'driver', personId: 'p-zhao', now, ...driverOptions,
   });
   assert.equal(rejected.ok, true);
   assert.equal(rejected.vehicle.status, 'rejected');
   assert.equal(rejected.vehicle.rejectReason, 'No capacity');
 
-  const withdrawn = transition(pending, 'withdraw', {}, { role: 'admin', personId: 'p-zhou', now });
+  const withdrawn = transition(pending, 'withdraw', {}, { role: 'admin', personId: 'p-zhou', now, ...driverOptions });
   assert.equal(withdrawn.ok, true);
   assert.equal(withdrawn.vehicle.status, 'withdrawn');
   assert.deepEqual(
-    transition(pending, 'withdraw', {}, { role: 'admin', personId: 'p-lin', now }),
+    transition(pending, 'withdraw', {}, { role: 'admin', personId: 'p-lin', now, ...driverOptions }),
     { ok: false, code: 'permission.denied' },
   );
 });
 
 test('complete, reassign, and cancelDispatch follow the assigned transitions', () => {
   const assigned = seed().vehicles[2];
-  const complete = transition(assigned, 'complete', {}, { role: 'driver', personId: 'p-zhao', now });
+  const complete = transition(assigned, 'complete', {}, { role: 'driver', personId: 'p-zhao', now, ...driverOptions });
   assert.equal(complete.ok, true);
   assert.equal(complete.vehicle.status, 'done');
   assert.equal(complete.vehicle.completedAt, '2026-10-24T09:20');
 
-  const reassigned = transition(assigned, 'reassign', { carId: 'gl8b' }, { role: 'driver', personId: 'p-zhao', now });
+  const reassigned = transition(assigned, 'reassign', { carId: 'gl8b' }, { role: 'driver', personId: 'p-zhao', now, ...driverOptions });
   assert.equal(reassigned.ok, true);
   assert.equal(reassigned.vehicle.status, 'assigned');
   assert.equal(reassigned.vehicle.carId, 'gl8b');
 
-  const pending = transition(assigned, 'cancelDispatch', {}, { role: 'driver', personId: 'p-zhao', now });
+  const pending = transition(assigned, 'cancelDispatch', {}, { role: 'driver', personId: 'p-zhao', now, ...driverOptions });
   assert.equal(pending.ok, true);
   assert.equal(pending.vehicle.status, 'pending');
   assert.equal(pending.vehicle.carId, null);
@@ -78,15 +81,15 @@ test('complete, reassign, and cancelDispatch follow the assigned transitions', (
 test('stale states, missing capabilities, and missing cars return codes', () => {
   const pending = seed().vehicles[3];
   assert.deepEqual(
-    transition(pending, 'dispatch', { carId: 'gl8a' }, { role: 'admin', personId: 'p-lin', now }),
+    transition(pending, 'dispatch', { carId: 'gl8a' }, { role: 'admin', personId: 'p-lin', now, ...driverOptions }),
     { ok: false, code: 'permission.denied' },
   );
   assert.deepEqual(
-    transition(pending, 'dispatch', {}, { role: 'driver', personId: 'p-zhao', now }),
+    transition(pending, 'dispatch', {}, { role: 'driver', personId: 'p-zhao', now, ...driverOptions }),
     { ok: false, code: 'vehicle.car.required' },
   );
   assert.deepEqual(
-    transition({ ...pending, status: 'done' }, 'dispatch', { carId: 'gl8a' }, { role: 'driver', personId: 'p-zhao', now }),
+    transition({ ...pending, status: 'done' }, 'dispatch', { carId: 'gl8a' }, { role: 'driver', personId: 'p-zhao', now, ...driverOptions }),
     { ok: false, code: 'vehicle.alreadyHandled' },
   );
 });
