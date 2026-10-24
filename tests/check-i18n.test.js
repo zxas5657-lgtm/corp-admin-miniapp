@@ -64,11 +64,15 @@ test('CJK scan includes custom-tab-bar and direct app files', () => {
   const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'corp-admin-cjk-'));
   try {
     fs.mkdirSync(path.join(fixture, 'miniprogram', 'custom-tab-bar'), { recursive: true });
+    fs.mkdirSync(path.join(fixture, 'miniprogram', 'viewmodels'), { recursive: true });
+    fs.mkdirSync(path.join(fixture, 'miniprogram', 'utils'), { recursive: true });
     fs.mkdirSync(path.join(fixture, 'miniprogram', 'nested'), { recursive: true });
     for (const file of ['app.js', 'app.json', 'app.wxss']) {
       fs.writeFileSync(path.join(fixture, 'miniprogram', file), '');
     }
     fs.writeFileSync(path.join(fixture, 'miniprogram', 'custom-tab-bar', 'index.js'), '');
+    fs.writeFileSync(path.join(fixture, 'miniprogram', 'viewmodels', 'schedule.js'), '');
+    fs.writeFileSync(path.join(fixture, 'miniprogram', 'utils', 'status-tone.js'), '');
     fs.writeFileSync(path.join(fixture, 'miniprogram', 'nested', 'app.js'), '');
 
     const files = collectCjkSourceFiles(fixture)
@@ -78,6 +82,8 @@ test('CJK scan includes custom-tab-bar and direct app files', () => {
       'miniprogram/app.json',
       'miniprogram/app.wxss',
       'miniprogram/custom-tab-bar/index.js',
+      'miniprogram/utils/status-tone.js',
+      'miniprogram/viewmodels/schedule.js',
     ]);
   } finally {
     fs.rmSync(fixture, { recursive: true, force: true });

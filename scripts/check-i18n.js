@@ -13,6 +13,8 @@ const CJK_DIRECTORIES = [
   'miniprogram/components',
   'miniprogram/behaviors',
   'miniprogram/custom-tab-bar',
+  'miniprogram/viewmodels',
+  'miniprogram/utils',
   'miniprogram/store',
 ];
 const CJK_ROOT_FILES = [
