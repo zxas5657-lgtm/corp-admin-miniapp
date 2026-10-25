@@ -38,6 +38,7 @@ test('meeting list groups, filters, and exposes role-aware empty states', () => 
     assert.equal(empty.empty.actionText, locale === 'en' ? 'New meeting' : '新建会议');
     const filtered = meetingListView({ state: localState(), filter: 'cancelled', now, role: 'admin' });
     assert.equal(filtered.empty.kind, 'filtered');
+    assert.equal(filtered.empty.actionText, locale === 'en' ? 'Show all meetings' : '查看全部会议');
 
     for (const role of ['driver', 'reception']) {
       const roleView = meetingListView({ state: localState(), filter: 'all', now, role });

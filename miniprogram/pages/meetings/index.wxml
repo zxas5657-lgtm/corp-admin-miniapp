@@ -18,7 +18,7 @@
       title="{{view.empty.title}}"
       body="{{view.empty.body}}"
       action-text="{{view.empty.actionText}}"
-      bind:action="onCreate"
+      bind:action="onEmptyAction"
     />
     <block wx:else>
       <view wx:for="{{view.groups}}" wx:key="date" wx:for-item="group">

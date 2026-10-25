@@ -129,6 +129,7 @@ module.exports = {
       noDataBody: 'New meetings will appear here.',
       filteredTitle: 'No matching meetings',
       filteredBody: 'Try another filter.',
+      showAll: 'Show all meetings',
     },
     action: {
       new: 'New meeting',
