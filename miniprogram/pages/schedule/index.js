@@ -122,11 +122,49 @@ Component({
         this.clearBannerTimer();
       }
       const scrollId = opts.scrollId || '';
+      const keepBanner = Boolean(opts.banner || (opts.refreshBanner && this.data.banner));
+      const page = this;
       this.setData(patch, function () {
         if (!scrollId) return;
+        page.scrollToItem(scrollId, keepBanner);
+      });
+    },
+    scrollToItem(scrollId, keepBanner) {
+      if (!keepBanner) {
         try {
           wx.pageScrollTo({
             selector: '#item-' + scrollId,
+            duration: 300,
+            fail: function () {}
+          });
+        } catch (err) {
+          // A missing detail card must not break the page.
+        }
+        return;
+      }
+      const query = this.createSelectorQuery();
+      query.select('#item-' + scrollId).boundingClientRect();
+      query.select('#created-banner').boundingClientRect();
+      query.selectViewport().scrollOffset();
+      query.selectViewport().boundingClientRect();
+      query.exec(function (rects) {
+        const item = rects && rects[0];
+        const banner = rects && rects[1];
+        const scroll = rects && rects[2] ? rects[2] : { scrollTop: 0 };
+        const viewport = rects && rects[3] ? rects[3] : { height: 0 };
+        if (!item) return;
+        const scrollTop = scroll.scrollTop || 0;
+        const docTop = scrollTop + item.top;
+        const docBottom = docTop + item.height;
+        const bannerHeight = banner && banner.height ? banner.height : 0;
+        const viewHeight = viewport.height || 0;
+        let target = 0;
+        if (docBottom > viewHeight) {
+          target = Math.max(0, docTop - bannerHeight - 8);
+        }
+        try {
+          wx.pageScrollTo({
+            scrollTop: target,
             duration: 300,
             fail: function () {}
           });

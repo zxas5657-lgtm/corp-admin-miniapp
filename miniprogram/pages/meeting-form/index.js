@@ -1,4 +1,5 @@
 const i18nBehavior = require('../../behaviors/i18n');
+const i18n = require('../../i18n/index');
 const { getStore } = require('../../store/index');
 const clock = require('../../domain/clock');
 const { can } = require('../../domain/permissions');
@@ -47,6 +48,7 @@ Component({
     people: [],
     roomLabel: '',
     roomIndex: 0,
+    dateLabel: '',
     errors: {},
     submitting: false,
     notice: '',
@@ -176,7 +178,8 @@ Component({
       const patch = {
         people: people,
         roomLabel: roomLabel,
-        roomIndex: roomIndex
+        roomIndex: roomIndex,
+        dateLabel: current && current.date ? i18n.fmt.dayHeading(current.date) : ''
       };
       const nextGuard = this._leaving ? false : (this.isDirty(current) || this._submitting);
       if (nextGuard !== this._guardBack) {

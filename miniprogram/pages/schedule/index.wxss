@@ -7,6 +7,16 @@
   padding-bottom: calc(88px + env(safe-area-inset-bottom));
 }
 
+.created-banner {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  box-sizing: border-box;
+  padding-right: var(--space-16, 16px);
+  padding-left: var(--space-16, 16px);
+  background: var(--bg, #F3F5F8);
+}
+
 .pad {
   box-sizing: border-box;
   padding-right: var(--space-16, 16px);

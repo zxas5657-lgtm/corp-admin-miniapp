@@ -11,15 +11,16 @@
     />
   </block>
   <block wx:elif="{{view}}">
-    <view class="pad">
+    <view wx:if="{{banner}}" id="created-banner" class="created-banner">
       <notice-bar
-        wx:if="{{banner}}"
         kind="success"
         text="{{banner}}"
         closable="{{true}}"
         close-label="{{i18n.a11y.closeSheet}}"
         bind:close="onCloseBanner"
       />
+    </view>
+    <view class="pad">
       <view class="head">
         <text class="date">{{view.dayHeading}}</text>
         <text class="count">{{view.countText}}</text>

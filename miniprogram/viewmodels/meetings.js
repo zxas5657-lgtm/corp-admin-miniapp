@@ -1,6 +1,6 @@
 'use strict';
 
-const i18n = require('../i18n');
+const i18n = require('../i18n/index');
 const reference = require('../data/reference');
 const { can } = require('../domain/permissions');
 const {

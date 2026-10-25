@@ -25,6 +25,16 @@ function noticeFor(page, result) {
   return page.t('error.' + code);
 }
 
+function setTabBarHidden(page, hidden) {
+  try {
+    if (!page || typeof page.getTabBar !== 'function') return;
+    const bar = page.getTabBar();
+    if (bar && typeof bar.setHidden === 'function') bar.setHidden(hidden);
+  } catch (err) {
+    // A missing tab bar must not break the page.
+  }
+}
+
 Component({
   behaviors: [i18nBehavior],
   data: {
@@ -65,6 +75,10 @@ Component({
   pageLifetimes: {
     show() {
       this.rebuild();
+      setTabBarHidden(this, this.data.languageOpen || this.data.resetOpen);
+    },
+    hide() {
+      setTabBarHidden(this, false);
     }
   },
   methods: {
@@ -94,9 +108,11 @@ Component({
     },
     onOpenLanguage() {
       this.setData({ languageOpen: true });
+      setTabBarHidden(this, true);
     },
     onCloseLanguage() {
       this.setData({ languageOpen: false });
+      setTabBarHidden(this, this.data.resetOpen);
     },
     onPickLocale(event) {
       const locale = event.currentTarget.dataset.locale;
@@ -107,6 +123,7 @@ Component({
         languageOpen: false,
         notice: failed ? this.t('error.storage.writeFailed') : ''
       });
+      setTabBarHidden(this, this.data.resetOpen);
     },
     onCloseNotice() {
       this.setData({ notice: '' });
@@ -143,9 +160,11 @@ Component({
     },
     onOpenReset() {
       this.setData({ resetOpen: true });
+      setTabBarHidden(this, true);
     },
     onCloseReset() {
       this.setData({ resetOpen: false });
+      setTabBarHidden(this, this.data.languageOpen);
     },
     onConfirmReset() {
       const result = getStore().resetDemo();
@@ -154,6 +173,7 @@ Component({
         resetOpen: false,
         notice: failed ? noticeFor(this, result) : ''
       });
+      setTabBarHidden(this, this.data.languageOpen);
       if (failed) return;
       try {
         wx.showToast({ title: this.t('demo.resetNotice'), icon: 'none' });

@@ -41,6 +41,19 @@ test('memory and wx adapters return result objects and never expose storage erro
   assert.deepEqual(throwingWx.remove('key'), { ok: false, code: 'storage.writeFailed' });
 });
 
+test('wx adapter treats the empty string wx returns for a missing key as absent, so first launch seeds', () => {
+  const values = new Map();
+  const fakeWx = {
+    getStorageSync(key) { return values.has(key) ? values.get(key) : ''; },
+    setStorageSync(key, value) { values.set(key, JSON.parse(JSON.stringify(value))); },
+    removeStorageSync(key) { values.delete(key); },
+  };
+  const adapter = createWxAdapter(fakeWx);
+  assert.deepEqual(adapter.get('missing'), { ok: true, value: undefined });
+  assert.deepEqual(makeStore(adapter).load(), { ok: true, dropped: 0 });
+  assert.equal(values.get(DATA_KEY).version, 2);
+});
+
 test('first load seeds and persists, and a second store reads it back', () => {
   const adapter = createMemoryAdapter();
   const first = makeStore(adapter);

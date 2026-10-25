@@ -116,7 +116,8 @@ Order matters. B-tasks unblock F-tasks. **Every task passes the gates in §5 bef
 | S1-F6 | done, reviewed | `e3c3f09` |
 | S1-F3 | done, reviewed | `9e0d5b6` |
 | S1-F4/F5 | done, reviewed | `f68b565` |
-| S1-F7 | Phase A done (7d08797): `npm run screens` captures 30 scenarios in zh-CN and en and writes `screenshots/index.html`. **Phase B is waiting on a human**: WeChat DevTools QR sign-in + service port, then the lead runs the script and reviews. | — |
+| S1-F7 | Phase A done (7d08797): `npm run screens` captures 30 scenarios in zh-CN and en and writes `screenshots/index.html`. Phase B ran with the owner's AppID: 60/60 shots. The pass found two crashes that the Node tests could not see, both fixed by the lead (d0d02a8: directory `require('../i18n')`; the next commit: `getStorageSync` returns `''` for a missing key). The UI findings are in **S1-F8** (cursor). | — |
+| S1-F8 | **Done** (1fe1ef5). Fixes from the screenshot pass: tab bar covering sheets (P1), page gutters dropped by `constant()` in the padding shorthand (P1), plus P2/P3 polish. Verified by re-running `npm run screens`: 60/60, reviewed in both locales. | cursor |
 | S2-F1 | done, reviewed: vehicle list/detail/form, dispatch/reject sheets, role-aware badge, tappable vehicle cards + schedule scope | `4a4a488` |
 | S2-F2 | in progress (cursor): polish (dead code, 44px targets, spacing tokens) + README/progress/DESIGN catch-up | — |
 

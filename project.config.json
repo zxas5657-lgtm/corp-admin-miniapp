@@ -1,7 +1,7 @@
 {
   "miniprogramRoot": "miniprogram/",
   "compileType": "miniprogram",
-  "appid": "touristappid",
+  "appid": "wxe62caebd6c66e685",
   "projectname": "corp-admin-miniapp",
   "setting": {
     "es6": true

@@ -47,6 +47,7 @@ Component({
   data: {
     selected: 0,
     badges: [0, 0, 0, 0],
+    hidden: false,
     list: buildList(i18n.dict('tab'))
   },
 
@@ -71,6 +72,12 @@ Component({
       if (i !== 0 && i !== 1 && i !== 2 && i !== 3) return;
       if (this.data.selected === i) return;
       this.setData({ selected: i });
+    },
+
+    setHidden(hidden) {
+      const next = Boolean(hidden);
+      if (this.data.hidden === next) return;
+      this.setData({ hidden: next });
     },
 
     setBadge(index, n) {

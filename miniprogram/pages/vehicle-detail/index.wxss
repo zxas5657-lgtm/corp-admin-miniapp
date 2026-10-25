@@ -2,7 +2,8 @@
   box-sizing: border-box;
   width: 100%;
   min-height: 100vh;
-  padding: var(--space-16, 16px) var(--space-16, 16px) calc(var(--space-24, 24px) + constant(safe-area-inset-bottom));
+  padding: var(--space-16, 16px) var(--space-16, 16px) var(--space-24, 24px);
+  padding-bottom: calc(var(--space-24, 24px) + constant(safe-area-inset-bottom));
   padding-bottom: calc(var(--space-24, 24px) + env(safe-area-inset-bottom));
 }
 
@@ -55,18 +56,25 @@
 }
 
 .step-dot {
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
   width: 16px;
   height: 16px;
+  border: 2px solid var(--icon, #8B95A5);
   border-radius: 50%;
-  background: var(--icon, #8B95A5);
+  background: var(--bg, #F3F5F8);
 }
 
 .step-dot.is-done {
+  border-color: var(--ok, #146C3F);
   background: var(--ok, #146C3F);
 }
 
 .step-dot.is-current {
-  background: var(--primary, #1F4E89);
+  border-color: var(--primary, #1F4E89);
+  background: var(--bg, #F3F5F8);
+  box-shadow: 0 0 0 3px var(--primary-soft, #E7F0FA);
 }
 
 .step-label,
@@ -175,8 +183,17 @@
   box-sizing: border-box;
   width: 100%;
   min-height: 88px;
+  padding: var(--space-10, 10px) var(--space-12, 12px);
+  border: 1px solid var(--line, #E6E9EE);
+  border-radius: 8px;
+  background: var(--bg, #F3F5F8);
   font-size: 15px;
   line-height: 1.45;
+}
+
+.reason.is-invalid {
+  border-color: var(--danger, #9F1D1D);
+  background: var(--danger-soft, #FDECEC);
 }
 
 .err {

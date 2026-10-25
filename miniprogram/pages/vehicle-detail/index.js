@@ -265,12 +265,22 @@ Component({
           this.setData({ rejectError: this.t('error.' + code) });
           return;
         }
-        this.setData({ notice: this.t('error.' + code) });
+        this.setData({
+          dispatchOpen: false,
+          rejectOpen: false,
+          confirmOpen: false,
+          notice: this.t('error.' + code)
+        });
         return;
       }
       const saved = getStore().updateVehicle(result.vehicle);
       if (!saved || saved.ok !== true) {
-        this.setData({ notice: this.t('error.storage.writeFailed') });
+        this.setData({
+          dispatchOpen: false,
+          rejectOpen: false,
+          confirmOpen: false,
+          notice: this.t('error.storage.writeFailed')
+        });
         return;
       }
       const action = this._action;

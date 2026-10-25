@@ -1,4 +1,5 @@
 const i18nBehavior = require('../../behaviors/i18n');
+const i18n = require('../../i18n/index');
 const { getStore } = require('../../store/index');
 const clock = require('../../domain/clock');
 const { can } = require('../../domain/permissions');
@@ -41,7 +42,10 @@ Component({
     submitting: false,
     notice: '',
     dirtyOpen: false,
-    guardBack: false
+    guardBack: false,
+    dateLabel: '',
+    reasonPlaceholder: '',
+    destinationPlaceholder: ''
   },
   lifetimes: {
     created() {
@@ -100,7 +104,10 @@ Component({
         allowed: true,
         form: form,
         labels: vehicleFormLabels(),
-        dirtyLeave: this.dirtyLeaveCopy()
+        dirtyLeave: this.dirtyLeaveCopy(),
+        dateLabel: i18n.fmt.dayHeading(form.date),
+        reasonPlaceholder: this.t('vehicle.form.reasonPlaceholder'),
+        destinationPlaceholder: this.t('vehicle.form.destinationPlaceholder')
       });
     },
     onLocaleChange() {
@@ -123,7 +130,10 @@ Component({
       if (!this.data.form) return;
       this.setData({
         labels: vehicleFormLabels(),
-        dirtyLeave: this.dirtyLeaveCopy()
+        dirtyLeave: this.dirtyLeaveCopy(),
+        dateLabel: i18n.fmt.dayHeading(this.data.form.date),
+        reasonPlaceholder: this.t('vehicle.form.reasonPlaceholder'),
+        destinationPlaceholder: this.t('vehicle.form.destinationPlaceholder')
       });
     },
     isDirty(form) {
@@ -150,7 +160,11 @@ Component({
       const errors = Object.assign({}, this.data.errors);
       const fields = Object.keys(patch);
       for (let i = 0; i < fields.length; i += 1) delete errors[fields[i]];
-      this.setData({ form: form, errors: errors });
+      this.setData({
+        form: form,
+        errors: errors,
+        dateLabel: i18n.fmt.dayHeading(form.date)
+      });
       this.syncGuard(form);
     },
     onReason(event) {

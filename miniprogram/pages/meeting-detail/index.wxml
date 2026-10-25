@@ -50,7 +50,7 @@
         aria-role="button"
         hover-class="is-pressed"
         bindtap="onOpenCancel"
-      >{{view.cancelSheet.title}}</view>
+      >{{cancelAction}}</view>
       <bottom-sheet
         show="{{cancelOpen}}"
         title="{{view.cancelSheet.title}}"

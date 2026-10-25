@@ -17,7 +17,9 @@ function createWxAdapter(wxApi) {
   return {
     get(key) {
       try {
-        return { ok: true, value: wxApi.getStorageSync(key) };
+        // wx.getStorageSync returns '' for a missing key; report it as absent.
+        const value = wxApi.getStorageSync(key);
+        return { ok: true, value: value === '' ? undefined : value };
       } catch (error) {
         return readFailure();
       }

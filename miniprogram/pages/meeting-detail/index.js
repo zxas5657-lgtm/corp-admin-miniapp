@@ -12,6 +12,7 @@ Component({
     navTitleKey: 'nav.meetingDetail',
     view: null,
     agendaLabel: '',
+    cancelAction: '',
     cancelOpen: false,
     notice: ''
   },
@@ -55,7 +56,8 @@ Component({
       });
       this.setData({
         view: view,
-        agendaLabel: this.t('meeting.detail.agenda')
+        agendaLabel: this.t('meeting.detail.agenda'),
+        cancelAction: this.t('meeting.detail.cancelAction')
       });
     },
     onBack() {

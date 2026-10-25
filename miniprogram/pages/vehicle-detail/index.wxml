@@ -47,6 +47,7 @@
       <view class="cell-group">
         <cell-row
           wx:for="{{view.cells}}"
+          wx:if="{{item.value}}"
           wx:key="key"
           label="{{item.label}}"
           value="{{item.value}}"
@@ -114,7 +115,7 @@
         bind:confirm="onConfirmReject"
       >
         <textarea
-          class="reason"
+          class="reason {{rejectError ? 'is-invalid' : ''}}"
           value="{{rejectReason}}"
           placeholder="{{rejectView.placeholder}}"
           bindinput="onRejectInput"

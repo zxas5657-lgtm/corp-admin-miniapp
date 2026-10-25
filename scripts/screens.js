@@ -1,5 +1,6 @@
 'use strict';
 
+const childProcess = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
 const automator = require('miniprogram-automator');
@@ -10,6 +11,8 @@ const CLI_PATH = process.env.WX_CLI || 'C:\\Program Files (x86)\\Tencent\\微信
 const LOCALES = ['zh-CN', 'en'];
 const DATA_KEY = 'corp-admin-v2';
 const PAUSE_MS = 500;
+const AUTO_PORT = Number(process.env.WX_AUTO_PORT) || 9420;
+let currentMini = null;
 
 const SHOT_MEETING = {
   id: 'm-shot',
@@ -79,9 +82,17 @@ async function openPage(mini, url) {
   return page;
 }
 
+// page.callMethod cannot see methods on Component()-built pages, so call the
+// method on the top page instance from getCurrentPages() instead.
 async function callPage(page, method, arg) {
-  if (arg === undefined) await page.callMethod(method);
-  else await page.callMethod(method, arg);
+  await page.waitFor(0);
+  await currentMini.evaluate(function (name, payload) {
+    var pages = getCurrentPages();
+    var top = pages[pages.length - 1];
+    if (!top || typeof top[name] !== 'function') throw new Error('page method missing: ' + name);
+    if (payload === undefined) top[name]();
+    else top[name](payload);
+  }, method, arg);
   await page.waitFor(PAUSE_MS);
 }
 
@@ -374,7 +385,7 @@ const SCENARIOS = [
       const page = await openPage(mini, '/pages/vehicle-detail/index?id=v3');
       await callPage(page, 'openAction', 'complete');
       await callPage(page, 'onConfirmAction');
-      if (await page.data('confirmOpen') !== true || !await page.data('notice')) {
+      if (await page.data('confirmOpen') !== false || !await page.data('notice')) {
         throw new Error('complete refusal is missing');
       }
       await saveShot(mini, locale, this.id + '.png');
@@ -546,16 +557,36 @@ function printSummary(results) {
   }
 }
 
+// automator.launch() spawns cli.bat without a shell, which Node >= 18.20
+// refuses on Windows (EINVAL). Start automation mode ourselves, then connect.
+async function launchDevTools() {
+  const args = ['auto', '--project', ROOT, '--auto-port', String(AUTO_PORT), '--trust-project'];
+  const quoted = [CLI_PATH].concat(args).map(function (arg) { return '"' + arg + '"'; }).join(' ');
+  let output = '';
+  const exitCode = await new Promise(function (resolve, reject) {
+    const child = childProcess.spawn(quoted, [], { shell: true, stdio: ['ignore', 'pipe', 'pipe'] });
+    child.stdout.on('data', function (chunk) { output += chunk; });
+    child.stderr.on('data', function (chunk) { output += chunk; });
+    child.on('error', reject);
+    child.on('exit', resolve);
+  });
+  if (exitCode !== 0) {
+    throw new Error('cli auto exited with ' + exitCode + '\n' + output.trim().slice(-2000));
+  }
+  try {
+    return await automator.connect({ wsEndpoint: 'ws://127.0.0.1:' + AUTO_PORT });
+  } catch (error) {
+    // cli auto exits 0 even when it fails (e.g. APPID_ERROR), so show its output.
+    throw new Error(error.message + '\ncli output:\n' + output.trim().slice(-2000));
+  }
+}
+
 async function main() {
   const results = [];
   let mini = null;
   try {
-    mini = await automator.launch({
-      cliPath: CLI_PATH,
-      projectPath: ROOT,
-      timeout: 120000,
-      trustProject: true,
-    });
+    mini = await launchDevTools();
+    currentMini = mini;
     for (const locale of LOCALES) {
       for (const scenario of SCENARIOS) {
         try {

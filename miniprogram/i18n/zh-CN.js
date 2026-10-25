@@ -73,4 +73,7 @@ module.exports = {
   common: { notAvailable: '未开放', cancel: '取消' },
   visitors: { lead: '当前版本只保留入口。预约、核验和接待记录以后再做。', bookingTitle: '预约来访', bookingBody: '登记访客与到访时间', checkTitle: '到访核验', checkBody: '前台核对并通知被访人', recordTitle: '接待记录', recordBody: '结束后留下接待备注' },
   daily: { lead: '当前版本只保留入口。申领、报修和用印以后再做。', supplyTitle: '用品申领', supplyBody: '文具、耗材与员工物资', repairTitle: '报修', repairBody: '会议室设备与办公设施', sealTitle: '用印', sealBody: '印章外带与盖章登记' },
+  'meeting.detail.cancelAction': '取消会议',
+  'vehicle.form.reasonPlaceholder': '请填写用车事由',
+  'vehicle.form.destinationPlaceholder': '请填写目的地',
 };

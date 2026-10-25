@@ -5,7 +5,21 @@
 
 .cell {
   position: relative;
+  display: flex;
+  align-items: center;
   min-height: 48px;
+}
+
+.cell-body {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.cell--stacked .cell-body {
+  flex-direction: column;
+  align-items: stretch;
 }
 
 .catcher {
