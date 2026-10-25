@@ -49,7 +49,7 @@
         error-text="{{errors.date}}"
       >
         <picker mode="date" value="{{form.date}}" disabled="{{submitting}}" bindchange="onDate">
-          <view class="picker-hit">{{form.date}}</view>
+          <view class="picker-hit">{{dateLabel}}</view>
         </picker>
       </cell-row>
       <cell-row
@@ -94,8 +94,7 @@
       </cell-row>
     </view>
 
-    <text class="section-label">{{labels.attendees}}</text>
-    <view id="field-attendees" class="cell-group">
+    <view id="field-attendees" class="cell-group section">
       <cell-row
         quiet="{{true}}"
         label="{{labels.attendees}}"
@@ -116,8 +115,7 @@
       </cell-row>
     </view>
 
-    <text class="section-label">{{labels.agenda}}</text>
-    <view class="cell-group">
+    <view class="cell-group section">
       <cell-row
         id="field-agenda"
         quiet="{{true}}"

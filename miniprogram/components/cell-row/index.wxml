@@ -4,10 +4,12 @@
     hover-class="{{arrow && !quiet ? 'is-hover' : 'none'}}"
     aria-role="{{arrow ? 'button' : ''}}"
   >
-    <text class="k">{{label}}</text>
-    <view class="v">
-      <text wx:if="{{value}}">{{value}}</text>
-      <slot wx:else></slot>
+    <view class="cell-body">
+      <text class="k">{{label}}</text>
+      <view class="v">
+        <text wx:if="{{value}}">{{value}}</text>
+        <slot wx:else></slot>
+      </view>
     </view>
     <view wx:if="{{arrow}}" class="chev" aria-hidden="true"></view>
     <view wx:if="{{!quiet}}" class="catcher" catchtap="onTap"></view>

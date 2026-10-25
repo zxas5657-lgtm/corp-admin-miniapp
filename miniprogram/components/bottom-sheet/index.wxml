@@ -16,13 +16,13 @@
         class="cancel"
         aria-role="button"
         catchtap="onClose"
-      >{{cancelText}}</view>
+      ><text class="action-label">{{cancelText}}</text></view>
       <view
         wx:if="{{confirmText}}"
         class="btn-primary confirm {{danger ? 'is-danger' : ''}} {{confirmDisabled ? 'is-disabled' : ''}}"
         aria-role="button"
         catchtap="onConfirm"
-      >{{confirmText}}</view>
+      ><text class="action-label">{{confirmText}}</text></view>
     </view>
   </view>
 </view>

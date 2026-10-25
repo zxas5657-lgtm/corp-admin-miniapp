@@ -2,7 +2,8 @@
   box-sizing: border-box;
   width: 100%;
   min-height: 100vh;
-  padding: var(--space-16, 16px) var(--space-16, 16px) calc(var(--space-24, 24px) + constant(safe-area-inset-bottom));
+  padding: var(--space-16, 16px) var(--space-16, 16px) var(--space-24, 24px);
+  padding-bottom: calc(var(--space-24, 24px) + constant(safe-area-inset-bottom));
   padding-bottom: calc(var(--space-24, 24px) + env(safe-area-inset-bottom));
 }
 

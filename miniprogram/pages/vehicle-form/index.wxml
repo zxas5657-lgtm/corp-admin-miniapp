@@ -36,6 +36,7 @@
           class="field-input"
           value="{{form.reason}}"
           maxlength="40"
+          placeholder="{{reasonPlaceholder}}"
           disabled="{{submitting}}"
           bindinput="onReason"
         />
@@ -51,6 +52,7 @@
           class="field-input"
           value="{{form.destination}}"
           maxlength="60"
+          placeholder="{{destinationPlaceholder}}"
           disabled="{{submitting}}"
           bindinput="onDestination"
         />
@@ -63,7 +65,7 @@
         error-text="{{errors.date}}"
       >
         <picker mode="date" value="{{form.date}}" disabled="{{submitting}}" bindchange="onDate">
-          <view class="picker-hit">{{form.date}}</view>
+          <view class="picker-hit">{{dateLabel}}</view>
         </picker>
       </cell-row>
       <cell-row

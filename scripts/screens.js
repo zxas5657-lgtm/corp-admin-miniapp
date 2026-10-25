@@ -385,7 +385,7 @@ const SCENARIOS = [
       const page = await openPage(mini, '/pages/vehicle-detail/index?id=v3');
       await callPage(page, 'openAction', 'complete');
       await callPage(page, 'onConfirmAction');
-      if (await page.data('confirmOpen') !== true || !await page.data('notice')) {
+      if (await page.data('confirmOpen') !== false || !await page.data('notice')) {
         throw new Error('complete refusal is missing');
       }
       await saveShot(mini, locale, this.id + '.png');
