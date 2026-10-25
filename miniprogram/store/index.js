@@ -1,6 +1,6 @@
 'use strict';
 
-const { normalizeLocale } = require('../i18n');
+const { normalizeLocale } = require('../i18n/index');
 const { seed: defaultSeed } = require('../data/seed');
 const defaultClock = require('../domain/clock');
 const { ROLE_CAPS } = require('../domain/permissions');
