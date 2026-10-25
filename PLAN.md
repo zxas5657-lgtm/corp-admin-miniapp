@@ -186,7 +186,7 @@ The north star changed from "admin self-service" to **leader itinerary first, ad
 - **Secretaries** serve one or more leaders (`supports`) and see and edit only those leaders' itineraries. Secretary admins see all leaders. Leaders never see each other's itineraries.
 - **Confirmation is secretary-judged:** on each create or change, the secretary chooses "needs leader confirmation" (→ pending) or not (→ updated, no confirmation; the leader still sees an "updated" badge). New items default to "needs confirmation". Leader-created items are confirmed.
 - **Time zone = the user's local zone.** Items store an instant plus their own zone; a secretary entering for a leader defaults to that leader's current zone, editable.
-- **Vehicles:** anyone except drivers may request. Requests for a leader are visible only to that leader, their mapped secretaries, dispatchers, the assigned driver and reception. Other requests are visible to secretaries, secretary admins, reception, dispatchers and drivers, never to leaders.
+- **Vehicles:** anyone except drivers may request. Requests for a leader are visible only to that leader, their mapped secretaries, secretary admins, dispatchers, the assigned driver and reception. Other requests are visible to secretaries, secretary admins, reception, dispatchers and drivers, never to leaders.
 - **Visitors** (no ID or phone numbers): name, organisation, headcount, host leader, time, purpose, transport (self-drive with plate, or pickup/drop-off), visitor type (government / customer / internal / partner), reception level (A / B / C).
 - **Reminders:** per item, default 15 minutes before, user-adjustable; itinerary digest at 08:00 and 18:00 local, user-adjustable.
 - **Channel:** plain WeChat one-off subscribe messages, limits accepted; WeCom is not reopened. Stronger notifications later.
@@ -209,7 +209,7 @@ The north star changed from "admin self-service" to **leader itinerary first, ad
 | S3-B2 | `auth`: whoami, invite redemption (transaction, hash, expiry, rate limit), disabled-employee handling; `admin`: issue/revoke invite, disable employee, flags, `supports`; audit log | codex | B1 | not started |
 | S3-B3 | Remote store adapter: async API, server error codes mapped to `error.*`, server ids; local adapters kept for tests and the demo | codex | B1 | not started |
 | S3-B4 | `items`, `notes` and `vehicles` handlers: server-side visibility filtering, create/edit/cancel with `needsConfirm`, confirm/decline/seen, series, visits (pickup → linked car request, arrived), dispatcher-only dispatch, `rev` concurrency, car availability and seats in transactions | codex | B1, B3 | not started |
-| S3-F3 | Leader week view: whole week grouped by day, brief lines that expand to detail, important emphasis, pending / updated markers, confirm and decline, rough-note entry; dual-zone time labels | cursor | B0b | not started |
+| S3-F3 | Design system v2 first (`DESIGN.md`: seasonal tokens, season switching and the Me → Appearance setting, shared components migrated, screens re-run). Then the leader week view: whole week grouped by day, brief lines that expand to detail, important emphasis, pending / updated markers, confirm and decline, rough-note entry; dual-zone time labels | cursor | B0b | not started |
 | S3-F4 | Secretary and reception tools: leader switcher (supported leaders only), notes inbox, item forms (meeting incl. category and weekly repeat, trip with stops, visit, milestone) with the zone field and the "needs confirmation" switch; meeting edit/reschedule; car request "for leader" | cursor | B0b | not started |
 | S3-F1 | Bind screen (invite code entry and its errors), not-bound and disabled states; loading/network-error/retry on every page; role-specific tab sets; production build hides the role switch and the demo clock | cursor | B2, B3 | not started |
 | S3-F2 | Privacy consent flow and a privacy-policy page in both locales (what is stored: employee name, title, department, role, the openid binding; visitor name, organisation and plate entered by staff, plate cleared after the visit) | cursor | — | not started |
@@ -229,7 +229,7 @@ Quality gates for Sprint 3, on top of §5:
 - Account owner type (enterprise or personal) and who does the 小程序备案 filing.
 - Audit log retention: 1 year proposed. Visitor plate retention: 30 days proposed.
 - ~~Meeting visibility~~: resolved by §7.1b (need-to-know, `DATA_MODEL.md` §4).
-- Design direction questions: `DESIGN.md` §Sprint 3 起的方向.
+- ~~Design direction questions~~: resolved 2026-10-25. `DESIGN.md` 设计系统 v2: soft glass on a dark canvas for leaders, light paper for work screens; seasonal brand colours (per-user auto by season in the user's local zone, personal override incl. brand blue `#093F9C`); leader tabs 行程 · ＋ · 我的.
 - Defaults the owner may still change (`DATA_MODEL.md`, marked "owner may change"): reception sees leaders' busy/free only; leaders see co-attending leaders' names; a secretary supporting one of several leaders on an item may edit it; a leader editing a pending item confirms it; series confirm applies to future occurrences; driver completes, dispatcher dispatches/rejects; pickup visits create a linked car request; reception level is a label only.
 
 ### 7.5 Sprint 4 (proposed, after S3)

@@ -82,7 +82,7 @@ Anyone except drivers may request a car.
 
 | Request | Visible to |
 | --- | --- |
-| for a leader (`forLeaderId` set: the requester is a leader, or a secretary requested for a supported leader) | that leader, that leader's mapped secretaries, dispatchers, the assigned driver, receptionists and reception admins |
+| for a leader (`forLeaderId` set: the requester is a leader, or a secretary requested for a supported leader) | that leader, that leader's mapped secretaries, secretary admins, dispatchers, the assigned driver, receptionists and reception admins |
 | not for a leader | the requester, all secretaries and secretary admins, receptionists and reception admins, dispatchers, drivers. **Never leaders.** |
 
 ## 5. Collections
