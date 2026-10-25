@@ -29,12 +29,17 @@ function leaderCheck(actor, item, ctx) {
 
 function itemVisibleTo(actor, item, ctx) {
   if (!actor || !item) return false;
+  const role = actorRole(actor);
+  if (item.kind === 'visit' && (role === 'receptionist' || role === 'receptionAdmin')) return true;
   return leaderCheck(actor, item, ctx);
 }
 
 function canEditItem(actor, item, ctx) {
   if (!actor || !item) return false;
   const role = actorRole(actor);
+  if (item.kind === 'visit' && role === 'receptionist') return item.createdBy === actor.personId;
+  if (item.kind === 'visit' && role === 'receptionAdmin') return true;
+  if (role === 'receptionist' || role === 'receptionAdmin') return false;
   if (item.organizerId === actor.personId) return true;
   if (
     role === 'leader' ||
@@ -72,4 +77,28 @@ function visibleVehicles(actor, vehicles, ctx) {
   return (vehicles || []).filter((vehicle) => vehicleVisibleTo(actor, vehicle, ctx));
 }
 
-module.exports = { itemVisibleTo, canEditItem, vehicleVisibleTo, visibleItems, visibleVehicles };
+function busySlots(actor, items, leaderId, day, viewerTz, ctx) {
+  if (!actor || !day) return [];
+  const role = actorRole(actor);
+  const canReadAllVisits = role === 'receptionist' || role === 'receptionAdmin';
+  return (items || [])
+    .filter((item) => {
+      if (item.status === 'cancelled' || item.allDay || !item.startAt || !item.endAt) return false;
+      if (leaderId && !(item.leaderIds || []).includes(leaderId)) return false;
+      if (!canReadAllVisits && !itemVisibleTo(actor, item, ctx)) return false;
+      const zone = viewerTz || 'Asia/Shanghai';
+      const startDay = require('./tz').toZoned(new Date(item.startAt), zone).date;
+      const endDay = require('./tz').toZoned(new Date(item.endAt), zone).date;
+      return startDay <= day && endDay >= day;
+    })
+    .map((item) => ({ startAt: item.startAt, endAt: item.endAt }));
+}
+
+module.exports = {
+  itemVisibleTo,
+  canEditItem,
+  vehicleVisibleTo,
+  visibleItems,
+  visibleVehicles,
+  busySlots,
+};

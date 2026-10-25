@@ -9,7 +9,9 @@ const {
   vehicleVisibleTo,
   visibleVehicles,
   canEditItem,
+  busySlots,
 } = require('../miniprogram/domain/visibility');
+const { noteVisibleTo } = require('../miniprogram/domain/notes');
 const ctx = { supports: ref.SUPPORTS, isLeader: ref.isLeader };
 const data = seed();
 const items = data.items.filter((x) => x.kind === 'meeting');
@@ -99,4 +101,54 @@ test('canEditItem follows organizer, leader, secretary support, and admin rules'
   assert.equal(canEditItem(ref.actorFor('secretaryAdmin'), m6, ctx), true);
   assert.equal(canEditItem(ref.actorFor('receptionist'), m1, ctx), false);
   assert.equal(canEditItem(ref.actorFor('secretary'), m1, ctx), true);
+});
+
+test('reception visibility and trip child scope follow the host leader', () => {
+  const visit = data.items.find((item) => item.id === 'vs1');
+  const trip = data.items.filter((item) => item.id === 't1' || item.parentId === 't1');
+  assert.equal(itemVisibleTo(ref.actorFor('receptionist'), visit, ctx), true);
+  assert.equal(itemVisibleTo(ref.actorFor('receptionAdmin'), visit, ctx), true);
+  assert.equal(canEditItem(ref.actorFor('receptionist'), visit, ctx), true);
+  assert.equal(canEditItem(ref.actorFor('receptionAdmin'), visit, ctx), true);
+  assert.equal(canEditItem(ref.actorFor('receptionist'), trip[0], ctx), false);
+  assert.equal(itemVisibleTo(ref.actorFor('leader'), trip[0], ctx), true);
+  assert.equal(itemVisibleTo(ref.actorFor('leader'), trip[1], ctx), true);
+  assert.equal(itemVisibleTo(ref.actorFor('secretary'), trip[1], ctx), true);
+  assert.equal(itemVisibleTo(ref.actorFor('driver'), trip[1], ctx), false);
+});
+
+test('busySlots return only instants and omit cancelled items', () => {
+  const slots = busySlots(
+    ref.actorFor('receptionist'),
+    data.items,
+    'p-chen',
+    '2026-10-27',
+    'Asia/Shanghai',
+    ctx,
+  );
+  assert.deepEqual(slots, [
+    { startAt: '2026-10-27T02:00:00.000Z', endAt: '2026-10-27T03:00:00.000Z' },
+  ]);
+  assert.deepEqual(Object.keys(slots[0]).sort(), ['endAt', 'startAt']);
+  const visit = data.items.find((item) => item.id === 'vs1');
+  const cancelled = { ...visit, status: 'cancelled' };
+  assert.deepEqual(
+    busySlots(
+      ref.actorFor('receptionist'),
+      [cancelled],
+      'p-chen',
+      '2026-10-27',
+      'Asia/Shanghai',
+      ctx,
+    ),
+    [],
+  );
+});
+
+test('seed notes follow the same support visibility rule', () => {
+  const note = data.notes.find((item) => item.id === 'n1');
+  assert.equal(noteVisibleTo(ref.actorFor('leader'), note, ctx), true);
+  assert.equal(noteVisibleTo(ref.actorFor('secretary'), note, ctx), true);
+  assert.equal(noteVisibleTo(ref.actorFor('secretaryAdmin'), note, ctx), true);
+  assert.equal(noteVisibleTo(ref.actorFor('receptionist'), note, ctx), false);
 });

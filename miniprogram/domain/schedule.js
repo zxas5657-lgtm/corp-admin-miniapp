@@ -46,7 +46,7 @@ function scheduleItems(date, sources, now, viewerTz) {
 function meetingSource(items) {
   return {
     kind: 'meeting',
-    items: items || [],
+    items: (items || []).filter((item) => item.kind === 'meeting'),
     toScheduleItem(item, now, viewerTz, date) {
       return sourceItem(item, now, viewerTz, date, 'meeting');
     },

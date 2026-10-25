@@ -139,7 +139,9 @@ function migrate(data, migrations) {
   let dropped = 0;
   const valid = (records, timeKey) =>
     records.filter((record) => {
-      const good = isRecord(record) && Boolean(record.id) && Boolean(record[timeKey]);
+      const hasTime =
+        record && record.allDay ? Boolean(record.date) : Boolean(record && record[timeKey]);
+      const good = isRecord(record) && Boolean(record.id) && hasTime;
       if (!good) dropped += 1;
       return good;
     });

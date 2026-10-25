@@ -21,13 +21,20 @@ function walk(value) {
 }
 test('seed v3 records have valid references and instants', () => {
   const data = seed();
-  assert.equal(data.items.length, 6);
+  assert.equal(data.items.length, 12);
   assert.equal(data.vehicles.length, 5);
   for (const item of data.items) {
-    assert.equal(item.kind, 'meeting');
-    assert.ok(item.startAt.endsWith('Z'));
-    assert.notEqual(reference.roomById(item.roomId), null);
-    assert.notEqual(reference.personById(item.organizerId), null);
+    assert.ok(['meeting', 'travel', 'stop', 'visit', 'milestone'].includes(item.kind));
+    if (item.allDay) assert.match(item.date, /^\d{4}-\d{2}-\d{2}$/);
+    else {
+      assert.ok(item.startAt.endsWith('Z'));
+      assert.ok(item.endAt.endsWith('Z'));
+    }
+    if (item.kind === 'meeting') {
+      assert.notEqual(reference.roomById(item.roomId), null);
+      assert.notEqual(reference.personById(item.organizerId), null);
+    }
+    for (const leaderId of item.leaderIds) assert.ok(reference.personById(leaderId));
   }
   for (const vehicle of data.vehicles) {
     assert.ok(vehicle.departAt.endsWith('Z'));
@@ -67,6 +74,23 @@ test('seed returns independent copies and required additions exist', () => {
     true,
   );
   assert.equal(a.items.find((x) => x.id === 'm4').important, true);
+});
+
+test('seed includes the trip, visit, milestone, and converted leader note', () => {
+  const data = seed();
+  const trip = data.items.find((item) => item.id === 't1');
+  assert.equal(trip.kind, 'travel');
+  assert.deepEqual(trip.title, { 'zh-CN': '深圳客户拜访', en: 'Shenzhen client visits' });
+  assert.equal(trip.leaders[0].confirm, 'pending');
+  assert.deepEqual(
+    data.items.filter((item) => item.parentId === 't1').map((item) => item.id),
+    ['t1-s1', 't1-s2', 't1-s3'],
+  );
+  assert.equal(data.items.find((item) => item.id === 'vs1').kind, 'visit');
+  assert.equal(data.items.find((item) => item.id === 'ms1').allDay, true);
+  assert.deepEqual(data.notes[0].itemIds, ['t1']);
+  assert.equal(data.notes[0].status, 'converted');
+  assert.equal(data.notes[0].handledBy, 'p-lin');
 });
 
 test('seed meeting statuses are derived from their instant ranges', () => {
@@ -110,9 +134,11 @@ test('vehicle status fields are consistent', () => {
 test('every seed reference id exists', () => {
   const data = seed();
   for (const item of data.items) {
-    assert.ok(reference.personById(item.organizerId));
-    assert.ok(reference.roomById(item.roomId));
-    for (const id of item.attendeeIds) assert.ok(reference.personById(id));
+    if (item.kind === 'meeting') {
+      assert.ok(reference.personById(item.organizerId));
+      assert.ok(reference.roomById(item.roomId));
+      for (const id of item.attendeeIds) assert.ok(reference.personById(id));
+    }
     for (const id of item.leaderIds) assert.ok(reference.personById(id));
   }
   for (const vehicle of data.vehicles) {

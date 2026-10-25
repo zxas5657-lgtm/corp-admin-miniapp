@@ -161,3 +161,17 @@ test('literal v2 fixture migrates leaders audit timestamps and vehicle ownership
   assert.equal(vehicle.departAt, '2026-10-28T00:30:00.000Z');
   assert.equal(vehicle.forLeaderId, 'p-chen');
 });
+
+test('v3 all-day items are retained without startAt', () => {
+  const result = migrate({
+    version: 3,
+    items: [{ id: 'milestone', kind: 'milestone', allDay: true, date: '2026-10-30' }],
+    vehicles: [],
+    notes: [],
+  });
+  assert.equal(result.ok, true);
+  assert.deepEqual(
+    result.data.items.map((item) => item.id),
+    ['milestone'],
+  );
+});

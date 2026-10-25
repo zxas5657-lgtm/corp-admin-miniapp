@@ -16,6 +16,12 @@ test('six roles and flag capabilities are explicit', () => {
     'driver',
   ]);
   assert.equal(can('leader', 'meeting.create'), true);
+  assert.equal(can('leader', 'item.create'), true);
+  assert.equal(can('leader', 'note.create'), true);
+  assert.equal(can('secretary', 'item.create'), true);
+  assert.equal(can('receptionist', 'visit.create'), true);
+  assert.equal(can('receptionAdmin', 'visit.create'), true);
+  assert.equal(can('driver', 'visit.create'), false);
   assert.equal(can('driver', 'vehicle.complete'), true);
   assert.equal(can(ref.actorFor('secretary'), 'vehicle.dispatch'), true);
   assert.equal(can(ref.actorFor('secretaryAdmin'), 'admin.manage'), true);

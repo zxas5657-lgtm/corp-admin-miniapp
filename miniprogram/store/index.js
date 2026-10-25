@@ -114,6 +114,14 @@ function createStore(options) {
       notes: current.notes,
     });
   }
+  function addItems(records) {
+    const current = ensureState();
+    return writeState({
+      items: [...current.items, ...clone(records || [])],
+      vehicles: current.vehicles,
+      notes: current.notes,
+    });
+  }
   function updateItem(record) {
     const current = ensureState();
     let replaced = false;
@@ -135,6 +143,25 @@ function createStore(options) {
     });
     if (!replaced) vehicles.push(clone(record));
     return writeState({ items: current.items, vehicles, notes: current.notes });
+  }
+  function addNote(record) {
+    const current = ensureState();
+    return writeState({
+      items: current.items,
+      vehicles: current.vehicles,
+      notes: [...current.notes, clone(record)],
+    });
+  }
+  function updateNote(record) {
+    const current = ensureState();
+    let replaced = false;
+    const notes = current.notes.map((note) => {
+      if (note.id !== record.id) return note;
+      replaced = true;
+      return clone(record);
+    });
+    if (!replaced) notes.push(clone(record));
+    return writeState({ items: current.items, vehicles: current.vehicles, notes });
   }
   function resetDemo() {
     const next = seedState();
@@ -228,8 +255,11 @@ function createStore(options) {
       return clone(ensureState());
     },
     addItem,
+    addItems,
     updateItem,
     updateVehicle,
+    addNote,
+    updateNote,
     resetDemo,
     getLocale,
     setLocale,

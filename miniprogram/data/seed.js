@@ -1,7 +1,10 @@
 'use strict';
 
 const tz = require('../domain/tz');
-const { isLeader } = require('./reference');
+const reference = require('./reference');
+const { createItem } = require('../domain/item');
+const { createNote } = require('../domain/notes');
+const { isLeader } = reference;
 function wall(date, time) {
   return tz.fromZoned(date, time, 'Asia/Shanghai').toISOString();
 }
@@ -119,8 +122,7 @@ const items = [
     ['p-lin', 'p-chen'],
     'p-lin',
     {
-      'zh-CN':
-        '复盘十月会议安排和用车情况。',
+      'zh-CN': '复盘十月会议安排和用车情况。',
       en: 'Review October meeting plans and vehicle usage.',
     },
     ['2026-10-20', '09:00'],
@@ -135,8 +137,7 @@ const items = [
     ['p-lin', 'p-zhou'],
     'p-lin',
     {
-      'zh-CN':
-        '对齐周末值班，以及周一例会材料是否齐套。',
+      'zh-CN': '对齐周末值班，以及周一例会材料是否齐套。',
       en: 'Align weekend duty coverage and check Monday meeting materials.',
     },
     ['2026-10-21', '09:00'],
@@ -166,9 +167,10 @@ const items = [
     ['p-chen', 'p-lin', 'p-sun', 'p-ma'],
     'p-chen',
     {
-      'zh-CN':
-        '上周经营数据、本周重点、需要行政协调的事项。',
-      en: "Review last week's results, this week's priorities, and items needing administrative coordination.",
+      'zh-CN': '上周经营数据、本周重点、需要行政协调的事项。',
+      en:
+        "Review last week's results, this week's priorities, and items needing " +
+        'administrative coordination.',
     },
     ['2026-10-22', '14:00'],
     { important: true },
@@ -183,8 +185,7 @@ const items = [
     ['p-lin', 'p-zhou'],
     'p-zhou',
     {
-      'zh-CN':
-        '确认接待路线、茶歇和会议室。',
+      'zh-CN': '确认接待路线、茶歇和会议室。',
       en: 'Confirm the visitor route, refreshments, and meeting room.',
     },
     ['2026-10-23', '11:00'],
@@ -205,6 +206,105 @@ const items = [
     ['2026-10-23', '10:00'],
   ),
 ];
+const extraNow = new Date('2026-10-24T01:20:00.000Z');
+function extraItems() {
+  const secretary = reference.actorFor('secretary');
+  const receptionist = reference.actorFor('receptionist');
+  const byId = {};
+  const options = {
+    actor: secretary,
+    now: extraNow,
+    tz: 'Asia/Shanghai',
+    isLeader,
+  };
+  const travel = createItem(
+    'travel',
+    {
+      title: { 'zh-CN': '深圳客户拜访', en: 'Shenzhen client visits' },
+      date: '2026-10-28',
+      start: '08:00',
+      endDate: '2026-10-29',
+      end: '18:00',
+      leaderIds: ['p-chen'],
+    },
+    { ...options, id: 't1' },
+  );
+  byId.t1 = travel;
+  const stops = [
+    createItem(
+      'stop',
+      {
+        title: { 'zh-CN': '出发', en: 'Departure' },
+        parentId: 't1',
+        stopType: 'depart',
+        date: '2026-10-28',
+        start: '08:00',
+        end: '09:00',
+        location: { 'zh-CN': '虹桥机场', en: 'Hongqiao Airport' },
+      },
+      { ...options, id: 't1-s1', itemById: (id) => byId[id] },
+    ),
+    createItem(
+      'stop',
+      {
+        title: { 'zh-CN': '客户现场', en: 'Client site' },
+        parentId: 't1',
+        stopType: 'stop',
+        date: '2026-10-28',
+        start: '14:00',
+        end: '16:00',
+        location: { 'zh-CN': '南山物流园', en: 'Nanshan Logistics Park' },
+        client: { 'zh-CN': '华南货运客户', en: 'South China freight client' },
+      },
+      { ...options, id: 't1-s2', itemById: (id) => byId[id] },
+    ),
+    createItem(
+      'stop',
+      {
+        title: { 'zh-CN': '返程', en: 'Return' },
+        parentId: 't1',
+        stopType: 'return',
+        date: '2026-10-29',
+        start: '16:00',
+        end: '18:00',
+        location: { 'zh-CN': '宝安机场', en: "Bao'an Airport" },
+      },
+      { ...options, id: 't1-s3', itemById: (id) => byId[id] },
+    ),
+  ];
+  const visit = createItem(
+    'visit',
+    {
+      title: { 'zh-CN': '交通运输局调研组', en: 'Transport bureau review team' },
+      date: '2026-10-27',
+      start: '10:00',
+      end: '11:00',
+      leaderIds: ['p-chen'],
+      visitorName: { 'zh-CN': '刘处长', en: 'Director Liu' },
+      org: { 'zh-CN': '市交通运输局', en: 'Municipal Transport Bureau' },
+      headcount: 3,
+      purpose: { 'zh-CN': '例行调研', en: 'Routine review' },
+      visitorType: 'government',
+      receptionLevel: 'A',
+      transport: 'selfDrive',
+      plate: '沪A·D0001',
+    },
+    { ...options, id: 'vs1', actor: receptionist },
+  );
+  const milestone = createItem(
+    'milestone',
+    {
+      title: { 'zh-CN': '年度航线合同签约', en: 'Annual route contract signing' },
+      allDay: true,
+      date: '2026-10-30',
+      leaderIds: ['p-chen'],
+      important: true,
+    },
+    { ...options, id: 'ms1' },
+  );
+  return [travel, ...stops, visit, milestone];
+}
+items.push(...extraItems());
 const vehicles = [
   vehicle(
     'v1',
@@ -219,8 +319,7 @@ const vehicles = [
     null,
     null,
     {
-      'zh-CN':
-        '当天公务车已排满，请改乘地铁或改期。',
+      'zh-CN': '当天公务车已排满，请改乘地铁或改期。',
       en: 'The company cars are fully booked; please take the metro or reschedule.',
     },
     ['2026-10-20', '10:00'],
@@ -255,8 +354,7 @@ const vehicles = [
     2,
     'p-lin',
     {
-      'zh-CN':
-        '需携带公章函件，预计两小时。',
+      'zh-CN': '需携带公章函件，预计两小时。',
       en: 'Bring the stamped letter; the trip should take about two hours.',
     },
     'assigned',
@@ -307,10 +405,30 @@ const vehicles = [
   ),
 ];
 function seed() {
+  const created = createNote('placeholder', {
+    id: 'n1',
+    actor: reference.actorFor('leader'),
+    now: extraNow,
+  });
+  const notes = [
+    {
+      ...created.note,
+      // Demo text is bilingual like the rest of the seed; real notes are typed in one language.
+      text: {
+        'zh-CN': '下周想去趟深圳，见两个客户',
+        en: 'Want to visit Shenzhen next week to see two clients',
+      },
+      status: 'converted',
+      itemIds: ['t1'],
+      handledBy: 'p-lin',
+      handledAt: extraNow.toISOString(),
+      rev: 1,
+    },
+  ];
   return {
     items: JSON.parse(JSON.stringify(items)),
     vehicles: JSON.parse(JSON.stringify(vehicles)),
-    notes: [],
+    notes,
   };
 }
 module.exports = { seed };

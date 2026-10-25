@@ -16,9 +16,9 @@ test('first load seeds v3 state and persists', () => {
   const s = make(a);
   assert.deepEqual(s.load(), { ok: true, dropped: 0 });
   assert.equal(a.get(DATA_KEY).value.version, 3);
-  assert.equal(s.getState().items.length, 6);
+  assert.equal(s.getState().items.length, 12);
   assert.equal(s.getState().vehicles.length, 5);
-  assert.deepEqual(s.getState().notes, []);
+  assert.equal(s.getState().notes.length, 1);
 });
 test('item and vehicle mutations replace or append and notify', () => {
   const a = createMemoryAdapter();
@@ -214,4 +214,32 @@ test('getState returns deep copies and subscribers fire after successful mutatio
   assert.deepEqual(s.updateVehicle({ id: 'v-add', departAt: 'x' }), { ok: true });
   assert.equal(notifications, 3);
   unsubscribe();
+});
+
+test('batch item and note mutations persist with one write per call', () => {
+  const base = createMemoryAdapter();
+  let writes = 0;
+  const adapter = {
+    get: (key) => base.get(key),
+    set(key, value) {
+      writes += 1;
+      return base.set(key, value);
+    },
+  };
+  const s = make(adapter);
+  s.load();
+  assert.deepEqual(
+    s.addItems([
+      { id: 'batch-1', kind: 'meeting', startAt: 'x' },
+      { id: 'batch-2', kind: 'meeting', startAt: 'y' },
+    ]),
+    { ok: true },
+  );
+  assert.equal(writes, 2);
+  assert.deepEqual(s.addNote({ id: 'note-add', leaderId: 'p-chen', text: 'x' }), { ok: true });
+  assert.deepEqual(s.updateNote({ id: 'note-add', leaderId: 'p-chen', text: 'updated' }), {
+    ok: true,
+  });
+  assert.equal(writes, 4);
+  assert.equal(s.getState().notes.find((note) => note.id === 'note-add').text, 'updated');
 });

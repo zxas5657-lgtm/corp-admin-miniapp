@@ -2,11 +2,11 @@
 
 const ROLE_ALIASES = { admin: 'secretary', reception: 'receptionist' };
 const ROLE_CAPS = {
-  leader: ['meeting.create', 'vehicle.request'],
-  secretary: ['meeting.create', 'vehicle.request'],
-  secretaryAdmin: ['meeting.create', 'vehicle.request'],
-  receptionist: ['vehicle.request'],
-  receptionAdmin: ['vehicle.request'],
+  leader: ['meeting.create', 'item.create', 'note.create', 'vehicle.request'],
+  secretary: ['meeting.create', 'item.create', 'vehicle.request'],
+  secretaryAdmin: ['meeting.create', 'item.create', 'vehicle.request'],
+  receptionist: ['vehicle.request', 'visit.create'],
+  receptionAdmin: ['vehicle.request', 'visit.create'],
   driver: ['vehicle.complete'],
 };
 const caps = [];
