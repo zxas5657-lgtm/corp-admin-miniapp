@@ -55,7 +55,12 @@
         />
       </view>
 
-      <view wx:for="{{view.warnings}}" wx:key="*this" class="warn-note">{{item}}</view>
+      <view
+        wx:for="{{view.warnings}}"
+        wx:if="{{item !== notice}}"
+        wx:key="*this"
+        class="warn-note"
+      >{{item}}</view>
 
       <view
         wx:for="{{textActions}}"
