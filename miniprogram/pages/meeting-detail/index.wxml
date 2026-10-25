@@ -1,0 +1,68 @@
+<view class="page">
+  <block wx:if="{{view}}">
+    <state-view
+      wx:if="{{view.notFound}}"
+      kind="empty"
+      title="{{view.title}}"
+      body="{{view.body}}"
+      action-text="{{i18n.nav.back}}"
+      bind:action="onBack"
+    />
+    <block wx:else>
+      <notice-bar
+        wx:if="{{notice}}"
+        kind="error"
+        text="{{notice}}"
+        closable="{{true}}"
+        close-label="{{i18n.a11y.closeSheet}}"
+        bind:close="onCloseNotice"
+      />
+      <view class="title-row">
+        <text class="text-detail title {{view.cancelled ? 'is-strike' : ''}}">{{view.title}}</text>
+        <status-pill class="pill-host" text="{{view.statusText}}" tone="{{view.tone}}" />
+      </view>
+      <view class="cell-group">
+        <cell-row
+          wx:for="{{view.cells}}"
+          wx:key="key"
+          label="{{item.label}}"
+          value="{{item.key === 'attendees' ? '' : item.value}}"
+          stacked="{{item.key === 'attendees'}}"
+        >
+          <text wx:if="{{item.key === 'attendees'}}" class="attendees">{{item.value}}</text>
+        </cell-row>
+        <cell-row
+          wx:if="{{view.agenda}}"
+          label="{{agendaLabel}}"
+          value="{{view.agenda}}"
+          stacked="{{true}}"
+        />
+      </view>
+      <view
+        class="schedule-link"
+        aria-role="button"
+        hover-class="is-pressed"
+        bindtap="onViewSchedule"
+      >{{view.viewInSchedule.text}}</view>
+      <view
+        wx:if="{{view.canCancel}}"
+        class="cancel-link"
+        aria-role="button"
+        hover-class="is-pressed"
+        bindtap="onOpenCancel"
+      >{{view.cancelSheet.title}}</view>
+      <bottom-sheet
+        show="{{cancelOpen}}"
+        title="{{view.cancelSheet.title}}"
+        cancel-text="{{view.cancelSheet.cancelText}}"
+        confirm-text="{{view.cancelSheet.confirmText}}"
+        danger="{{true}}"
+        mask-label="{{i18n.a11y.closeSheet}}"
+        bind:close="onCloseCancel"
+        bind:confirm="onConfirmCancel"
+      >
+        <text class="sheet-copy">{{view.cancelSheet.body}}</text>
+      </bottom-sheet>
+    </block>
+  </block>
+</view>

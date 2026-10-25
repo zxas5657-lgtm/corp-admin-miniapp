@@ -1,0 +1,8 @@
+<view class="wrap {{fixed ? 'is-fixed' : ''}}">
+  <view
+    class="btn-primary {{disabled ? 'is-disabled' : ''}}"
+    aria-role="button"
+    catchtap="onTap"
+  >{{loading && loadingText ? loadingText : text}}</view>
+  <text wx:if="{{disabled && reason}}" class="fine">{{reason}}</text>
+</view>

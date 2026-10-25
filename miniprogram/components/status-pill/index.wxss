@@ -1,0 +1,3 @@
+.pill {
+  max-width: 100%;
+}

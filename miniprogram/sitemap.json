@@ -1,0 +1,9 @@
+{
+  "desc": "Allow all pages",
+  "rules": [
+    {
+      "action": "allow",
+      "page": "*"
+    }
+  ]
+}

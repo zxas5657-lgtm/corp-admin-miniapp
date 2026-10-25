@@ -1,0 +1,55 @@
+.page {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 100vh;
+  padding: var(--space-16, 16px) var(--space-16, 16px) calc(var(--space-24, 24px) + constant(safe-area-inset-bottom));
+  padding-bottom: calc(var(--space-24, 24px) + env(safe-area-inset-bottom));
+}
+
+.lead {
+  display: block;
+  margin: 0 var(--space-4, 4px) var(--space-12, 12px);
+  color: var(--ink-2, #5C6778);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.skel-row {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  min-height: 64px;
+  padding: var(--space-12, 12px) var(--space-14, 14px);
+  border-bottom: 1px solid var(--line, #E6E9EE);
+}
+
+.skel-row:last-child {
+  border-bottom: 0;
+}
+
+.skel-copy {
+  flex: 1;
+  min-width: 0;
+  margin-right: var(--space-12, 12px);
+}
+
+.skel-title,
+.skel-body {
+  display: block;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.skel-title {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.skel-body {
+  margin-top: var(--space-2, 2px);
+}
+
+.pill-host {
+  flex: none;
+}

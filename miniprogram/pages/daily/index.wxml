@@ -1,0 +1,26 @@
+<view class="page">
+  <text class="lead">{{i18n.daily.lead}}</text>
+  <view class="cell-group">
+    <view class="skel-row">
+      <view class="skel-copy">
+        <text class="skel-title">{{i18n.daily.supplyTitle}}</text>
+        <text class="skel-body text-secondary">{{i18n.daily.supplyBody}}</text>
+      </view>
+      <status-pill class="pill-host" text="{{i18n.common.notAvailable}}" tone="mute" />
+    </view>
+    <view class="skel-row">
+      <view class="skel-copy">
+        <text class="skel-title">{{i18n.daily.repairTitle}}</text>
+        <text class="skel-body text-secondary">{{i18n.daily.repairBody}}</text>
+      </view>
+      <status-pill class="pill-host" text="{{i18n.common.notAvailable}}" tone="mute" />
+    </view>
+    <view class="skel-row">
+      <view class="skel-copy">
+        <text class="skel-title">{{i18n.daily.sealTitle}}</text>
+        <text class="skel-body text-secondary">{{i18n.daily.sealBody}}</text>
+      </view>
+      <status-pill class="pill-host" text="{{i18n.common.notAvailable}}" tone="mute" />
+    </view>
+  </view>
+</view>

@@ -1,0 +1,54 @@
+<view class="page">
+  <block wx:if="{{view}}">
+    <scroll-view class="filters" scroll-x aria-label="{{i18n.a11y.filterMeetings}}">
+      <view
+        wx:for="{{view.filters}}"
+        wx:key="key"
+        class="chip {{item.active ? 'is-on' : ''}}"
+        data-key="{{item.key}}"
+        aria-role="button"
+        hover-class="is-pressed"
+        bindtap="onFilter"
+      >{{item.label}}</view>
+    </scroll-view>
+
+    <state-view
+      wx:if="{{view.empty}}"
+      kind="empty"
+      title="{{view.empty.title}}"
+      body="{{view.empty.body}}"
+      action-text="{{view.empty.actionText}}"
+      bind:action="onCreate"
+    />
+    <block wx:else>
+      <view wx:for="{{view.groups}}" wx:key="date" wx:for-item="group">
+        <text class="section-label">{{group.heading}}</text>
+        <view
+          wx:for="{{group.items}}"
+          wx:for-item="meeting"
+          wx:key="id"
+          class="card {{meeting.cancelled ? 'is-cancelled' : ''}}"
+          data-id="{{meeting.id}}"
+          hover-class="is-pressed"
+          bindtap="onOpen"
+        >
+          <view class="card-line">
+            <view class="card-title {{meeting.cancelled ? 'is-strike' : ''}}">{{meeting.title}}</view>
+            <status-pill class="pill-host" text="{{meeting.statusText}}" tone="{{meeting.tone}}" />
+          </view>
+          <text class="meta text-secondary">{{meeting.timeText}} · {{meeting.roomName}}</text>
+          <text class="meta text-secondary">{{meeting.organizerName}}</text>
+        </view>
+      </view>
+    </block>
+
+    <view class="dock">
+      <primary-button
+        text="{{view.createButton.text}}"
+        disabled="{{view.createButton.disabled}}"
+        reason="{{view.createButton.reason}}"
+        bind:press="onCreate"
+      />
+    </view>
+  </block>
+</view>

@@ -1,0 +1,28 @@
+<view wx:if="{{rendered}}" class="sheet {{raised ? 'is-on' : ''}}">
+  <view
+    class="mask"
+    aria-role="button"
+    aria-label="{{maskLabel}}"
+    catchtap="onClose"
+    catchtouchmove="preventMove"
+  ></view>
+  <view class="panel" aria-role="dialog" aria-label="{{title}}" catchtap="onPanel">
+    <view class="handle" aria-hidden="true"></view>
+    <text wx:if="{{title}}" class="title">{{title}}</text>
+    <view class="body"><slot></slot></view>
+    <view class="actions">
+      <view
+        wx:if="{{cancelText}}"
+        class="cancel"
+        aria-role="button"
+        catchtap="onClose"
+      >{{cancelText}}</view>
+      <view
+        wx:if="{{confirmText}}"
+        class="btn-primary confirm {{danger ? 'is-danger' : ''}} {{confirmDisabled ? 'is-disabled' : ''}}"
+        aria-role="button"
+        catchtap="onConfirm"
+      >{{confirmText}}</view>
+    </view>
+  </view>
+</view>
