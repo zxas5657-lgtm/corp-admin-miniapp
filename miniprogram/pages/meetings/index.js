@@ -55,6 +55,15 @@ Component({
       this._filter = key;
       this.refresh();
     },
+    onEmptyAction() {
+      const empty = this.data.view && this.data.view.empty;
+      if (empty && empty.kind === 'filtered') {
+        this._filter = 'all';
+        this.refresh();
+        return;
+      }
+      this.onCreate();
+    },
     onOpen(event) {
       const id = event.currentTarget.dataset.id;
       if (!id) return;

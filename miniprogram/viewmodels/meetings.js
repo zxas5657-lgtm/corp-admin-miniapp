@@ -71,7 +71,8 @@ function meetingListView(options) {
         kind: 'filtered',
         title: i18n.t('meeting.empty.filteredTitle'),
         body: i18n.t('meeting.empty.filteredBody'),
-        actionText: canCreate ? i18n.t('meeting.action.new') : null,
+        // The dock already offers "new meeting"; here the way out is clearing the filter.
+        actionText: i18n.t('meeting.empty.showAll'),
       };
 
   return {
