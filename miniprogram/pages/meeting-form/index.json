@@ -1,0 +1,11 @@
+{
+  "navigationBarTitleText": "",
+  "usingComponents": {
+    "cell-row": "/components/cell-row/index",
+    "primary-button": "/components/primary-button/index",
+    "bottom-sheet": "/components/bottom-sheet/index",
+    "notice-bar": "/components/notice-bar/index",
+    "top-progress": "/components/top-progress/index",
+    "state-view": "/components/state-view/index"
+  }
+}

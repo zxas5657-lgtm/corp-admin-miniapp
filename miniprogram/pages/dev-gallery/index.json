@@ -1,0 +1,12 @@
+{
+  "navigationBarTitleText": "",
+  "usingComponents": {
+    "state-view": "/components/state-view/index",
+    "status-pill": "/components/status-pill/index",
+    "cell-row": "/components/cell-row/index",
+    "bottom-sheet": "/components/bottom-sheet/index",
+    "primary-button": "/components/primary-button/index",
+    "notice-bar": "/components/notice-bar/index",
+    "top-progress": "/components/top-progress/index"
+  }
+}

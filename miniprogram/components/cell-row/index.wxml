@@ -1,0 +1,18 @@
+<view class="wrap {{requiredError ? 'is-invalid' : ''}}">
+  <view
+    class="cell {{stacked ? 'cell--stacked' : ''}} {{arrow ? 'is-arrow' : ''}}"
+    hover-class="{{arrow && !quiet ? 'is-hover' : 'none'}}"
+    aria-role="{{arrow ? 'button' : ''}}"
+  >
+    <view class="cell-body">
+      <text class="k">{{label}}</text>
+      <view class="v">
+        <text wx:if="{{value}}">{{value}}</text>
+        <slot wx:else></slot>
+      </view>
+    </view>
+    <view wx:if="{{arrow}}" class="chev" aria-hidden="true"></view>
+    <view wx:if="{{!quiet}}" class="catcher" catchtap="onTap"></view>
+  </view>
+  <text wx:if="{{errorText}}" class="err">{{errorText}}</text>
+</view>

@@ -1,0 +1,18 @@
+{
+  "miniprogramRoot": "miniprogram/",
+  "compileType": "miniprogram",
+  "appid": "wxe62caebd6c66e685",
+  "projectname": "corp-admin-miniapp",
+  "setting": {
+    "es6": true
+  },
+  "packOptions": {
+    "ignore": [
+      { "type": "folder", "value": "tests" },
+      { "type": "folder", "value": "scripts" },
+      { "type": "folder", "value": ".team" },
+      { "type": "folder", "value": "prototype" },
+      { "type": "suffix", "value": ".md" }
+    ]
+  }
+}

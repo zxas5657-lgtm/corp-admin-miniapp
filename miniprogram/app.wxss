@@ -1,0 +1,337 @@
+page {
+  --ink: #1C2430;
+  --ink-2: #5C6778;
+  --ink-3: #6B7585;
+  --icon: #8B95A5;
+  --line: #E6E9EE;
+  --bg: #F3F5F8;
+  --card: #FFFFFF;
+  --primary: #1F4E89;
+  --primary-press: #173C6B;
+  --primary-soft: #E7F0FA;
+  --warn: #8A4B0F;
+  --warn-soft: #FBF3E6;
+  --ok: #146C3F;
+  --ok-soft: #E7F6EE;
+  --danger: #9F1D1D;
+  --danger-soft: #FDECEC;
+  --mute: #5C6778;
+  --mute-soft: #EEF1F5;
+  --vehicle: #C47B2B;
+  --disabled: #C5CED8;
+  --shadow: 0 1px 2px rgba(28, 36, 48, 0.04);
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-sheet: 16px;
+  --radius-pill: 999px;
+  --space-2: 2px;
+  --space-4: 4px;
+  --space-6: 6px;
+  --space-8: 8px;
+  --space-10: 10px;
+  --space-12: 12px;
+  --space-14: 14px;
+  --space-16: 16px;
+  --space-24: 24px;
+  --space-32: 32px;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+.text-nav {
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.text-detail {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.text-title {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.text-body {
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.text-secondary {
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.45;
+  color: var(--ink-2);
+}
+
+.text-aux {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.text-tab {
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.time,
+.tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+button,
+input,
+textarea {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  box-sizing: border-box;
+}
+
+.card {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: var(--space-12) var(--space-14);
+  margin-bottom: var(--space-10);
+  color: inherit;
+  box-shadow: var(--shadow);
+}
+
+.card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: var(--space-12);
+  bottom: var(--space-12);
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--primary);
+}
+
+.card.vehicle::before {
+  background: var(--vehicle);
+}
+
+.section-label {
+  margin: var(--space-14) var(--space-4) var(--space-8);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--ink-3);
+}
+
+.sub {
+  display: block;
+  margin-top: var(--space-2);
+  color: var(--ink-3);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.fine {
+  display: block;
+  margin: var(--space-8) 0 0;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.45;
+  color: var(--ink-3);
+  text-align: center;
+}
+
+.cell-group {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  background: var(--card);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.cell {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-height: 48px;
+  padding: var(--space-12) var(--space-14);
+  border-bottom: 1px solid var(--line);
+}
+
+.cell:last-child {
+  border-bottom: 0;
+}
+
+.cell .k,
+.cell .cell-label {
+  flex: 0 1 auto;
+  min-width: 72px;
+  max-width: 45%;
+  font-size: 15px;
+  line-height: 1.4;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.cell .v,
+.cell .cell-value {
+  flex: 1;
+  min-width: 0;
+  margin-left: var(--space-12);
+  text-align: right;
+  font-size: 15px;
+  line-height: 1.4;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.cell-body {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.cell--stacked .cell-body {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.cell--stacked .k,
+.cell--stacked .cell-label {
+  min-width: 0;
+  max-width: 100%;
+  width: auto;
+}
+
+.cell--stacked .v,
+.cell--stacked .cell-value {
+  width: 100%;
+  margin-left: 0;
+  margin-top: var(--space-4);
+  text-align: left;
+}
+
+.pill {
+  display: inline-block;
+  box-sizing: border-box;
+  max-width: 200px;
+  height: 22px;
+  padding: 0 var(--space-8);
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 22px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+}
+
+.pill-warn {
+  color: var(--warn);
+  background: var(--warn-soft);
+}
+
+.pill-info {
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.pill-ok {
+  color: var(--ok);
+  background: var(--ok-soft);
+}
+
+.pill-danger {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.pill-mute {
+  color: var(--mute);
+  background: var(--mute-soft);
+}
+
+.btn-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  height: 44px;
+  margin: 0;
+  padding: 0 var(--space-16);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: var(--primary);
+  color: #FFFFFF;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.btn-primary::after {
+  border: none;
+}
+
+.btn-primary:active {
+  background: var(--primary-press);
+}
+
+.btn-primary[disabled],
+.btn-primary.is-disabled {
+  opacity: 1;
+  background: #FFFFFF;
+  color: var(--ink-3);
+  border-color: var(--line);
+}
+
+.btn-primary[disabled]:active,
+.btn-primary.is-disabled:active {
+  background: #FFFFFF;
+  color: var(--ink-3);
+}
+
+.safe-bottom {
+  padding-bottom: constant(safe-area-inset-bottom);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.page-empty {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: var(--space-32);
+  padding-right: var(--space-16);
+  padding-left: var(--space-16);
+  padding-bottom: calc(88px + constant(safe-area-inset-bottom));
+  padding-bottom: calc(88px + env(safe-area-inset-bottom));
+  text-align: center;
+}

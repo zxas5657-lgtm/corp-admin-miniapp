@@ -1,0 +1,12 @@
+<view class="notice notice-{{kind}}">
+  <text class="text">{{text}}</text>
+  <view
+    wx:if="{{closable}}"
+    class="close"
+    aria-role="button"
+    aria-label="{{closeLabel}}"
+    catchtap="onClose"
+  >
+    <view class="x" aria-hidden="true"></view>
+  </view>
+</view>

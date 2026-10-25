@@ -1,0 +1,152 @@
+<view class="page">
+  <top-progress active="{{submitting}}" />
+  <state-view
+    wx:if="{{!allowed}}"
+    kind="error"
+    title="{{deniedText}}"
+    action-text="{{i18n.nav.back}}"
+    bind:action="onBack"
+  />
+  <block wx:elif="{{form && labels && dirtyLeave}}">
+    <page-container
+      show="{{guardBack}}"
+      overlay="{{false}}"
+      duration="{{0}}"
+      position="center"
+      custom-style="height: 0; width: 0; overflow: hidden;"
+      bind:beforeleave="onBeforeLeave"
+    />
+    <notice-bar
+      wx:if="{{notice}}"
+      kind="error"
+      text="{{notice}}"
+      closable="{{true}}"
+      close-label="{{i18n.a11y.closeSheet}}"
+      bind:close="onCloseNotice"
+    />
+    <view class="cell-group">
+      <cell-row
+        id="field-reason"
+        quiet="{{true}}"
+        label="{{labels.reason}}"
+        required-error="{{errors.reason ? true : false}}"
+        error-text="{{errors.reason}}"
+      >
+        <input
+          class="field-input"
+          value="{{form.reason}}"
+          maxlength="40"
+          placeholder="{{reasonPlaceholder}}"
+          disabled="{{submitting}}"
+          bindinput="onReason"
+        />
+      </cell-row>
+      <cell-row
+        id="field-destination"
+        quiet="{{true}}"
+        label="{{labels.destination}}"
+        required-error="{{errors.destination ? true : false}}"
+        error-text="{{errors.destination}}"
+      >
+        <input
+          class="field-input"
+          value="{{form.destination}}"
+          maxlength="60"
+          placeholder="{{destinationPlaceholder}}"
+          disabled="{{submitting}}"
+          bindinput="onDestination"
+        />
+      </cell-row>
+      <cell-row
+        id="field-date"
+        quiet="{{true}}"
+        label="{{labels.date}}"
+        required-error="{{errors.date ? true : false}}"
+        error-text="{{errors.date}}"
+      >
+        <picker mode="date" value="{{form.date}}" disabled="{{submitting}}" bindchange="onDate">
+          <view class="picker-hit">{{dateLabel}}</view>
+        </picker>
+      </cell-row>
+      <cell-row
+        id="field-time"
+        quiet="{{true}}"
+        label="{{labels.start}}"
+        required-error="{{errors.time ? true : false}}"
+        error-text="{{errors.time}}"
+      >
+        <picker mode="time" value="{{form.time}}" disabled="{{submitting}}" bindchange="onTime">
+          <view class="picker-hit">{{form.time}}</view>
+        </picker>
+      </cell-row>
+      <cell-row
+        id="field-passengers"
+        quiet="{{true}}"
+        label="{{labels.passengers}}"
+        required-error="{{errors.passengers ? true : false}}"
+        error-text="{{errors.passengers}}"
+      >
+        <view class="stepper">
+          <view
+            class="step-btn {{form.passengers <= 1 || submitting ? 'is-off' : ''}}"
+            data-step="-1"
+            aria-role="button"
+            aria-label="{{i18n.a11y.decrease}}"
+            bindtap="onPassengers"
+          >-</view>
+          <text class="step-value">{{form.passengers}}</text>
+          <view
+            class="step-btn {{form.passengers >= 6 || submitting ? 'is-off' : ''}}"
+            data-step="{{1}}"
+            aria-role="button"
+            aria-label="{{i18n.a11y.increase}}"
+            bindtap="onPassengers"
+          >+</view>
+        </view>
+      </cell-row>
+    </view>
+
+    <text class="section-label">{{labels.note}}</text>
+    <view class="cell-group">
+      <cell-row
+        id="field-note"
+        quiet="{{true}}"
+        label="{{labels.note}}"
+        stacked="{{true}}"
+        required-error="{{errors.note ? true : false}}"
+        error-text="{{errors.note}}"
+      >
+        <textarea
+          class="field-area"
+          value="{{form.note}}"
+          maxlength="200"
+          placeholder="{{labels.notePlaceholder}}"
+          disabled="{{submitting}}"
+          bindinput="onNote"
+        />
+      </cell-row>
+    </view>
+
+    <view class="submit">
+      <primary-button
+        text="{{labels.submit}}"
+        loading="{{submitting}}"
+        loading-text="{{labels.submitting}}"
+        bind:press="onSubmit"
+      />
+    </view>
+
+    <bottom-sheet
+      show="{{dirtyOpen}}"
+      title="{{dirtyLeave.title}}"
+      cancel-text="{{dirtyLeave.stay}}"
+      confirm-text="{{dirtyLeave.leave}}"
+      danger="{{true}}"
+      mask-label="{{i18n.a11y.closeSheet}}"
+      bind:close="onDirtyStay"
+      bind:confirm="onDirtyLeave"
+    >
+      <text class="sheet-copy">{{dirtyLeave.body}}</text>
+    </bottom-sheet>
+  </block>
+</view>
