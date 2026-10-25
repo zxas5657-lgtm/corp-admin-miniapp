@@ -38,6 +38,16 @@ async function loadCaller(db, openid) {
   };
 }
 
+function requireSysAdmin(actor) {
+  return actor && actor.sysAdmin ? null : fail('permission.denied');
+}
+
+function requireSupportsEditor(actor) {
+  return actor && (actor.sysAdmin || actor.role === 'secretaryAdmin')
+    ? null
+    : fail('permission.denied');
+}
+
 async function loadSupports(db) {
   const result = await db.collection('supports').get();
   const supports = {};
@@ -45,4 +55,11 @@ async function loadSupports(db) {
   return supports;
 }
 
-module.exports = { loadCaller, loadSupports, getDoc, isMissing };
+module.exports = {
+  loadCaller,
+  loadSupports,
+  getDoc,
+  isMissing,
+  requireSysAdmin,
+  requireSupportsEditor,
+};

@@ -191,3 +191,46 @@ test('fake db bulk writes need a condition, exists matches all, ids stay unique'
   assert.deepEqual(removed, { stats: { removed: 3 } });
   assert.equal((await db.collection('things').count()).total, 0);
 });
+
+test('fake db transactions reject query operations', async () => {
+  const db = createFakeDb();
+  await assert.rejects(
+    db.runTransaction(async (tx) => tx.collection('things').where({ _id: 'x' })),
+    /where is not supported in transactions/,
+  );
+  await assert.rejects(
+    db.runTransaction(async (tx) => tx.collection('things').get()),
+    /where is not supported in transactions/,
+  );
+  await assert.rejects(
+    db.runTransaction(async (tx) => tx.collection('things').count()),
+    /where is not supported in transactions/,
+  );
+  await assert.rejects(
+    db.runTransaction(async (tx) => tx.collection('things').orderBy('_id', 'asc')),
+    /where is not supported in transactions/,
+  );
+});
+
+test('fake db rejects _id inside set and update data like the SDK', async () => {
+  const db = createFakeDb({ things: [{ _id: 'a', n: 1 }] });
+  await assert.rejects(
+    db
+      .collection('things')
+      .doc('a')
+      .set({ data: { _id: 'a', n: 2 } }),
+    /set data must not contain _id/,
+  );
+  await assert.rejects(
+    db
+      .collection('things')
+      .doc('a')
+      .update({ data: { _id: 'b' } }),
+    /update data must not contain _id/,
+  );
+  await db
+    .collection('things')
+    .doc('b')
+    .set({ data: { n: 3 } });
+  assert.equal((await db.collection('things').doc('b').get()).data._id, 'b');
+});

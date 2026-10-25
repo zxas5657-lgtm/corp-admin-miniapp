@@ -127,6 +127,8 @@ Indexes: `employeeId` (unique). Offboarding deletes the binding and sets the emp
 | `usedAt`, `usedBy` | Date, string | `usedBy` is the binding's openid |
 | `revokedAt` | Date | |
 
+`_id` equals `codeHash`: a `wx-server-sdk` transaction can only read documents by id, so redemption looks the invite up by its hash inside the transaction.
+
 Indexes: `codeHash` (unique), `employeeId + usedAt`. Rules:
 - An employee has at most one open invite; issuing a new one revokes the old one.
 - Codes are 8 characters from an unambiguous alphabet (no 0/O/1/I).

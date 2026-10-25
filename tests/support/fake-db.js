@@ -166,7 +166,13 @@ function requireCondition(where, operation) {
     throw new Error(`${operation} requires a non-empty where condition`);
 }
 
-function createFakeDb(initial) {
+// doc(id).set/update take the id from doc(); the SDK rejects _id inside data.
+function rejectIdInData(data, operation) {
+  if (data && Object.prototype.hasOwnProperty.call(data, '_id'))
+    throw new Error(`${operation} data must not contain _id`);
+}
+
+function createFakeDb(initial, transaction = false) {
   const collections = new Map();
   for (const [name, docs] of Object.entries(initial || {}))
     collections.set(name, clone(docs || []));
@@ -184,6 +190,7 @@ function createFakeDb(initial) {
         return { data: clone(document) };
       },
       async set({ data }) {
+        rejectIdInData(data, 'set');
         const docs = docsFor(name);
         const next = { ...(clone(data) || {}), _id: id };
         const index = docs.findIndex((item) => item._id === id);
@@ -192,6 +199,7 @@ function createFakeDb(initial) {
         return { stats: { updated: 1 } };
       },
       async update({ data }) {
+        rejectIdInData(data, 'update');
         const docs = docsFor(name);
         const index = docs.findIndex((item) => item._id === id);
         if (index < 0) throw missing(id);
@@ -267,7 +275,30 @@ function createFakeDb(initial) {
   const db = {
     command: createCommand(),
     collection(name) {
-      return {
+      if (transaction) {
+        const unsupported = () => {
+          throw new Error('where is not supported in transactions');
+        };
+        return {
+          doc(id) {
+            return docRef(name, id);
+          },
+          add: async ({ data }) => {
+            const docs = docsFor(name);
+            const next = clone(data) || {};
+            const id = next._id || `fake-${nextId++}`;
+            if (docs.some((item) => item._id === id)) throw new Error(`Duplicate _id ${id}`);
+            next._id = id;
+            docs.push(next);
+            return { _id: id };
+          },
+          where: unsupported,
+          get: unsupported,
+          count: unsupported,
+          orderBy: unsupported,
+        };
+      }
+      const collection = {
         doc(id) {
           return docRef(name, id);
         },
@@ -282,11 +313,12 @@ function createFakeDb(initial) {
         },
         ...query(name),
       };
+      return collection;
     },
     async runTransaction(callback) {
       const snapshot = new Map();
       for (const [name, docs] of collections.entries()) snapshot.set(name, clone(docs));
-      const tx = createFakeDb(Object.fromEntries(snapshot));
+      const tx = createFakeDb(Object.fromEntries(snapshot), true);
       try {
         const value = await callback(tx);
         collections.clear();

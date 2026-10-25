@@ -44,3 +44,14 @@ The console test page can run the fictional development seed with:
 
 Never run `devSeed` in `prod`. Production data is real data and is imported through the CloudBase
 console only.
+
+## First sysAdmin bootstrap
+
+1. Import the first active employee with `sysAdmin: true` through the CloudBase console.
+2. On the console function test page, call `admin` with
+   `{ "action": "bootstrapInvite", "employeeId": "<that id>", "confirm": "bootstrap" }`.
+   (The normal `issueInvite` does not work here: console calls carry no openid, so it returns
+   `auth.notBound`.) The bootstrap action is allowed only while `bindings` is empty and the
+   target is an active sysAdmin.
+3. Give the returned code to that employee; they redeem it in the app. Once any binding exists,
+   the bootstrap action refuses further calls and all later invites come from the app.
