@@ -3,15 +3,15 @@
 const ROOMS = [
   {
     id: 'f3-small',
-    name: { 'zh-CN': '\u0033楼小会议室', en: '3F Small Meeting Room' },
+    name: { 'zh-CN': '3楼小会议室', en: '3F Small Meeting Room' },
   },
   {
     id: 'f5-board',
-    name: { 'zh-CN': '\u0035楼董事会议室', en: '5F Boardroom' },
+    name: { 'zh-CN': '5楼董事会议室', en: '5F Boardroom' },
   },
   {
     id: 'f1-reception',
-    name: { 'zh-CN': '\u0031楼接待室', en: '1F Reception Room' },
+    name: { 'zh-CN': '1楼接待室', en: '1F Reception Room' },
   },
   {
     id: 'online',
