@@ -1,6 +1,6 @@
 # PLAN — corp-admin-miniapp
 
-Owner: lead (Claude Code). Last updated: 2026-10-24.
+Owner: lead (Claude Code). Last updated: 2026-10-25.
 Input: `CLAUDE_REVIEW.md` (P0/P1/P2 findings). This plan records the decisions that review asked for and orders the work.
 
 ## 1. Decisions
@@ -10,7 +10,7 @@ Input: `CLAUDE_REVIEW.md` (P0/P1/P2 findings). This plan records the decisions t
   - The prototype already proved the UI, and the product is a mini-program.
   - Plain JS means the code runs in WeChat DevTools and in plain Node with no bundler.
 - **Freeze `prototype/` as a reference.** It is not ported to i18n and receives no new features.
-- **v1 has no real backend.** This is unchanged from `PROJECT_RULES.md` rule 6: no cloud functions, no WeChat login, local storage only.
+- **v1 had no real backend** (local storage only). **From Sprint 3 this changes** (owner decision 2026-10-25, §7): the backend is WeChat CloudBase, sign-in is plain WeChat login plus admin-issued invite codes, and `PROJECT_RULES.md` rule 6 was revised to allow it. No secrets and no real personal data go in the repo.
 
 ### 1.2 What "backend" means in this team
 v1 has no server, so **backend** means every layer below the UI that is free of the platform:
@@ -168,3 +168,44 @@ P2 items (contrast details, touch targets, spacing scale, toast vs. banner rule,
   - **Human step before S1-F7:** sign in once with a WeChat QR scan, and turn on Settings → Security → Service port so the CLI can open and screenshot the project.
 - Standing authorization: the liaison may approve Sprint 1 tool and runtime installs on this machine. Anything destructive, paid or outside this project still needs a status-update ask first.
 - ~~cursor-exec is not logged in.~~ Resolved 2026-10-24: logged in and trusted. S1-F1 is delegated. It codes against the i18n contract in `.team/tasks/S1-B2.md` while codex builds the runtime.
+- Sprint 3 owner inputs, still open: see §7.4.
+
+## 7. Sprint 3: go-live foundations (CloudBase, WeChat login, invite binding)
+
+### 7.1 Decisions (owner, 2026-10-25)
+- **Platform: plain WeChat (普通微信), not WeCom.** WeCom was chosen and then reversed the same day.
+- **Backend: WeChat CloudBase (云开发).** It is paid and the owner approved it. Cloud functions read the caller's openid from the server context, so no AppSecret is handled anywhere.
+- **Employee binding: admin-issued one-time invite codes.** First sign-in asks for the code; it binds the openid to an employee record, and the role comes from that record. Leavers are disabled by an admin, which removes the binding and keeps their history.
+- **`PROJECT_RULES.md` rule 6 revised:** a real backend and WeChat login are allowed; no secrets or real personal data in the repo; real data enters `prod` through the CloudBase console only.
+- **Data model:** `DATA_MODEL.md`. Every read and write goes through cloud functions; clients get no direct database access; `domain/` is shared with the functions so the rules exist once.
+
+### 7.2 Backend / frontend split in Sprint 3
+- codex: `cloudfunctions/` (new top-level folder; `project.config.json` gets `cloudfunctionRoot`), shared `domain/` packaging, the remote store adapter, and tests.
+- cursor: the sign-in/binding screen, async loading/error/retry states, the privacy consent flow, and the production-build switches.
+- The local adapters stay, so `npm test` and the offline demo keep working without the network.
+
+### 7.3 Tasks
+
+| # | Task | Owner | Depends on | Status |
+| --- | --- | --- | --- | --- |
+| S3-L0 | Decisions into PLAN.md, rule 6 revised, data model (`DATA_MODEL.md`) | lead | — | **done** |
+| S3-B1 | CloudBase project wiring: `cloudfunctionRoot`, function skeletons (`auth`, `directory`, `meetings`, `vehicles`, `admin`), shared `domain/`, a dev seed function, a collections/index/rules checklist matching `DATA_MODEL.md`, and Node tests for handlers with a fake DB | codex | S3-L0 | not started |
+| S3-B2 | `auth`: whoami, invite redemption (transaction, hash, expiry, rate limit), disabled-employee handling; `admin`: issue/revoke invite, disable employee; audit log | codex | B1 | not started |
+| S3-B3 | Remote store adapter: async API, server error codes mapped to `error.*`, server ids; local adapters kept for tests and the demo | codex | B1 | not started |
+| S3-B4 | `meetings` and `vehicles` handlers: domain validation, permission checks, `rev` concurrency, server-side car availability and seats in transactions | codex | B1, B3 | not started |
+| S3-F1 | Bind screen (invite code entry and its errors), not-bound and disabled states; loading/network-error/retry on every page; production build hides the role switch and the demo clock | cursor | B2, B3 | not started |
+| S3-F2 | Privacy consent flow and a privacy-policy page in both locales (what is stored: name, title, department, role, the openid binding) | cursor | — | not started |
+| S3-L1 | Screenshot pass against `dev`; trial build (体验版) on iOS and Android with the pilot group | lead + owner | all | not started |
+
+Quality gates for Sprint 3, on top of §5:
+- No secret, token or real personal data in any commit (lead checks every diff).
+- Clients never write to a collection directly.
+- Every function derives identity from the openid, never from client input.
+- Every state change is covered by a handler test, including a stale-`rev` case.
+
+### 7.4 Owner inputs still open
+- Pilot list: names, titles, roles, and one sysAdmin; plus the real rooms and cars. Needed before S3-L1, imported into `prod` only.
+- Who has access to the mini-program admin console and the CloudBase console (to create envs, collections and rules).
+- Account owner type (enterprise or personal) and who does the 小程序备案 filing.
+- Meeting visibility: all employees (v1 parity, the default) or organizer and attendees plus leaders.
+- Audit log retention: 1 year proposed.

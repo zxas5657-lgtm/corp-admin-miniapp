@@ -278,6 +278,8 @@ system-ui, -apple-system, "Segoe UI", Roboto, PingFang SC, Hiragino Sans GB, Not
 
 ## v1 不做
 
+> Sprint 3 起有变：普通微信登录 + 管理员邀请码绑定员工、微信云开发（云函数 + 数据库）开始做，见 `PLAN.md` §7 和 `DATA_MODEL.md`。下面前两条只适用于 v1 演示版。手机号授权仍然不做。
+
 - 微信登录、openid、手机号授权
 - 云函数、数据库、真实审批接口
 - 订阅消息、短信、写入手机系统日历
