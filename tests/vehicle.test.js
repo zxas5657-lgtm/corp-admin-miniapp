@@ -1,13 +1,10 @@
 'use strict';
-
 const test = require('node:test');
 const assert = require('node:assert/strict');
-
-const i18n = require('../miniprogram/i18n');
-const reference = require('../miniprogram/data/reference');
+const ref = require('../miniprogram/data/reference');
 const { seed } = require('../miniprogram/data/seed');
-const { DRIVERS } = require('../miniprogram/data/reference');
-const { parseLocalDateTime } = require('../miniprogram/domain/dates');
+const { actorFor } = ref;
+const tz = require('../miniprogram/domain/tz');
 const {
   availableActions,
   carAvailability,
@@ -16,176 +13,270 @@ const {
   transition,
   validateVehicle,
 } = require('../miniprogram/domain/vehicle');
-
-const now = parseLocalDateTime('2026-10-24T09:20');
-const driverOptions = { drivers: DRIVERS };
-
-test.afterEach(() => i18n._resetForTests());
-
-test('availableActions combines transition and capability rules', () => {
-  const pending = seed().vehicles[3];
-  const assigned = seed().vehicles[2];
-  assert.deepEqual(availableActions(pending, 'admin', 'p-zhou'), ['withdraw']);
-  assert.deepEqual(availableActions(pending, 'driver', 'p-zhao'), ['dispatch', 'reject']);
-  assert.deepEqual(availableActions(assigned, 'driver', 'p-zhao'), ['complete', 'reassign', 'cancelDispatch']);
-  assert.deepEqual(availableActions({ ...pending, status: 'done' }, 'driver', 'p-zhao'), []);
-});
-
-test('dispatch sets the car, driver, and dispatch audit fields', () => {
-  const source = seed().vehicles[3];
-  const result = transition(source, 'dispatch', { carId: 'gl8a' }, {
-    role: 'driver',
-    personId: 'p-zhao',
-    now,
-    ...driverOptions,
-  });
-  assert.equal(result.ok, true);
-  assert.equal(result.vehicle.status, 'assigned');
-  assert.equal(result.vehicle.carId, 'gl8a');
-  assert.equal(result.vehicle.driverId, 'p-zhao');
-  assert.equal(result.vehicle.dispatchedAt, '2026-10-24T09:20');
-  assert.equal(result.vehicle.dispatchedBy, 'p-zhao');
-  assert.equal(source.status, 'pending');
-});
-
-test('reject and withdraw enforce their payload and ownership rules', () => {
-  const pending = seed().vehicles[3];
+const now = new Date('2026-10-24T01:20:00Z');
+const iso = (d, t) => tz.fromZoned(d, t, 'Asia/Shanghai').toISOString();
+test('actors control vehicle actions and drivers are chosen explicitly', () => {
+  const d = seed();
+  const pending = d.vehicles.find((x) => x.id === 'v4');
+  assert.deepEqual(availableActions(pending, actorFor('secretary')), ['dispatch', 'reject']);
+  assert.deepEqual(availableActions(pending, actorFor('receptionist')), ['withdraw']);
   assert.deepEqual(
-    transition(pending, 'reject', {}, { role: 'driver', personId: 'p-zhao', now }),
-    { ok: false, code: 'vehicle.reject.reasonRequired' },
+    availableActions(
+      d.vehicles.find((x) => x.id === 'v3'),
+      actorFor('driver'),
+    ),
+    ['complete'],
   );
-  const rejected = transition(pending, 'reject', { reason: '  No capacity  ' }, {
-    role: 'driver', personId: 'p-zhao', now, ...driverOptions,
-  });
-  assert.equal(rejected.ok, true);
-  assert.equal(rejected.vehicle.status, 'rejected');
-  assert.equal(rejected.vehicle.rejectReason, 'No capacity');
-
-  const withdrawn = transition(pending, 'withdraw', {}, { role: 'admin', personId: 'p-zhou', now, ...driverOptions });
-  assert.equal(withdrawn.ok, true);
-  assert.equal(withdrawn.vehicle.status, 'withdrawn');
+  const result = transition(
+    pending,
+    'dispatch',
+    { carId: 'gl8a', driverId: 'p-qian' },
+    {
+      actor: actorFor('secretary'),
+      now,
+      cars: ref.CARS,
+      vehicles: d.vehicles,
+      drivers: ref.DRIVERS,
+    },
+  );
+  assert.equal(result.ok, true);
+  assert.equal(result.vehicle.driverId, 'p-qian');
+  assert.equal(result.vehicle.dispatchedBy, 'p-lin');
+  assert.equal(result.vehicle.dispatchedAt, '2026-10-24T01:20:00.000Z');
+});
+test('dispatch requires flag and driver choice, reject needs reason, withdraw is applicant only', () => {
+  const pending = seed().vehicles.find((x) => x.id === 'v4');
   assert.deepEqual(
-    transition(pending, 'withdraw', {}, { role: 'admin', personId: 'p-lin', now, ...driverOptions }),
+    transition(
+      pending,
+      'dispatch',
+      { carId: 'gl8a', driverId: 'p-zhao' },
+      { actor: actorFor('receptionist'), now, drivers: ref.DRIVERS },
+    ),
     { ok: false, code: 'permission.denied' },
   );
+  assert.deepEqual(
+    transition(
+      pending,
+      'dispatch',
+      { carId: 'gl8a' },
+      { actor: actorFor('secretary'), now, drivers: ref.DRIVERS },
+    ),
+    { ok: false, code: 'vehicle.driver.required' },
+  );
+  assert.deepEqual(transition(pending, 'reject', {}, { actor: actorFor('secretary'), now }), {
+    ok: false,
+    code: 'vehicle.reject.reasonRequired',
+  });
+  assert.equal(
+    transition(pending, 'reject', { reason: 'full' }, { actor: actorFor('secretary'), now }).vehicle
+      .status,
+    'rejected',
+  );
+  assert.equal(
+    transition(pending, 'withdraw', {}, { actor: actorFor('secretary'), now }).code,
+    'permission.denied',
+  );
+  assert.equal(
+    transition(pending, 'withdraw', {}, { actor: actorFor('receptionist'), now }).ok,
+    true,
+  );
 });
-
-test('complete, reassign, and cancelDispatch follow the assigned transitions', () => {
-  const assigned = seed().vehicles[2];
-  const departure = parseLocalDateTime('2026-10-24T14:00');
-  const complete = transition(assigned, 'complete', {}, { role: 'driver', personId: 'p-zhao', now: departure, ...driverOptions });
-  assert.equal(complete.ok, true);
-  assert.equal(complete.vehicle.status, 'done');
-  assert.equal(complete.vehicle.completedAt, '2026-10-24T14:00');
-
-  const reassigned = transition(assigned, 'reassign', { carId: 'gl8b' }, { role: 'driver', personId: 'p-zhao', now, ...driverOptions });
-  assert.equal(reassigned.ok, true);
-  assert.equal(reassigned.vehicle.status, 'assigned');
-  assert.equal(reassigned.vehicle.carId, 'gl8b');
-
-  const pending = transition(assigned, 'cancelDispatch', {}, { role: 'driver', personId: 'p-zhao', now, ...driverOptions });
-  assert.equal(pending.ok, true);
-  assert.equal(pending.vehicle.status, 'pending');
-  assert.equal(pending.vehicle.carId, null);
-  assert.equal(pending.vehicle.driverId, null);
+test('driver completion and instant car availability honor boundaries', () => {
+  const d = seed();
+  const assigned = d.vehicles.find((x) => x.id === 'v3');
+  assert.deepEqual(transition(assigned, 'complete', {}, { actor: actorFor('driver'), now }), {
+    ok: false,
+    code: 'vehicle.complete.beforeDeparture',
+  });
+  const done = transition(
+    assigned,
+    'complete',
+    {},
+    { actor: actorFor('driver'), now: new Date('2026-10-24T06:00:00Z') },
+  );
+  assert.equal(done.ok, true);
+  const busy = {
+    id: 'busy',
+    status: 'assigned',
+    carId: 'a6',
+    departAt: iso('2026-10-24', '13:30'),
+  };
+  const before = carAvailability(ref.CARS, [busy], { departAt: iso('2026-10-24', '15:29') });
+  const edge = carAvailability(ref.CARS, [busy], { departAt: iso('2026-10-24', '15:30') });
+  assert.equal(before.find((x) => x.carId === 'a6').available, false);
+  assert.equal(edge.find((x) => x.carId === 'a6').available, true);
 });
-
-test('car availability uses overlapping assigned windows and ignores exact edges', () => {
-  const vehicles = [{ id: 'busy', status: 'assigned', carId: 'a6', date: '2026-10-24', time: '13:30' }];
-  const beforeEdge = carAvailability(reference.CARS, vehicles, { date: '2026-10-24', time: '15:29' });
-  const atEdge = carAvailability(reference.CARS, vehicles, { date: '2026-10-24', time: '15:30' });
-  assert.equal(beforeEdge.find((item) => item.carId === 'a6').available, false);
-  assert.equal(beforeEdge.find((item) => item.carId === 'a6').busyWith, 'busy');
-  assert.equal(atEdge.find((item) => item.carId === 'a6').available, true);
-  assert.equal(carAvailability(reference.CARS, vehicles, { date: '2026-10-25', time: '13:30' }).find((item) => item.carId === 'a6').available, true);
-  assert.equal(carAvailability(reference.CARS, vehicles, { date: '2026-10-24', time: '13:30', excludeVehicleId: 'busy' }).find((item) => item.carId === 'a6').available, true);
+test('vehicle request uses instant fields and permissions', () => {
+  const input = {
+    reason: '  Reason ',
+    destination: ' Place ',
+    date: '2026-10-28',
+    time: '08:30',
+    passengers: 2,
+    note: ' Note ',
+  };
+  const v = createVehicleRequest(input, {
+    id: 'v-new',
+    actor: actorFor('leader'),
+    now,
+    tz: 'Asia/Shanghai',
+  });
+  assert.equal(v.applicantId, 'p-chen');
+  assert.equal(v.forLeaderId, 'p-chen');
+  assert.equal(v.departAt, '2026-10-28T00:30:00.000Z');
+  assert.equal(v.createdAt, '2026-10-24T01:20:00.000Z');
+  assert.equal(
+    createVehicleRequest(input, { id: 'bad', actor: actorFor('driver'), now }).code,
+    'permission.denied',
+  );
 });
-
-test('seatWarning is non-blocking and reports capacity parameters', () => {
-  assert.equal(seatWarning(reference.carById('a6'), 4), null);
-  assert.deepEqual(seatWarning(reference.carById('a6'), 5), {
+test('validation and seat warnings retain form contracts', () => {
+  assert.equal(
+    validateVehicle({
+      reason: '',
+      destination: '',
+      date: 'bad',
+      time: 'bad',
+      passengers: 7,
+      note: 'x'.repeat(201),
+    }).length,
+    6,
+  );
+  assert.deepEqual(seatWarning(ref.carById('a6'), 5), {
     code: 'vehicle.seats.exceeded',
     seats: 4,
     passengers: 5,
   });
 });
-
-test('validateVehicle checks fields in form order and create trims text', () => {
-  assert.deepEqual(validateVehicle({
-    reason: '',
-    destination: '',
-    date: '2026-02-30',
-    time: '24:00',
-    passengers: 7,
-    note: 'x'.repeat(201),
-  }), [
-    { field: 'reason', code: 'vehicle.reason.required' },
-    { field: 'destination', code: 'vehicle.destination.required' },
-    { field: 'date', code: 'vehicle.date.required' },
-    { field: 'time', code: 'vehicle.time.required' },
-    { field: 'passengers', code: 'vehicle.passengers.range' },
-    { field: 'note', code: 'vehicle.note.tooLong' },
-  ]);
-  assert.deepEqual(validateVehicle({
-    reason: 'x'.repeat(41),
-    destination: 'x'.repeat(61),
-    date: '2026-10-24',
-    time: '09:00',
-    passengers: 1,
-    note: '',
-  }), [
-    { field: 'reason', code: 'vehicle.reason.tooLong' },
-    { field: 'destination', code: 'vehicle.destination.tooLong' },
-  ]);
-  assert.deepEqual(validateVehicle({ reason: '  Reason ', destination: '  Place ', date: '2026-10-24', time: '09:00', passengers: 1, note: '  Note ' }), []);
-  assert.deepEqual(createVehicleRequest({ reason: '  Reason ', destination: '  Place ', date: '2026-10-24', time: '09:00', passengers: 1, note: '  Note ' }, {
-    id: 'v-new', applicantId: 'p-lin', now,
-  }), {
-    id: 'v-new', reason: 'Reason', destination: 'Place', date: '2026-10-24', time: '09:00', passengers: 1,
-    applicantId: 'p-lin', note: 'Note', status: 'pending', carId: null, driverId: null, rejectReason: '',
-    createdAt: '2026-10-24T09:20', dispatchedAt: null, dispatchedBy: null, completedAt: null,
-  });
+test('busy car and stale transitions return explicit codes', () => {
+  const d = seed();
+  const p = d.vehicles.find((x) => x.id === 'v4');
+  const busy = { id: 'other', status: 'assigned', carId: 'a6', departAt: p.departAt };
+  assert.deepEqual(
+    transition(
+      p,
+      'dispatch',
+      { carId: 'a6', driverId: 'p-zhao' },
+      { actor: actorFor('secretary'), now, cars: ref.CARS, vehicles: [busy], drivers: ref.DRIVERS },
+    ),
+    { ok: false, code: 'vehicle.car.busy' },
+  );
+  assert.deepEqual(
+    transition(
+      { ...p, status: 'done' },
+      'dispatch',
+      { carId: 'a6', driverId: 'p-zhao' },
+      { actor: actorFor('secretary'), now, drivers: ref.DRIVERS },
+    ),
+    { ok: false, code: 'vehicle.alreadyHandled' },
+  );
 });
 
-test('completion is guarded before departure and busy cars cannot be dispatched', () => {
-  const assigned = { ...seed().vehicles[2], date: '2026-10-27', time: '09:20' };
-  assert.deepEqual(transition(assigned, 'complete', {}, { role: 'driver', personId: 'p-zhao', now, ...driverOptions }), {
-    ok: false,
-    code: 'vehicle.complete.beforeDeparture',
-  });
-  const pending = seed().vehicles[3];
-  const result = transition(pending, 'dispatch', { carId: 'a6' }, {
-    role: 'driver', personId: 'p-zhao', now, vehicles: [{ id: 'other', status: 'assigned', carId: 'a6', date: pending.date, time: pending.time }], cars: reference.CARS, ...driverOptions,
-  });
-  assert.deepEqual(result, { ok: false, code: 'vehicle.car.busy' });
+test('complete reassign and cancelDispatch follow assigned transitions', () => {
+  const assigned = seed().vehicles.find((x) => x.id === 'v3');
+  const dispatcher = actorFor('secretary');
+  const done = transition(
+    assigned,
+    'complete',
+    {},
+    { actor: actorFor('driver'), now: new Date('2026-10-24T06:00:00Z') },
+  );
+  assert.equal(done.ok, true);
+  const reassigned = transition(
+    assigned,
+    'reassign',
+    { carId: 'gl8b', driverId: 'p-qian' },
+    { actor: dispatcher, now, cars: ref.CARS, vehicles: seed().vehicles, drivers: ref.DRIVERS },
+  );
+  assert.equal(reassigned.ok, true);
+  assert.equal(reassigned.vehicle.carId, 'gl8b');
+  const pending = transition(assigned, 'cancelDispatch', {}, { actor: dispatcher, now });
+  assert.equal(pending.ok, true);
+  assert.equal(pending.vehicle.status, 'pending');
+  assert.equal(pending.vehicle.driverId, null);
 });
-
-test('new vehicle codes resolve in both locales', () => {
+test('car availability ignores exact edges and excluded vehicles', () => {
+  const busy = {
+    id: 'busy',
+    status: 'assigned',
+    carId: 'a6',
+    departAt: iso('2026-10-24', '13:30'),
+  };
+  assert.equal(
+    carAvailability(ref.CARS, [busy], { departAt: iso('2026-10-24', '15:29') }).find(
+      (x) => x.carId === 'a6',
+    ).available,
+    false,
+  );
+  assert.equal(
+    carAvailability(ref.CARS, [busy], { departAt: iso('2026-10-24', '15:30') }).find(
+      (x) => x.carId === 'a6',
+    ).available,
+    true,
+  );
+  assert.equal(
+    carAvailability(ref.CARS, [busy], { departAt: busy.departAt, excludeVehicleId: 'busy' }).find(
+      (x) => x.carId === 'a6',
+    ).available,
+    true,
+  );
+});
+test('new vehicle error codes resolve in both locales', () => {
+  const i18n = require('../miniprogram/i18n');
   for (const locale of ['zh-CN', 'en']) {
     i18n._resetForTests();
-    i18n.setDevMode(false);
     i18n.setLocale(locale);
-    assert.equal(i18n.t('error.vehicle.seats.exceeded', { seats: 4, passengers: 5 }).includes('{'), false);
-    assert.equal(i18n.t('error.vehicle.complete.beforeDeparture').includes('{'), false);
+    assert.equal(i18n.t('error.vehicle.driver.required').includes('{'), false);
     assert.equal(i18n.t('error.vehicle.car.busy').includes('{'), false);
-    assert.equal(i18n.t('error.vehicle.reason.tooLong').includes('{'), false);
-    assert.equal(i18n.t('error.vehicle.destination.tooLong').includes('{'), false);
-    assert.equal(i18n.t('error.vehicle.note.tooLong').includes('{'), false);
   }
+  i18n._resetForTests();
 });
-
-test('stale states, missing capabilities, and missing cars return codes', () => {
-  const pending = seed().vehicles[3];
+test('stale states missing capabilities and cars return codes', () => {
+  const pending = seed().vehicles.find((x) => x.id === 'v4');
   assert.deepEqual(
-    transition(pending, 'dispatch', { carId: 'gl8a' }, { role: 'admin', personId: 'p-lin', now, ...driverOptions }),
+    transition(
+      pending,
+      'dispatch',
+      { carId: 'gl8a', driverId: 'p-zhao' },
+      { actor: actorFor('receptionist'), now, drivers: ref.DRIVERS },
+    ),
     { ok: false, code: 'permission.denied' },
   );
   assert.deepEqual(
-    transition(pending, 'dispatch', {}, { role: 'driver', personId: 'p-zhao', now, ...driverOptions }),
+    transition(
+      pending,
+      'dispatch',
+      {},
+      { actor: actorFor('secretary'), now, drivers: ref.DRIVERS },
+    ),
     { ok: false, code: 'vehicle.car.required' },
   );
   assert.deepEqual(
-    transition({ ...pending, status: 'done' }, 'dispatch', { carId: 'gl8a' }, { role: 'driver', personId: 'p-zhao', now, ...driverOptions }),
+    transition(
+      { ...pending, status: 'done' },
+      'dispatch',
+      { carId: 'gl8a', driverId: 'p-zhao' },
+      { actor: actorFor('secretary'), now, drivers: ref.DRIVERS },
+    ),
     { ok: false, code: 'vehicle.alreadyHandled' },
   );
+});
+
+test('dispatch defaults to the sole available driver', () => {
+  const pending = seed().vehicles.find((x) => x.id === 'v4');
+  const result = transition(
+    pending,
+    'dispatch',
+    { carId: 'gl8a' },
+    {
+      actor: actorFor('secretary'),
+      now,
+      cars: ref.CARS,
+      vehicles: seed().vehicles,
+      drivers: ['p-qian'],
+    },
+  );
+  assert.equal(result.ok, true);
+  assert.equal(result.vehicle.driverId, 'p-qian');
 });

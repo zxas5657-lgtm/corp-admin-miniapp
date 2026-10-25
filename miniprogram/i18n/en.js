@@ -23,9 +23,11 @@ module.exports = {
   },
   role: {
     leader: { label: 'Executive', hint: 'View all schedules, create meetings, and request vehicles.' },
-    admin: { label: 'Admin Specialist', hint: 'Create meetings, request vehicles, and follow the day’s schedule.' },
-    driver: { label: 'Driver / Fleet', hint: 'Handle pending requests, assign vehicles, and mark trips complete.' },
-    reception: { label: 'Front Desk / Reception', hint: 'View schedules and meetings, and request vehicles for visitors.' },
+    secretary: { label: 'Secretary', hint: 'Follow supported leaders\' schedules and request vehicles.' },
+    secretaryAdmin: { label: 'Secretariat Admin', hint: 'Manage all leaders\' schedules and secretary support.' },
+    receptionist: { label: 'Front Desk', hint: 'View reception schedules and request vehicles.' },
+    receptionAdmin: { label: 'Front Desk Lead', hint: 'Manage reception schedules and request vehicles.' },
+    driver: { label: 'Driver', hint: 'Handle trips assigned to you.' },
   },
   status: {
     meeting: {
@@ -74,6 +76,9 @@ module.exports = {
     'vehicle.reason.tooLong': 'The reason must be 40 characters or fewer',
     'vehicle.destination.tooLong': 'The destination must be 60 characters or fewer',
     'vehicle.note.tooLong': 'The note must be 200 characters or fewer',
+    'meeting.category.invalid': 'Choose a valid meeting category',
+    'meeting.important.invalid': 'The important flag is invalid',
+    'vehicle.driver.required': 'Choose a driver',
   },
   state: {
     loading: 'Loading…',
@@ -324,4 +329,5 @@ module.exports = {
   'meeting.detail.cancelAction': 'Cancel meeting',
   'vehicle.form.reasonPlaceholder': 'Enter a reason for the vehicle request',
   'vehicle.form.destinationPlaceholder': 'Enter a destination',
+  'vehicle.dispatch.driverLabel': 'Driver',
 };

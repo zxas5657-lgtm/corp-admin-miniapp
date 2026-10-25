@@ -14,3 +14,7 @@
 | 来访接待 / 行政日常 | Visitor reception / Daily admin | Skeleton pages are bilingual. | Starter |
 | 未开放 | Not available yet |  | Starter |
 | 恢复演示数据 | Reset demo data |  | Starter |
+| 秘书 | Secretary | Supported leader schedules and requests | S3
+| 秘书主管 | Secretariat Admin | All leader schedules and support management | S3
+| 前台 | Front Desk | Reception schedules and requests | S3
+| 前台主管 | Front Desk Lead | Reception administration | S3

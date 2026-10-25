@@ -4,6 +4,7 @@ const childProcess = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
 const automator = require('miniprogram-automator');
+const tz = require('../miniprogram/domain/tz');
 
 const ROOT = path.resolve(__dirname, '..');
 const OUT_DIR = path.join(ROOT, 'screenshots');
@@ -14,37 +15,71 @@ const PAUSE_MS = 500;
 const AUTO_PORT = Number(process.env.WX_AUTO_PORT) || 9420;
 let currentMini = null;
 
+function wall(date, time) {
+  return tz.fromZoned(date, time, 'Asia/Shanghai').toISOString();
+}
+
+const SHOT_DATE = '2026-10-24';
+const SHOT_CREATED = wall('2026-10-24', '09:20');
 const SHOT_MEETING = {
   id: 'm-shot',
+  kind: 'meeting',
   title: { 'zh-CN': '截图会议', en: 'Screenshot meeting' },
-  date: '2026-10-24',
-  start: '11:00',
-  end: '12:00',
+  startAt: wall(SHOT_DATE, '11:00'),
+  endAt: wall(SHOT_DATE, '12:00'),
+  allDay: false,
+  tz: 'Asia/Shanghai',
+  location: '',
   roomId: 'f1-reception',
-  attendeeIds: ['p-lin'],
+  attendeeIds: ['p-lin', 'p-chen'],
   organizerId: 'p-lin',
-  agenda: { 'zh-CN': '截图用', en: 'For the screenshot pass' },
-  cancelled: false,
-  createdAt: '2026-10-24T09:20',
+  category: 'regular',
+  important: false,
+  parentId: null,
+  seriesId: null,
+  notes: { 'zh-CN': '截图用', en: 'For the screenshot pass' },
+  noteId: null,
+  leaderIds: ['p-chen'],
+  leaders: [{
+    leaderId: 'p-chen',
+    confirm: 'pending',
+    confirmedAt: null,
+    declineReason: '',
+    changedAt: null,
+    changeNote: '',
+    seenAt: null,
+  }],
+  status: 'active',
+  createdBy: 'p-lin',
+  createdAt: SHOT_CREATED,
+  updatedAt: SHOT_CREATED,
+  updatedBy: 'p-lin',
+  cancelledAt: null,
+  cancelledBy: null,
+  v: 1,
+  rev: 0,
 };
 
 const BUSY_VEHICLE = {
   id: 'v-busy',
   reason: { 'zh-CN': '重叠行程', en: 'Overlapping trip' },
   destination: { 'zh-CN': '园区', en: 'Campus' },
-  date: '2026-10-27',
-  time: '09:20',
+  departAt: wall('2026-10-27', '09:20'),
+  tz: 'Asia/Shanghai',
   passengers: 1,
   applicantId: 'p-lin',
+  forLeaderId: null,
+  itemId: null,
   note: '',
   status: 'assigned',
   carId: 'gl8a',
   driverId: 'p-zhao',
   rejectReason: '',
-  createdAt: '2026-10-24T09:20',
-  dispatchedAt: '2026-10-24T09:20',
-  dispatchedBy: 'p-zhao',
+  createdAt: SHOT_CREATED,
+  dispatchedAt: SHOT_CREATED,
+  dispatchedBy: 'p-lin',
   completedAt: null,
+  rev: 0,
 };
 
 function dev(mini, method, value) {
@@ -106,6 +141,18 @@ function eventWith(key, value) {
   return { currentTarget: { dataset: { [key]: value } } };
 }
 
+function scheduleIds(view) {
+  return ((view && view.items) || []).map(function (item) { return item.id; });
+}
+
+function vehicleIds(view) {
+  const ids = [];
+  ((view && view.groups) || []).forEach(function (group) {
+    (group.items || []).forEach(function (item) { ids.push(item.id); });
+  });
+  return ids;
+}
+
 async function stageBusyCar(mini, passengers) {
   const saved = await dev(mini, 'updateVehicle', BUSY_VEHICLE);
   if (!saved || saved.ok !== true) {
@@ -139,9 +186,9 @@ async function rearmCreatedMeeting(mini) {
 const SCENARIOS = [
   {
     id: '01-schedule-1024',
-    title: 'Schedule 2026-10-24, admin',
+    title: 'Schedule 2026-10-24, secretary',
     async run(mini, locale) {
-      await resetSeed(mini, locale, 'admin');
+      await resetSeed(mini, locale, 'secretary');
       await dev(mini, 'setDate', '2026-10-24');
       await openPage(mini, '/pages/schedule/index');
       await saveShot(mini, locale, this.id + '.png');
@@ -151,7 +198,7 @@ const SCENARIOS = [
     id: '02-schedule-1025',
     title: 'Schedule 2026-10-25, empty',
     async run(mini, locale) {
-      await resetSeed(mini, locale, 'admin');
+      await resetSeed(mini, locale, 'secretary');
       await dev(mini, 'setDate', '2026-10-25');
       await openPage(mini, '/pages/schedule/index');
       await saveShot(mini, locale, this.id + '.png');
@@ -161,11 +208,11 @@ const SCENARIOS = [
     id: '03-schedule-created',
     title: 'Schedule after creating a meeting',
     async run(mini, locale) {
-      await resetSeed(mini, locale, 'admin');
-      const saved = await dev(mini, 'addMeeting', SHOT_MEETING);
-      if (!saved || saved.ok !== true) throw new Error('addMeeting failed');
+      await resetSeed(mini, locale, 'secretary');
+      const saved = await dev(mini, 'addItem', SHOT_MEETING);
+      if (!saved || saved.ok !== true) throw new Error('addItem failed');
       await dev(mini, 'focus', {
-        date: SHOT_MEETING.date,
+        date: SHOT_DATE,
         meetingId: SHOT_MEETING.id,
         banner: true,
       });
@@ -176,10 +223,10 @@ const SCENARIOS = [
     },
   },
   {
-    id: '04-meetings-admin',
-    title: 'Meetings list, admin',
+    id: '04-meetings-secretary',
+    title: 'Meetings list, secretary',
     async run(mini, locale) {
-      await resetSeed(mini, locale, 'admin');
+      await resetSeed(mini, locale, 'secretary');
       await openPage(mini, '/pages/meetings/index');
       await saveShot(mini, locale, this.id + '.png');
     },
@@ -188,7 +235,7 @@ const SCENARIOS = [
     id: '05-meetings-filtered-empty',
     title: 'Meetings list filtered to empty',
     async run(mini, locale) {
-      await resetSeed(mini, locale, 'admin');
+      await resetSeed(mini, locale, 'secretary');
       const page = await openPage(mini, '/pages/meetings/index');
       await callPage(page, 'onFilter', eventWith('key', 'cancelled'));
       if (await page.data('filter') !== 'cancelled') {
@@ -214,7 +261,7 @@ const SCENARIOS = [
     id: '07-meeting-m3',
     title: 'Meeting m3, organizer can cancel',
     async run(mini, locale) {
-      await resetSeed(mini, locale, 'admin');
+      await resetSeed(mini, locale, 'secretary');
       const page = await openPage(mini, '/pages/meeting-detail/index?id=m3');
       const view = await page.data('view');
       if (!view || view.canCancel !== true) throw new Error('m3 cancel action is missing');
@@ -225,7 +272,7 @@ const SCENARIOS = [
     id: '08-meeting-m3-cancel-sheet',
     title: 'Meeting m3 cancel sheet',
     async run(mini, locale) {
-      await resetSeed(mini, locale, 'admin');
+      await resetSeed(mini, locale, 'secretary');
       const page = await openPage(mini, '/pages/meeting-detail/index?id=m3');
       await callPage(page, 'onOpenCancel');
       if (await page.data('cancelOpen') !== true) throw new Error('cancel sheet did not open');
@@ -236,7 +283,7 @@ const SCENARIOS = [
     id: '09-meeting-m2-cancel-refused',
     title: 'Meeting m2 cancel refused',
     async run(mini, locale) {
-      await resetSeed(mini, locale, 'admin');
+      await resetSeed(mini, locale, 'secretary');
       const page = await openPage(mini, '/pages/meeting-detail/index?id=m2');
       await callPage(page, 'onConfirmCancel');
       const notice = await page.data('notice');
@@ -248,7 +295,7 @@ const SCENARIOS = [
     id: '10-meeting-not-found',
     title: 'Meeting detail, missing id',
     async run(mini, locale) {
-      await resetSeed(mini, locale, 'admin');
+      await resetSeed(mini, locale, 'secretary');
       const page = await openPage(mini, '/pages/meeting-detail/index?id=missing');
       const view = await page.data('view');
       if (!view || view.notFound !== true) throw new Error('not-found state is missing');
@@ -259,7 +306,7 @@ const SCENARIOS = [
     id: '11-meeting-form-empty',
     title: 'Meeting form, empty',
     async run(mini, locale) {
-      await resetSeed(mini, locale, 'admin');
+      await resetSeed(mini, locale, 'secretary');
       await openPage(mini, '/pages/meeting-form/index');
       await saveShot(mini, locale, this.id + '.png');
     },
@@ -268,7 +315,7 @@ const SCENARIOS = [
     id: '12-meeting-form-errors',
     title: 'Meeting form, inline errors',
     async run(mini, locale) {
-      await resetSeed(mini, locale, 'admin');
+      await resetSeed(mini, locale, 'secretary');
       const page = await openPage(mini, '/pages/meeting-form/index');
       await callPage(page, 'onSubmit');
       const errors = await page.data('errors');
@@ -280,7 +327,7 @@ const SCENARIOS = [
     id: '13-meeting-form-conflict',
     title: 'Meeting form, 5F Boardroom conflict',
     async run(mini, locale) {
-      await resetSeed(mini, locale, 'admin');
+      await resetSeed(mini, locale, 'secretary');
       const page = await openPage(mini, '/pages/meeting-form/index');
       await callPage(page, 'setForm', {
         title: 'Board clash',
@@ -298,7 +345,7 @@ const SCENARIOS = [
     id: '14-meeting-form-dirty',
     title: 'Meeting form, dirty-leave sheet',
     async run(mini, locale) {
-      await resetSeed(mini, locale, 'admin');
+      await resetSeed(mini, locale, 'secretary');
       const page = await openPage(mini, '/pages/meeting-form/index');
       await callPage(page, 'setForm', { title: 'Draft' });
       await callPage(page, 'onBeforeLeave');
@@ -307,10 +354,10 @@ const SCENARIOS = [
     },
   },
   {
-    id: '15-vehicles-admin',
-    title: 'Vehicles, admin mine',
+    id: '15-vehicles-secretary',
+    title: 'Vehicles, secretary mine',
     async run(mini, locale) {
-      await resetSeed(mini, locale, 'admin');
+      await resetSeed(mini, locale, 'secretary');
       await openPage(mini, '/pages/vehicles/index');
       await saveShot(mini, locale, this.id + '.png');
     },
@@ -325,10 +372,10 @@ const SCENARIOS = [
     },
   },
   {
-    id: '17-vehicles-reception',
-    title: 'Vehicles, reception',
+    id: '17-vehicles-receptionist',
+    title: 'Vehicles, receptionist',
     async run(mini, locale) {
-      await resetSeed(mini, locale, 'reception');
+      await resetSeed(mini, locale, 'receptionist');
       await openPage(mini, '/pages/vehicles/index');
       await saveShot(mini, locale, this.id + '.png');
     },
@@ -337,7 +384,7 @@ const SCENARIOS = [
     id: '18-vehicle-v4-dispatch-busy',
     title: 'Vehicle v4 dispatch sheet, busy car',
     async run(mini, locale) {
-      await resetSeed(mini, locale, 'driver');
+      await resetSeed(mini, locale, 'secretary');
       await stageBusyCar(mini);
       const page = await openPage(mini, '/pages/vehicle-detail/index?id=v4');
       await callPage(page, 'openAction', 'dispatch');
@@ -353,7 +400,7 @@ const SCENARIOS = [
     id: '19-vehicle-v4-seat-warning',
     title: 'Vehicle v4 dispatch sheet, seat warning',
     async run(mini, locale) {
-      await resetSeed(mini, locale, 'driver');
+      await resetSeed(mini, locale, 'secretary');
       await stageBusyCar(mini, 5);
       const page = await openPage(mini, '/pages/vehicle-detail/index?id=v4');
       await callPage(page, 'openAction', 'dispatch');
@@ -367,7 +414,7 @@ const SCENARIOS = [
     id: '20-vehicle-v4-reject-error',
     title: 'Vehicle v4 reject sheet, empty reason',
     async run(mini, locale) {
-      await resetSeed(mini, locale, 'driver');
+      await resetSeed(mini, locale, 'secretary');
       const page = await openPage(mini, '/pages/vehicle-detail/index?id=v4');
       await callPage(page, 'openAction', 'reject');
       await callPage(page, 'onConfirmReject');
@@ -395,7 +442,7 @@ const SCENARIOS = [
     id: '22-vehicle-v1-rejected',
     title: 'Vehicle v1 rejected',
     async run(mini, locale) {
-      await resetSeed(mini, locale, 'admin');
+      await resetSeed(mini, locale, 'secretary');
       const page = await openPage(mini, '/pages/vehicle-detail/index?id=v1');
       const view = await page.data('view');
       if (!view || !view.rejectBanner) throw new Error('reject banner is missing');
@@ -406,7 +453,7 @@ const SCENARIOS = [
     id: '23-vehicle-form-errors',
     title: 'Vehicle form, inline errors',
     async run(mini, locale) {
-      await resetSeed(mini, locale, 'admin');
+      await resetSeed(mini, locale, 'secretary');
       const page = await openPage(mini, '/pages/vehicle-form/index');
       await callPage(page, 'onSubmit');
       const errors = await page.data('errors');
@@ -415,10 +462,10 @@ const SCENARIOS = [
     },
   },
   {
-    id: '24-me-admin',
-    title: 'Me, admin',
+    id: '24-me-secretary',
+    title: 'Me, secretary',
     async run(mini, locale) {
-      await resetSeed(mini, locale, 'admin');
+      await resetSeed(mini, locale, 'secretary');
       await openPage(mini, '/pages/me/index');
       await saveShot(mini, locale, this.id + '.png');
     },
@@ -427,7 +474,7 @@ const SCENARIOS = [
     id: '25-me-language',
     title: 'Me, language sheet',
     async run(mini, locale) {
-      await resetSeed(mini, locale, 'admin');
+      await resetSeed(mini, locale, 'secretary');
       const page = await openPage(mini, '/pages/me/index');
       await callPage(page, 'onOpenLanguage');
       if (await page.data('languageOpen') !== true) throw new Error('language sheet did not open');
@@ -438,7 +485,7 @@ const SCENARIOS = [
     id: '26-me-reset',
     title: 'Me, reset sheet',
     async run(mini, locale) {
-      await resetSeed(mini, locale, 'admin');
+      await resetSeed(mini, locale, 'secretary');
       const page = await openPage(mini, '/pages/me/index');
       await callPage(page, 'onOpenReset');
       if (await page.data('resetOpen') !== true) throw new Error('reset sheet did not open');
@@ -449,7 +496,7 @@ const SCENARIOS = [
     id: '27-visitors',
     title: 'Visitors skeleton',
     async run(mini, locale) {
-      await resetSeed(mini, locale, 'admin');
+      await resetSeed(mini, locale, 'secretary');
       await openPage(mini, '/pages/visitors/index');
       await saveShot(mini, locale, this.id + '.png');
     },
@@ -458,7 +505,7 @@ const SCENARIOS = [
     id: '28-daily',
     title: 'Daily skeleton',
     async run(mini, locale) {
-      await resetSeed(mini, locale, 'admin');
+      await resetSeed(mini, locale, 'secretary');
       await openPage(mini, '/pages/daily/index');
       await saveShot(mini, locale, this.id + '.png');
     },
@@ -467,7 +514,7 @@ const SCENARIOS = [
     id: '29-dev-gallery-pseudo',
     title: 'Dev gallery, pseudo-locale',
     async run(mini, locale) {
-      await resetSeed(mini, locale, 'admin');
+      await resetSeed(mini, locale, 'secretary');
       const page = await openPage(mini, '/pages/dev-gallery/index');
       await callPage(page, 'onTogglePseudo');
       if (await page.data('pseudoOn') !== true) throw new Error('pseudo-locale did not turn on');
@@ -478,7 +525,7 @@ const SCENARIOS = [
     id: '30-schedule-load-error',
     title: 'Schedule load error',
     async run(mini, locale) {
-      await resetSeed(mini, locale, 'admin');
+      await resetSeed(mini, locale, 'secretary');
       await mini.callWxMethod('setStorageSync', DATA_KEY, { version: 99 });
       const loaded = await dev(mini, 'reload');
       if (!loaded || loaded.ok !== false) {
@@ -486,6 +533,76 @@ const SCENARIOS = [
       }
       const page = await openPage(mini, '/pages/schedule/index');
       if (await page.data('loadFailed') !== true) throw new Error('load-error state is missing');
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '31-schedule-1026-leader',
+    title: 'Schedule 2026-10-26, leader',
+    async run(mini, locale) {
+      await resetSeed(mini, locale, 'leader');
+      await dev(mini, 'setDate', '2026-10-26');
+      const page = await openPage(mini, '/pages/schedule/index');
+      const ids = scheduleIds(await page.data('view'));
+      if (!ids.includes('m4') || ids.includes('m6')) {
+        throw new Error('leader schedule ids: ' + ids.join(','));
+      }
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '32-schedule-1026-secretary-admin',
+    title: 'Schedule 2026-10-26, secretary admin',
+    async run(mini, locale) {
+      await resetSeed(mini, locale, 'secretaryAdmin');
+      await dev(mini, 'setDate', '2026-10-26');
+      const page = await openPage(mini, '/pages/schedule/index');
+      const ids = scheduleIds(await page.data('view'));
+      if (!ids.includes('m6')) throw new Error('secretary admin schedule ids: ' + ids.join(','));
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '33-vehicles-leader',
+    title: 'Vehicles, leader',
+    async run(mini, locale) {
+      await resetSeed(mini, locale, 'leader');
+      const page = await openPage(mini, '/pages/vehicles/index');
+      const ids = vehicleIds(await page.data('view'));
+      if (ids.length !== 1 || ids[0] !== 'v5') {
+        throw new Error('leader vehicle ids: ' + ids.join(','));
+      }
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '34-vehicle-v4-dispatch-drivers',
+    title: 'Vehicle v4 dispatch sheet, driver row',
+    async run(mini, locale) {
+      await resetSeed(mini, locale, 'secretary');
+      const page = await openPage(mini, '/pages/vehicle-detail/index?id=v4');
+      await callPage(page, 'openAction', 'dispatch');
+      const drivers = await page.data('dispatchDrivers');
+      const view = await page.data('dispatchView');
+      if (await page.data('dispatchOpen') !== true || !drivers || drivers.length < 2) {
+        throw new Error('driver row is missing');
+      }
+      if (!view || view.confirmDisabled !== true) {
+        throw new Error('confirm should stay disabled until a driver is chosen');
+      }
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '35-vehicles-driver-todo',
+    title: 'Vehicles, driver assigned to-do',
+    async run(mini, locale) {
+      await resetSeed(mini, locale, 'driver');
+      const page = await openPage(mini, '/pages/vehicles/index');
+      const ids = vehicleIds(await page.data('view'));
+      if (!ids.includes('v3') || ids.includes('v4') || ids.includes('v5')) {
+        throw new Error('driver to-do ids: ' + ids.join(','));
+      }
       await saveShot(mini, locale, this.id + '.png');
     },
   },
@@ -587,6 +704,11 @@ async function main() {
   try {
     mini = await launchDevTools();
     currentMini = mini;
+    try {
+      await mini.reLaunch('/pages/schedule/index');
+    } catch (error) {
+      // The first route after DevTools starts can time out. Later scenarios still run.
+    }
     for (const locale of LOCALES) {
       for (const scenario of SCENARIOS) {
         try {

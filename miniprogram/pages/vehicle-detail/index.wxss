@@ -122,6 +122,16 @@
   color: var(--danger, #9F1D1D);
 }
 
+.driver-label {
+  display: block;
+  margin-top: var(--space-12, 12px);
+  margin-bottom: var(--space-4, 4px);
+  color: var(--ink-2, #5C6778);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
 .car {
   display: flex;
   align-items: flex-start;

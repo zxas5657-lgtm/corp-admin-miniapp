@@ -3,6 +3,7 @@ const { getStore } = require('../../store/index');
 const clock = require('../../domain/clock');
 const { meetingListView } = require('../../viewmodels/meetings');
 const { refreshVehicleBadge } = require('../../utils/badge');
+const { session } = require('../../utils/session');
 
 Component({
   behaviors: [i18nBehavior],
@@ -41,10 +42,13 @@ Component({
       refreshVehicleBadge(this);
       if (typeof this.t !== 'function') return;
       const store = getStore();
+      const current = session(store);
       const view = meetingListView({
         state: store.getState(),
         now: clock.now(),
-        role: store.getRole(),
+        actor: current.actor,
+        viewerTz: current.viewerTz,
+        ctx: current.ctx,
         filter: this._filter || 'all'
       });
       this.setData({ view: view, filter: this._filter || 'all' });

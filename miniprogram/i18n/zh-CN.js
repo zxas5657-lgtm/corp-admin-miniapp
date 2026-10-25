@@ -9,9 +9,11 @@ module.exports = {
   },
   role: {
     leader: { label: '领导', hint: '可查看全部安排，可以建会，也可以申请用车。' },
-    admin: { label: '行政专员', hint: '可以建会、申请用车，并跟进当天的日程。' },
-    driver: { label: '司机/车管', hint: '查看待派的申请，分派车辆，行程结束后标记完成。' },
-    reception: { label: '前台/接待', hint: '可查看日程和会议，也可以为接待申请用车。' },
+    secretary: { label: '秘书', hint: '跟进所支持领导的日程，并可以申请用车。' },
+    secretaryAdmin: { label: '秘书主管', hint: '管理所有领导的日程和秘书支持关系。' },
+    receptionist: { label: '前台', hint: '查看接待日程并申请用车。' },
+    receptionAdmin: { label: '前台主管', hint: '管理接待日程并申请用车。' },
+    driver: { label: '司机', hint: '处理已分配的用车行程。' },
   },
   status: {
     meeting: { upcoming: '待开始', ongoing: '进行中', done: '已结束', cancelled: '已取消' },
@@ -34,6 +36,9 @@ module.exports = {
     'vehicle.seats.exceeded': '车辆座位不足（可坐 {seats} 人，申请 {passengers} 人）',
     'vehicle.complete.beforeDeparture': '出发前不能标记完成', 'vehicle.car.busy': '该车辆在此时段已被占用',
     'vehicle.reason.tooLong': '用车事由不能超过 40 个字', 'vehicle.destination.tooLong': '目的地不能超过 60 个字', 'vehicle.note.tooLong': '备注不能超过 200 个字',
+    'meeting.category.invalid': '会议类型无效',
+    'meeting.important.invalid': '重要标记无效',
+    'vehicle.driver.required': '请选择司机',
   },
   state: { loading: '加载中…', submitting: '提交中…', genericErrorTitle: '出错了', genericErrorBody: '请重试', retry: '重试', reset: '恢复演示数据' },
   schedule: { emptyTitle: '这天没有安排', emptyBody: '新建的会议和有效的用车申请会列在这里。', count_other: '{n} 项', backToToday: '回到今天', scope: { all: '全部日程', mine: '我的日程' } },
@@ -76,4 +81,5 @@ module.exports = {
   'meeting.detail.cancelAction': '取消会议',
   'vehicle.form.reasonPlaceholder': '请填写用车事由',
   'vehicle.form.destinationPlaceholder': '请填写目的地',
+  'vehicle.dispatch.driverLabel': '司机',
 };

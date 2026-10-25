@@ -1,7 +1,7 @@
 const i18nBehavior = require('../../behaviors/i18n');
 const i18n = require('../../i18n/index');
 const { getStore } = require('../../store/index');
-const { ROLES, ROLE_ORDER, personById } = require('../../data/reference');
+const { ROLE_ORDER, personById, actorFor } = require('../../data/reference');
 const { DEV_ROLE_SWITCH } = require('../../config');
 const { changeLocale } = require('../../utils/locale');
 const { refreshVehicleBadge } = require('../../utils/badge');
@@ -86,9 +86,11 @@ Component({
       refreshVehicleBadge(this);
       if (typeof this.t !== 'function') return;
       const roleId = getStore().getRole();
-      const person = personById(ROLES[roleId]);
+      const currentActor = actorFor(roleId);
+      const person = currentActor ? personById(currentActor.personId) : null;
       const roles = ROLE_ORDER.map(function (id) {
-        const item = personById(ROLES[id]);
+        const actor = actorFor(id);
+        const item = actor ? personById(actor.personId) : null;
         return {
           id: id,
           label: this.t('role.' + id + '.label'),

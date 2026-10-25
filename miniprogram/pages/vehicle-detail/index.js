@@ -1,8 +1,10 @@
 const i18nBehavior = require('../../behaviors/i18n');
 const { getStore } = require('../../store/index');
 const clock = require('../../domain/clock');
+const i18n = require('../../i18n/index');
 const { transition } = require('../../domain/vehicle');
-const { ROLES, DRIVERS } = require('../../data/reference');
+const reference = require('../../data/reference');
+const { session } = require('../../utils/session');
 const {
   vehicleDetailView,
   dispatchSheetView,
@@ -46,6 +48,9 @@ Component({
     notice: '',
     dispatchOpen: false,
     dispatchView: null,
+    dispatchDrivers: [],
+    driverLabel: '',
+    driverError: '',
     rejectOpen: false,
     rejectView: null,
     rejectReason: '',
@@ -79,20 +84,46 @@ Component({
       this._created = Boolean(query && String(query.created) === '1');
       this._action = '';
       this._selectedCarId = '';
+      this._selectedDriverId = '';
       this.refresh();
     },
     onLocaleChange() {
       this.refresh();
     },
     actorOptions(store) {
-      const role = store.getRole();
+      const current = session(store);
       const state = store.getState() || {};
       return {
-        role: role,
-        personId: ROLES[role],
+        actor: current.actor,
         now: clock.now(),
-        drivers: DRIVERS,
-        vehicles: state.vehicles || []
+        cars: reference.CARS,
+        vehicles: state.vehicles || [],
+        drivers: reference.DRIVERS
+      };
+    },
+    driverRows() {
+      const selected = this._selectedDriverId;
+      return reference.DRIVERS.map(function (id) {
+        const person = reference.personById(id);
+        return {
+          id: id,
+          label: person ? i18n.localName(person) : '',
+          selected: id === selected
+        };
+      });
+    },
+    dispatchState(carId) {
+      const view = dispatchSheetView({
+        state: getStore().getState(),
+        id: this._id,
+        selectedCarId: carId
+      });
+      if (!this._selectedDriverId) view.confirmDisabled = true;
+      return {
+        dispatchView: view,
+        dispatchDrivers: this.driverRows(),
+        driverLabel: this.t('vehicle.dispatch.driverLabel'),
+        driverError: ''
       };
     },
     confirmCopy(action) {
@@ -106,13 +137,14 @@ Component({
     refresh() {
       if (typeof this.t !== 'function') return;
       const store = getStore();
-      const role = store.getRole();
+      const current = session(store);
       const view = vehicleDetailView({
         state: store.getState(),
         id: this._id || '',
         now: clock.now(),
-        role: role,
-        personId: ROLES[role]
+        actor: current.actor,
+        viewerTz: current.viewerTz,
+        ctx: current.ctx
       });
       const actions = splitActions(view && view.actions);
       const patch = {
@@ -156,18 +188,15 @@ Component({
     openAction(key) {
       this._action = key;
       if (key === 'dispatch' || key === 'reassign') {
+        const drivers = reference.DRIVERS;
         this._selectedCarId = '';
-        this.setData({
+        this._selectedDriverId = drivers.length === 1 ? drivers[0] : '';
+        this.setData(Object.assign({
           dispatchOpen: true,
-          dispatchView: dispatchSheetView({
-            state: getStore().getState(),
-            id: this._id,
-            selectedCarId: ''
-          }),
           rejectOpen: false,
           confirmOpen: false,
           notice: ''
-        });
+        }, this.dispatchState('')));
         return;
       }
       if (key === 'reject') {
@@ -202,13 +231,18 @@ Component({
       }
       if (!car || !car.available || car.selected) return;
       this._selectedCarId = id;
-      this.setData({
-        dispatchView: dispatchSheetView({
-          state: getStore().getState(),
-          id: this._id,
-          selectedCarId: id
-        })
-      });
+      this.setData(this.dispatchState(id));
+    },
+    onPickDriver(event) {
+      const id = event.currentTarget.dataset.id;
+      const rows = this.data.dispatchDrivers || [];
+      let driver = null;
+      for (let i = 0; i < rows.length; i += 1) {
+        if (rows[i].id === id) driver = rows[i];
+      }
+      if (!driver || driver.selected) return;
+      this._selectedDriverId = id;
+      this.setData(this.dispatchState(this._selectedCarId));
     },
     onRejectInput(event) {
       this.setData({
@@ -224,7 +258,14 @@ Component({
       });
     },
     onConfirmDispatch() {
-      this.runTransition({ carId: this._selectedCarId });
+      if (!this._selectedDriverId) {
+        this.setData({ driverError: this.t('error.vehicle.driver.required') });
+        return;
+      }
+      this.runTransition({
+        carId: this._selectedCarId,
+        driverId: this._selectedDriverId
+      });
     },
     onConfirmReject() {
       this.runTransition({ reason: this.data.rejectReason });
@@ -263,6 +304,10 @@ Component({
         }
         if (code === 'vehicle.reject.reasonRequired') {
           this.setData({ rejectError: this.t('error.' + code) });
+          return;
+        }
+        if (code === 'vehicle.driver.required') {
+          this.setData({ driverError: this.t('error.' + code) });
           return;
         }
         this.setData({

@@ -1,7 +1,8 @@
 'use strict';
 
-const DEMO_NOW = '2026-10-24T09:20';
-const { parseLocalDateTime } = require('./dates');
+const DEMO_TZ = 'Asia/Shanghai';
+const DEMO_NOW = '2026-10-24T01:20:00.000Z';
+const tz = require('./tz');
 
 let demoMode = true;
 let overrideNow = null;
@@ -16,8 +17,12 @@ function validDate(value) {
 
 function now() {
   if (overrideNow) return cloneDate(overrideNow);
-  if (demoMode) return parseLocalDateTime(DEMO_NOW);
+  if (demoMode) return new Date(DEMO_NOW);
   return new Date();
+}
+
+function viewerZone() {
+  return demoMode ? DEMO_TZ : tz.deviceZone();
 }
 
 function setDemoMode(value) {
@@ -38,8 +43,10 @@ function setNow(dateOrNull) {
 }
 
 module.exports = {
+  DEMO_TZ,
   DEMO_NOW,
   now,
+  viewerZone,
   setDemoMode,
   isDemoMode,
   setNow,

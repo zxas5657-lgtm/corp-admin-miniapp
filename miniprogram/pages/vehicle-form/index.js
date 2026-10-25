@@ -4,8 +4,8 @@ const { getStore } = require('../../store/index');
 const clock = require('../../domain/clock');
 const { can } = require('../../domain/permissions');
 const { validateVehicle, createVehicleRequest } = require('../../domain/vehicle');
-const { ROLES } = require('../../data/reference');
 const { vehicleFormLabels, vehicleFormDefaults } = require('../../viewmodels/vehicles');
+const { session } = require('../../utils/session');
 
 const FIELD_IDS = {
   reason: 'field-reason',
@@ -54,7 +54,7 @@ Component({
       this._submitting = false;
       this._guardBack = false;
       this._defaults = null;
-      this._personId = '';
+      this._actor = null;
       this._writeTimer = null;
     },
     attached() {
@@ -81,16 +81,17 @@ Component({
   },
   methods: {
     onLoad() {
-      const role = getStore().getRole();
-      this._personId = ROLES[role] || '';
-      if (!can(role, 'vehicle.request')) {
+      const current = session(getStore());
+      this._actor = current.actor;
+      this._viewerTz = current.viewerTz;
+      if (!can(current.actor, 'vehicle.request')) {
         this.setData({
           allowed: false,
           deniedText: this.t('error.permission.denied')
         });
         return;
       }
-      const defaults = vehicleFormDefaults({ now: clock.now() });
+      const defaults = vehicleFormDefaults({ now: clock.now(), viewerTz: this._viewerTz });
       this._defaults = defaults;
       const form = {
         reason: defaults.reason,
@@ -235,12 +236,24 @@ Component({
       const run = function () {
         page._writeTimer = null;
         if (!page._alive || !page._submitting) return;
+        const current = session(getStore());
         const record = createVehicleRequest(form, {
           id: 'v' + Date.now().toString(36),
-          applicantId: page._personId,
-          now: clock.now()
+          actor: current.actor,
+          now: clock.now(),
+          tz: current.viewerTz
         });
         if (!page._alive || !page._submitting) return;
+        if (!record || record.ok === false || !record.id) {
+          page._submitting = false;
+          page._guardBack = page.isDirty();
+          page.setData({
+            submitting: false,
+            guardBack: page._guardBack,
+            notice: page.t('error.' + (record && record.code ? record.code : 'permission.denied'))
+          });
+          return;
+        }
         const saved = getStore().updateVehicle(record);
         if (!page._alive || !page._submitting) return;
         if (!saved || saved.ok !== true) {

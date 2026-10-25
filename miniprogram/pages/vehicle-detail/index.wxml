@@ -106,6 +106,22 @@
             <text wx:if="{{item.busyText}}" class="car-busy">{{item.busyText}}</text>
           </view>
         </view>
+        <text class="driver-label">{{driverLabel}}</text>
+        <view
+          wx:for="{{dispatchDrivers}}"
+          wx:key="id"
+          class="car {{item.selected ? 'is-on' : ''}}"
+          data-id="{{item.id}}"
+          aria-role="radio"
+          aria-checked="{{item.selected}}"
+          bindtap="onPickDriver"
+        >
+          <view class="radio {{item.selected ? 'is-on' : ''}}"></view>
+          <view class="car-copy">
+            <text class="car-label">{{item.label}}</text>
+          </view>
+        </view>
+        <text wx:if="{{driverError}}" class="err">{{driverError}}</text>
         <text wx:if="{{dispatchView.seatWarning}}" class="warn-note">{{dispatchView.seatWarning}}</text>
       </bottom-sheet>
 

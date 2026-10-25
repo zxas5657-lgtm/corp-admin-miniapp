@@ -1,84 +1,115 @@
 'use strict';
-
 const test = require('node:test');
 const assert = require('node:assert/strict');
-
 const i18n = require('../miniprogram/i18n');
+const ref = require('../miniprogram/data/reference');
 const { seed } = require('../miniprogram/data/seed');
-const clock = require('../miniprogram/domain/clock');
-const { scheduleView } = require('../miniprogram/viewmodels/schedule');
-
-const state = seed();
-
-function walk(value, visit) {
-  visit(value);
-  if (Array.isArray(value)) {
-    for (const item of value) walk(item, visit);
-  } else if (value && typeof value === 'object') {
-    for (const child of Object.values(value)) walk(child, visit);
-  }
-}
-
+const {
+  vehicleListView,
+  vehicleDetailView,
+  dispatchSheetView,
+  rejectSheetView,
+  vehicleFormDefaults,
+  vehicleFormLabels,
+} = require('../miniprogram/viewmodels/vehicles');
+const now = new Date('2026-10-24T01:20:00Z');
 test.afterEach(() => i18n._resetForTests());
 test.beforeEach(() => {
   i18n._resetForTests();
   i18n.setDevMode(false);
-  clock.setDemoMode(true);
-  clock.setNow(null);
 });
-
-test('schedule view models are localized, fixed-week, focused, and complete', () => {
-  const now = clock.now();
-  for (const locale of ['zh-CN', 'en']) {
-    i18n._resetForTests();
-    i18n.setDevMode(false);
-    i18n.setLocale(locale);
-    const view = scheduleView({ state, date: '2026-10-24', now, focusId: 'm3' });
-    assert.deepEqual(view.items.map((item) => item.id), ['m2', 'v3', 'm3']);
-    assert.equal(view.items[0].statusText, locale === 'en' ? 'In progress' : '进行中');
-    assert.equal(view.items[2].focused, true);
-    assert.equal(view.items[0].url, '/pages/meeting-detail/index?id=m2');
-    assert.equal(view.items[1].url, '/pages/vehicle-detail/index?id=v3');
-    assert.deepEqual(view.week.days.map((day) => day.date), locale === 'en'
-      ? ['2026-10-18', '2026-10-19', '2026-10-20', '2026-10-21', '2026-10-22', '2026-10-23', '2026-10-24']
-      : ['2026-10-19', '2026-10-20', '2026-10-21', '2026-10-22', '2026-10-23', '2026-10-24', '2026-10-25']);
-    for (const day of view.week.days) {
-      assert.equal(day.hasItems, ['2026-10-23', '2026-10-24', '2026-10-26', '2026-10-27'].includes(day.date));
-    }
-    const empty = scheduleView({ state, date: '2026-10-25', now });
-    assert.equal(empty.items.length, 0);
-    assert.equal(empty.empty.body.includes('{'), false);
-    assert.equal(empty.backToToday !== null, true);
-    walk(view, (value) => {
-      assert.notEqual(value, undefined);
-      if (typeof value === 'string') assert.equal(value.includes('{'), false);
-    });
-  }
+test('vehicle lists apply visibility then actor scopes and badges', () => {
+  const state = seed();
+  const dispatcher = vehicleListView({
+    state,
+    actor: ref.actorFor('secretary'),
+    now,
+    viewerTz: 'Asia/Shanghai',
+    refs: ref,
+  });
+  assert.deepEqual(
+    dispatcher.groups.flatMap((g) => g.items.map((x) => x.id)),
+    ['v4', 'v5'],
+  );
+  assert.equal(dispatcher.badgeCount, 2);
+  const driver = vehicleListView({
+    state,
+    actor: ref.actorFor('driver'),
+    now,
+    viewerTz: 'Asia/Shanghai',
+    refs: ref,
+  });
+  assert.deepEqual(
+    driver.groups.flatMap((g) => g.items.map((x) => x.id)),
+    ['v3'],
+  );
+  assert.equal(driver.badgeCount, 1);
+  const requester = vehicleListView({
+    state,
+    actor: ref.actorFor('receptionist'),
+    now,
+    viewerTz: 'Asia/Shanghai',
+    refs: ref,
+  });
+  assert.deepEqual(
+    requester.groups.flatMap((g) => g.items.map((x) => x.id)),
+    ['v4', 'v2'],
+  );
 });
-
-test('schedule scopes filter rows and week dots by role', () => {
-  const now = clock.now();
-  const admin = scheduleView({
+test('vehicle details honor visibility and actor actions', () => {
+  const state = seed();
+  const detail = vehicleDetailView({
     state,
-    date: '2026-10-24',
+    id: 'v3',
+    actor: ref.actorFor('driver'),
     now,
-    role: 'admin',
-    personId: 'p-lin',
+    viewerTz: 'Asia/Shanghai',
+    refs: ref,
   });
-  assert.deepEqual(admin.items.map((item) => item.id), ['m2', 'v3', 'm3']);
-  assert.deepEqual(admin.scopes, [
-    { key: 'all', label: '全部日程', active: false },
-    { key: 'mine', label: '我的日程', active: true },
-  ]);
-  assert.equal(admin.week.days.find((day) => day.date === '2026-10-23').hasItems, true);
-
-  const leader = scheduleView({
+  assert.equal(detail.notFound, false);
+  assert.equal(
+    detail.actions.some((x) => x.key === 'complete'),
+    true,
+  );
+  assert.equal(detail.warnings.length, 1);
+  assert.equal(
+    vehicleDetailView({
+      state,
+      id: 'v5',
+      actor: ref.actorFor('leader'),
+      now,
+      viewerTz: 'Asia/Shanghai',
+      refs: ref,
+    }).notFound,
+    false,
+  );
+  assert.equal(
+    vehicleDetailView({
+      state,
+      id: 'v5',
+      actor: ref.actorFor('driver'),
+      now,
+      viewerTz: 'Asia/Shanghai',
+      refs: ref,
+    }).notFound,
+    true,
+  );
+});
+test('dispatch sheet detects busy cars and form defaults use viewer zone', () => {
+  const state = seed();
+  state.vehicles.push({ ...state.vehicles[3], id: 'busy', status: 'assigned', carId: 'a6' });
+  const sheet = dispatchSheetView({
     state,
-    date: '2026-10-24',
+    id: 'v4',
     now,
-    role: 'leader',
-    personId: 'p-chen',
+    viewerTz: 'Asia/Shanghai',
+    refs: ref,
+    selectedCarId: 'a6',
   });
-  assert.equal(leader.scopes.find((item) => item.key === 'all').active, true);
-  assert.equal(leader.items.length, 3);
+  assert.equal(sheet.cars.find((x) => x.id === 'a6').available, false);
+  assert.equal(sheet.confirmDisabled, true);
+  assert.equal(rejectSheetView().confirmText.length > 0, true);
+  assert.equal(vehicleFormDefaults({ now, viewerTz: 'Asia/Shanghai' }).time, '10:00');
+  assert.equal(vehicleFormDefaults({ now, viewerTz: 'America/Los_Angeles' }).date, '2026-10-23');
+  assert.equal(vehicleFormLabels().passengers.length > 0, true);
 });

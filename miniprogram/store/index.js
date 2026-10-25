@@ -3,26 +3,16 @@
 const { normalizeLocale } = require('../i18n/index');
 const { seed: defaultSeed } = require('../data/seed');
 const defaultClock = require('../domain/clock');
-const { ROLE_CAPS } = require('../domain/permissions');
-const { toDateStr } = require('../domain/dates');
+const { ROLE_CAPS, normalizeRole } = require('../domain/permissions');
+const tz = require('../domain/tz');
 const { createWxAdapter } = require('./adapter');
-const {
-  DATA_KEY,
-  LOCALE_KEY,
-  ROLE_KEY,
-  SCHEMA_VERSION,
-  migrate,
-} = require('./schema');
-
+const { DATA_KEY, LOCALE_KEY, ROLE_KEY, SCHEMA_VERSION, migrate } = require('./schema');
 function clone(value) {
-  if (value === undefined) return undefined;
-  return JSON.parse(JSON.stringify(value));
+  return value === undefined ? undefined : JSON.parse(JSON.stringify(value));
 }
-
 function resultCode(result, fallback) {
   return result && result.code ? result.code : fallback;
 }
-
 function createStore(options) {
   const config = options || {};
   const adapter = config.adapter;
@@ -31,33 +21,30 @@ function createStore(options) {
   let state = null;
   let pendingFocus = null;
   let selectedDate = null;
-  let listeners = new Set();
-
+  const listeners = new Set();
   function seedState() {
     const value = makeSeed();
     return {
-      meetings: clone(value.meetings || []),
+      items: clone(value.items || []),
       vehicles: clone(value.vehicles || []),
+      notes: clone(value.notes || []),
     };
   }
-
   function persistedData(value) {
     return {
       version: SCHEMA_VERSION,
-      meetings: clone(value.meetings),
+      items: clone(value.items),
       vehicles: clone(value.vehicles),
+      notes: clone(value.notes || []),
     };
   }
-
   function notify() {
     for (const listener of [...listeners]) listener();
   }
-
   function ensureState() {
     if (!state) state = seedState();
     return state;
   }
-
   function load() {
     let read;
     try {
@@ -80,12 +67,10 @@ function createStore(options) {
         return { ok: false, code: 'storage.writeFailed' };
       }
       state = initial;
-      if (!saved || saved.ok !== true) {
+      if (!saved || saved.ok !== true)
         return { ok: false, code: resultCode(saved, 'storage.writeFailed') };
-      }
       return { ok: true, dropped: 0 };
     }
-
     let migrated;
     try {
       migrated = migrate(read.value);
@@ -98,12 +83,12 @@ function createStore(options) {
       return { ok: false, code: migrated.code };
     }
     state = {
-      meetings: clone(migrated.data.meetings),
+      items: clone(migrated.data.items),
       vehicles: clone(migrated.data.vehicles),
+      notes: clone(migrated.data.notes || []),
     };
     return { ok: true, dropped: migrated.dropped };
   }
-
   function writeState(next) {
     let saved;
     try {
@@ -111,37 +96,35 @@ function createStore(options) {
     } catch (error) {
       return { ok: false, code: 'storage.writeFailed' };
     }
-    if (!saved || saved.ok !== true) {
+    if (!saved || saved.ok !== true)
       return { ok: false, code: resultCode(saved, 'storage.writeFailed') };
-    }
     state = {
-      meetings: clone(next.meetings),
+      items: clone(next.items),
       vehicles: clone(next.vehicles),
+      notes: clone(next.notes || []),
     };
     notify();
     return { ok: true };
   }
-
-  function addMeeting(record) {
+  function addItem(record) {
     const current = ensureState();
     return writeState({
-      meetings: [...current.meetings, clone(record)],
+      items: [...current.items, clone(record)],
       vehicles: current.vehicles,
+      notes: current.notes,
     });
   }
-
-  function updateMeeting(record) {
+  function updateItem(record) {
     const current = ensureState();
     let replaced = false;
-    const meetings = current.meetings.map((meeting) => {
-      if (meeting.id !== record.id) return meeting;
+    const items = current.items.map((item) => {
+      if (item.id !== record.id) return item;
       replaced = true;
       return clone(record);
     });
-    if (!replaced) meetings.push(clone(record));
-    return writeState({ meetings, vehicles: current.vehicles });
+    if (!replaced) items.push(clone(record));
+    return writeState({ items, vehicles: current.vehicles, notes: current.notes });
   }
-
   function updateVehicle(record) {
     const current = ensureState();
     let replaced = false;
@@ -151,9 +134,8 @@ function createStore(options) {
       return clone(record);
     });
     if (!replaced) vehicles.push(clone(record));
-    return writeState({ meetings: current.meetings, vehicles });
+    return writeState({ items: current.items, vehicles, notes: current.notes });
   }
-
   function resetDemo() {
     const next = seedState();
     let saved;
@@ -162,23 +144,20 @@ function createStore(options) {
     } catch (error) {
       return { ok: false, code: 'storage.writeFailed' };
     }
-    if (!saved || saved.ok !== true) {
+    if (!saved || saved.ok !== true)
       return { ok: false, code: resultCode(saved, 'storage.writeFailed') };
-    }
     let roleSaved;
     try {
-      roleSaved = adapter.set(ROLE_KEY, 'admin');
+      roleSaved = adapter.set(ROLE_KEY, 'secretary');
     } catch (error) {
       return { ok: false, code: 'storage.writeFailed' };
     }
-    if (!roleSaved || roleSaved.ok !== true) {
+    if (!roleSaved || roleSaved.ok !== true)
       return { ok: false, code: resultCode(roleSaved, 'storage.writeFailed') };
-    }
     state = next;
     notify();
     return { ok: true };
   }
-
   function getLocale() {
     let result;
     try {
@@ -186,10 +165,8 @@ function createStore(options) {
     } catch (error) {
       return null;
     }
-    if (!result || result.ok !== true || result.value === undefined) return null;
-    return result.value;
+    return result && result.ok === true && result.value !== undefined ? result.value : null;
   }
-
   function setLocale(locale) {
     const value = normalizeLocale(locale);
     let saved;
@@ -198,43 +175,36 @@ function createStore(options) {
     } catch (error) {
       return { ok: false, code: 'storage.writeFailed' };
     }
-    if (!saved || saved.ok !== true) {
+    if (!saved || saved.ok !== true)
       return { ok: false, code: resultCode(saved, 'storage.writeFailed') };
-    }
     notify();
     return { ok: true };
   }
-
   function getRole() {
     let result;
     try {
       result = adapter.get(ROLE_KEY);
     } catch (error) {
-      return 'admin';
+      return 'secretary';
     }
-    if (!result || result.ok !== true || !Object.prototype.hasOwnProperty.call(ROLE_CAPS, result.value)) {
-      return 'admin';
-    }
-    return result.value;
+    const role = result && result.ok === true ? normalizeRole(result.value) : 'secretary';
+    return Object.prototype.hasOwnProperty.call(ROLE_CAPS, role) ? role : 'secretary';
   }
-
   function setRole(role) {
-    if (!Object.prototype.hasOwnProperty.call(ROLE_CAPS, role)) {
+    const value = normalizeRole(role);
+    if (!Object.prototype.hasOwnProperty.call(ROLE_CAPS, value))
       return { ok: false, code: 'permission.denied' };
-    }
     let saved;
     try {
-      saved = adapter.set(ROLE_KEY, role);
+      saved = adapter.set(ROLE_KEY, value);
     } catch (error) {
       return { ok: false, code: 'storage.writeFailed' };
     }
-    if (!saved || saved.ok !== true) {
+    if (!saved || saved.ok !== true)
       return { ok: false, code: resultCode(saved, 'storage.writeFailed') };
-    }
     notify();
     return { ok: true };
   }
-
   const ui = {
     setPendingFocus(value) {
       pendingFocus = clone(value);
@@ -248,19 +218,17 @@ function createStore(options) {
       selectedDate = value;
     },
     getSelectedDate() {
-      if (selectedDate === null) selectedDate = toDateStr(clock.now());
+      if (selectedDate === null) selectedDate = tz.toZoned(clock.now(), clock.viewerZone()).date;
       return selectedDate;
     },
   };
-
   return {
     load,
     getState() {
-      const current = ensureState();
-      return clone(current);
+      return clone(ensureState());
     },
-    addMeeting,
-    updateMeeting,
+    addItem,
+    updateItem,
     updateVehicle,
     resetDemo,
     getLocale,
@@ -275,9 +243,7 @@ function createStore(options) {
     },
   };
 }
-
 let singleton = null;
-
 function getStore() {
   if (!singleton) {
     const wxApi = typeof wx === 'undefined' ? {} : wx;
@@ -289,5 +255,4 @@ function getStore() {
   }
   return singleton;
 }
-
 module.exports = { createStore, getStore };

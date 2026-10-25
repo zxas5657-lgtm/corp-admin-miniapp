@@ -1,8 +1,8 @@
 const i18nBehavior = require('../../behaviors/i18n');
 const { getStore } = require('../../store/index');
-const { ROLES } = require('../../data/reference');
 const { vehicleListView } = require('../../viewmodels/vehicles');
 const { refreshVehicleBadge } = require('../../utils/badge');
+const { session } = require('../../utils/session');
 
 function activeScope(view) {
   const scopes = (view && view.scopes) || [];
@@ -49,15 +49,17 @@ Component({
       refreshVehicleBadge(this);
       if (typeof this.t !== 'function') return;
       const store = getStore();
-      const role = store.getRole();
+      const current = session(store);
+      const role = current.actor ? current.actor.role : '';
       if (this._role !== role) {
         this._role = role;
         this._scope = '';
       }
       const view = vehicleListView({
         state: store.getState(),
-        role: role,
-        personId: ROLES[role],
+        actor: current.actor,
+        viewerTz: current.viewerTz,
+        ctx: current.ctx,
         scope: this._scope || undefined
       });
       if (!this._scope) this._scope = activeScope(view);

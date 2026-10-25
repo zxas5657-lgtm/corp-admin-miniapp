@@ -21,8 +21,11 @@ function attachDevHook(app) {
       app.globalData.loadResult = result;
       return result;
     },
-    addMeeting(record) {
-      return getStore().addMeeting(record);
+    addItem(record) {
+      return getStore().addItem(record);
+    },
+    updateItem(record) {
+      return getStore().updateItem(record);
     },
     updateVehicle(record) {
       return getStore().updateVehicle(record);

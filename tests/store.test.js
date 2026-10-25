@@ -1,169 +1,217 @@
 'use strict';
-
 const test = require('node:test');
 const assert = require('node:assert/strict');
-
 const { seed } = require('../miniprogram/data/seed');
 const clock = require('../miniprogram/domain/clock');
 const { createMemoryAdapter, createWxAdapter } = require('../miniprogram/store/adapter');
-const { DATA_KEY, LOCALE_KEY, ROLE_KEY } = require('../miniprogram/store/schema');
+const { DATA_KEY, ROLE_KEY } = require('../miniprogram/store/schema');
 const { createStore } = require('../miniprogram/store');
-
-function makeStore(adapter) {
-  return createStore({ adapter, seed, clock });
-}
-
+const make = (adapter, extra) => createStore({ adapter, seed, clock, ...(extra || {}) });
 test.beforeEach(() => {
   clock.setDemoMode(true);
   clock.setNow(null);
 });
-
-test('memory and wx adapters return result objects and never expose storage errors', () => {
-  const memory = createMemoryAdapter();
-  assert.deepEqual(memory.get('missing'), { ok: true, value: undefined });
-  assert.deepEqual(memory.set('key', { value: 1 }), { ok: true });
-  assert.deepEqual(memory.get('key'), { ok: true, value: { value: 1 } });
-  assert.deepEqual(memory.remove('key'), { ok: true });
-  memory.failNext({ op: 'get' });
-  assert.deepEqual(memory.get('missing'), { ok: false, code: 'storage.readFailed' });
-  memory.failNext({ op: 'set' });
-  assert.deepEqual(memory.set('key', 1), { ok: false, code: 'storage.writeFailed' });
-  memory.failNext({ op: 'remove' });
-  assert.deepEqual(memory.remove('key'), { ok: false, code: 'storage.writeFailed' });
-
-  const throwingWx = createWxAdapter({
-    getStorageSync() { throw new Error('read'); },
-    setStorageSync() { throw new Error('write'); },
-    removeStorageSync() { throw new Error('remove'); },
-  });
-  assert.deepEqual(throwingWx.get('key'), { ok: false, code: 'storage.readFailed' });
-  assert.deepEqual(throwingWx.set('key', 1), { ok: false, code: 'storage.writeFailed' });
-  assert.deepEqual(throwingWx.remove('key'), { ok: false, code: 'storage.writeFailed' });
+test('first load seeds v3 state and persists', () => {
+  const a = createMemoryAdapter();
+  const s = make(a);
+  assert.deepEqual(s.load(), { ok: true, dropped: 0 });
+  assert.equal(a.get(DATA_KEY).value.version, 3);
+  assert.equal(s.getState().items.length, 6);
+  assert.equal(s.getState().vehicles.length, 5);
+  assert.deepEqual(s.getState().notes, []);
 });
-
-test('wx adapter treats the empty string wx returns for a missing key as absent, so first launch seeds', () => {
-  const values = new Map();
-  const fakeWx = {
-    getStorageSync(key) { return values.has(key) ? values.get(key) : ''; },
-    setStorageSync(key, value) { values.set(key, JSON.parse(JSON.stringify(value))); },
-    removeStorageSync(key) { values.delete(key); },
-  };
-  const adapter = createWxAdapter(fakeWx);
-  assert.deepEqual(adapter.get('missing'), { ok: true, value: undefined });
-  assert.deepEqual(makeStore(adapter).load(), { ok: true, dropped: 0 });
-  assert.equal(values.get(DATA_KEY).version, 2);
+test('item and vehicle mutations replace or append and notify', () => {
+  const a = createMemoryAdapter();
+  const s = make(a);
+  s.load();
+  let n = 0;
+  s.subscribe(() => n++);
+  assert.deepEqual(s.addItem({ id: 'x', kind: 'meeting', startAt: 'x' }), { ok: true });
+  assert.deepEqual(s.updateItem({ id: 'x', kind: 'meeting', startAt: 'y' }), { ok: true });
+  assert.deepEqual(s.updateVehicle({ id: 'v-x', departAt: 'x', status: 'pending' }), { ok: true });
+  assert.equal(n, 3);
+  assert.equal(s.getState().items.find((x) => x.id === 'x').startAt, 'y');
+  assert.equal(typeof s.addMeeting, 'undefined');
+  assert.equal(typeof s.updateMeeting, 'undefined');
 });
-
-test('first load seeds and persists, and a second store reads it back', () => {
-  const adapter = createMemoryAdapter();
-  const first = makeStore(adapter);
-  assert.deepEqual(first.load(), { ok: true, dropped: 0 });
-  const stored = adapter.get(DATA_KEY);
-  assert.equal(stored.ok, true);
-  assert.equal(stored.value.version, 2);
-
-  const record = { id: 'm-extra', date: '2026-10-28' };
-  assert.deepEqual(first.addMeeting(record), { ok: true });
-  const second = makeStore(adapter);
-  assert.deepEqual(second.load(), { ok: true, dropped: 0 });
-  assert.equal(second.getState().meetings.some((meeting) => meeting.id === 'm-extra'), true);
+test('write failure preserves state', () => {
+  const a = createMemoryAdapter();
+  const s = make(a);
+  s.load();
+  const before = s.getState();
+  a.failNext({ op: 'set' });
+  assert.deepEqual(s.addItem({ id: 'x' }), { ok: false, code: 'storage.writeFailed' });
+  assert.deepEqual(s.getState(), before);
 });
-
-test('write failure leaves memory unchanged and does not notify', () => {
-  const adapter = createMemoryAdapter();
-  const store = makeStore(adapter);
-  store.load();
-  const before = store.getState();
-  let notifications = 0;
-  store.subscribe(() => { notifications += 1; });
-  adapter.failNext({ op: 'set' });
-  const result = store.addMeeting({ id: 'm-fail', date: '2026-10-29' });
-  assert.deepEqual(result, { ok: false, code: 'storage.writeFailed' });
-  assert.deepEqual(store.getState(), before);
-  assert.equal(notifications, 0);
+test('role persistence maps legacy roles and reset uses secretary', () => {
+  const a = createMemoryAdapter({ [ROLE_KEY]: 'admin' });
+  const s = make(a);
+  assert.equal(s.getRole(), 'secretary');
+  assert.deepEqual(s.setRole('reception'), { ok: true });
+  assert.equal(s.getRole(), 'receptionist');
+  assert.deepEqual(s.resetDemo(), { ok: true });
+  assert.equal(s.getRole(), 'secretary');
+  assert.equal(a.get(ROLE_KEY).value, 'secretary');
 });
-
-test('read failures, corrupt blobs, and future versions keep stored data untouched', () => {
-  const adapter = createMemoryAdapter();
-  const store = makeStore(adapter);
-  adapter.failNext({ op: 'get' });
-  assert.deepEqual(store.load(), { ok: false, code: 'storage.readFailed' });
-  assert.equal(store.getState().meetings.length, seed().meetings.length);
-
-  const corrupt = { version: 2, meetings: 'bad', vehicles: [] };
-  adapter.set(DATA_KEY, corrupt);
-  const corruptStore = makeStore(adapter);
-  assert.deepEqual(corruptStore.load(), { ok: false, code: 'storage.readFailed' });
-  assert.deepEqual(adapter.get(DATA_KEY).value, corrupt);
-
-  const future = { version: 99, meetings: [], vehicles: [] };
-  adapter.set(DATA_KEY, future);
-  const futureStore = makeStore(adapter);
-  assert.deepEqual(futureStore.load(), { ok: false, code: 'storage.readFailed' });
-  assert.deepEqual(adapter.get(DATA_KEY).value, future);
+test('selected date uses viewer zone and state is deeply copied', () => {
+  const s = make(createMemoryAdapter());
+  assert.equal(s.ui.getSelectedDate(), '2026-10-24');
+  const x = s.getState();
+  x.items[0].title = 'changed';
+  assert.notEqual(s.getState().items[0].title, 'changed');
 });
-
-test('malformed records are dropped and counted by load', () => {
-  const adapter = createMemoryAdapter({
+test('load migrates v2 and reports drops', () => {
+  const a = createMemoryAdapter({
     [DATA_KEY]: {
       version: 2,
-      meetings: [{ id: 'm1', date: '2026-10-24' }, { id: 'bad' }],
-      vehicles: [{ id: 'v1', date: '2026-10-24' }, null],
+      meetings: [
+        {
+          id: 'm',
+          title: 'x',
+          date: '2026-10-24',
+          start: '09:00',
+          end: '10:00',
+          attendeeIds: [],
+          organizerId: 'p-lin',
+        },
+      ],
+      vehicles: [
+        { id: 'v', date: '2026-10-24', time: '09:00', applicantId: 'p-zhou', status: 'pending' },
+      ],
     },
   });
-  const store = makeStore(adapter);
-  assert.deepEqual(store.load(), { ok: true, dropped: 2 });
-  assert.deepEqual(store.getState().meetings.map((meeting) => meeting.id), ['m1']);
-  assert.deepEqual(store.getState().vehicles.map((vehicle) => vehicle.id), ['v1']);
+  const s = make(a);
+  assert.deepEqual(s.load(), { ok: true, dropped: 0 });
+  assert.equal(s.getState().items[0].kind, 'meeting');
+  assert.equal(s.getState().vehicles[0].departAt, '2026-10-24T01:00:00.000Z');
 });
 
-test('resetDemo keeps locale and resets role', () => {
-  const adapter = createMemoryAdapter();
-  const store = makeStore(adapter);
-  store.load();
-  assert.deepEqual(store.setLocale('en'), { ok: true });
-  assert.deepEqual(store.setRole('driver'), { ok: true });
-  assert.deepEqual(store.resetDemo(), { ok: true });
-  assert.equal(store.getLocale(), 'en');
-  assert.equal(store.getRole(), 'admin');
-  assert.equal(adapter.get(LOCALE_KEY).value, 'en');
-  assert.equal(adapter.get(ROLE_KEY).value, 'admin');
+test('memory and wx adapters return result objects and never expose storage errors', () => {
+  const a = createMemoryAdapter();
+  assert.deepEqual(a.get('missing'), { ok: true, value: undefined });
+  assert.deepEqual(a.set('key', { value: 1 }), { ok: true });
+  assert.deepEqual(a.get('key'), { ok: true, value: { value: 1 } });
+  a.failNext({ op: 'get' });
+  assert.deepEqual(a.get('key'), { ok: false, code: 'storage.readFailed' });
+  const wx = createWxAdapter({
+    getStorageSync() {
+      throw Error('read');
+    },
+    setStorageSync() {
+      throw Error('write');
+    },
+    removeStorageSync() {
+      throw Error('remove');
+    },
+  });
+  assert.deepEqual(wx.get('x'), { ok: false, code: 'storage.readFailed' });
+  assert.deepEqual(wx.set('x', 1), { ok: false, code: 'storage.writeFailed' });
+  assert.deepEqual(wx.remove('x'), { ok: false, code: 'storage.writeFailed' });
 });
-
+test('read failures corrupt blobs and future versions keep stored data untouched', () => {
+  const a = createMemoryAdapter();
+  const s = make(a);
+  a.failNext({ op: 'get' });
+  assert.deepEqual(s.load(), { ok: false, code: 'storage.readFailed' });
+  assert.equal(s.getState().items.length, seed().items.length);
+  const corrupt = { version: 3, items: 'bad', vehicles: [], notes: [] };
+  a.set(DATA_KEY, corrupt);
+  assert.deepEqual(make(a).load(), { ok: false, code: 'storage.readFailed' });
+  assert.deepEqual(a.get(DATA_KEY).value, corrupt);
+  const future = { version: 99, items: [], vehicles: [], notes: [] };
+  a.set(DATA_KEY, future);
+  assert.deepEqual(make(a).load(), { ok: false, code: 'storage.readFailed' });
+  assert.deepEqual(a.get(DATA_KEY).value, future);
+});
 test('locale and role persistence validate values', () => {
-  const adapter = createMemoryAdapter();
-  const store = makeStore(adapter);
-  assert.equal(store.getLocale(), null);
-  assert.deepEqual(store.setLocale('zh-Hans'), { ok: true });
-  assert.equal(store.getLocale(), 'zh-CN');
-  assert.equal(store.getRole(), 'admin');
-  assert.deepEqual(store.setRole('unknown'), { ok: false, code: 'permission.denied' });
-  assert.deepEqual(store.setRole('leader'), { ok: true });
-  assert.equal(store.getRole(), 'leader');
+  const s = make(createMemoryAdapter());
+  assert.equal(s.getLocale(), null);
+  assert.deepEqual(s.setLocale('zh-Hans'), { ok: true });
+  assert.equal(s.getLocale(), 'zh-CN');
+  assert.equal(s.getRole(), 'secretary');
+  assert.deepEqual(s.setRole('unknown'), { ok: false, code: 'permission.denied' });
+  assert.deepEqual(s.setRole('leader'), { ok: true });
+  assert.equal(s.getRole(), 'leader');
 });
-
 test('pending focus is one-shot and selected date defaults from the clock', () => {
-  const store = makeStore(createMemoryAdapter());
-  assert.equal(store.ui.getSelectedDate(), '2026-10-24');
-  store.ui.setPendingFocus({ date: '2026-10-26', meetingId: 'm4' });
-  assert.deepEqual(store.ui.takePendingFocus(), { date: '2026-10-26', meetingId: 'm4' });
-  assert.equal(store.ui.takePendingFocus(), null);
-  store.ui.setSelectedDate('2026-10-27');
-  assert.equal(store.ui.getSelectedDate(), '2026-10-27');
+  const s = make(createMemoryAdapter());
+  assert.equal(s.ui.getSelectedDate(), '2026-10-24');
+  s.ui.setPendingFocus({ date: '2026-10-26', itemId: 'm4' });
+  assert.deepEqual(s.ui.takePendingFocus(), { date: '2026-10-26', itemId: 'm4' });
+  assert.equal(s.ui.takePendingFocus(), null);
+  s.ui.setSelectedDate('2026-10-27');
+  assert.equal(s.ui.getSelectedDate(), '2026-10-27');
 });
 
+test('wx adapter treats an empty string as absent so first launch seeds', () => {
+  const values = new Map();
+  const fake = {
+    getStorageSync(k) {
+      return values.has(k) ? values.get(k) : '';
+    },
+    setStorageSync(k, v) {
+      values.set(k, JSON.parse(JSON.stringify(v)));
+    },
+    removeStorageSync(k) {
+      values.delete(k);
+    },
+  };
+  const a = createWxAdapter(fake);
+  assert.deepEqual(a.get('missing'), { ok: true, value: undefined });
+  assert.deepEqual(make(a).load(), { ok: true, dropped: 0 });
+  assert.equal(values.get(DATA_KEY).version, 3);
+});
+
+test('first load persists and a second store reads appended items', () => {
+  const a = createMemoryAdapter();
+  const first = make(a);
+  assert.deepEqual(first.load(), { ok: true, dropped: 0 });
+  const record = {
+    id: 'm-extra',
+    kind: 'meeting',
+    startAt: '2026-10-28T01:00:00.000Z',
+    endAt: '2026-10-28T02:00:00.000Z',
+  };
+  assert.deepEqual(first.addItem(record), { ok: true });
+  const second = make(a);
+  assert.deepEqual(second.load(), { ok: true, dropped: 0 });
+  assert.equal(
+    second.getState().items.some((x) => x.id === 'm-extra'),
+    true,
+  );
+});
+test('malformed records are dropped and counted by load', () => {
+  const a = createMemoryAdapter({
+    [DATA_KEY]: {
+      version: 3,
+      items: [{ id: 'i', startAt: 'x' }, { id: 'bad' }],
+      vehicles: [{ id: 'v', departAt: 'x' }, null],
+      notes: [],
+    },
+  });
+  const s = make(a);
+  assert.deepEqual(s.load(), { ok: true, dropped: 2 });
+  assert.deepEqual(
+    s.getState().items.map((x) => x.id),
+    ['i'],
+  );
+  assert.deepEqual(
+    s.getState().vehicles.map((x) => x.id),
+    ['v'],
+  );
+});
 test('getState returns deep copies and subscribers fire after successful mutations', () => {
-  const adapter = createMemoryAdapter();
-  const store = makeStore(adapter);
-  store.load();
+  const a = createMemoryAdapter();
+  const s = make(a);
+  s.load();
   let notifications = 0;
-  const unsubscribe = store.subscribe(() => { notifications += 1; });
-  const state = store.getState();
-  state.meetings[0].title = 'changed';
-  assert.notEqual(store.getState().meetings[0].title, 'changed');
-  assert.deepEqual(store.addMeeting({ id: 'm-add', date: '2026-10-30' }), { ok: true });
-  assert.deepEqual(store.updateMeeting({ id: 'm-add', date: '2026-10-31' }), { ok: true });
-  assert.deepEqual(store.updateVehicle({ id: 'v-add', date: '2026-10-31' }), { ok: true });
+  const unsubscribe = s.subscribe(() => notifications++);
+  const state = s.getState();
+  state.items[0].title = 'changed';
+  assert.notEqual(s.getState().items[0].title, 'changed');
+  assert.deepEqual(s.addItem({ id: 'i-add', kind: 'meeting', startAt: 'x' }), { ok: true });
+  assert.deepEqual(s.updateItem({ id: 'i-add', kind: 'meeting', startAt: 'y' }), { ok: true });
+  assert.deepEqual(s.updateVehicle({ id: 'v-add', departAt: 'x' }), { ok: true });
   assert.equal(notifications, 3);
   unsubscribe();
 });

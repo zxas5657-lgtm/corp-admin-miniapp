@@ -2,22 +2,23 @@
 
 const { isDateStr, isTimeStr } = require('./dates');
 
+// Offsets and DST rules only; display names live in data/zones.js.
 const ZONES = Object.freeze([
-  { id: 'UTC', city: { 'zh-CN': '\u4e16\u754c\u534f\u8c03\u65f6', en: 'UTC' }, std: 0, dst: null },
-  { id: 'Asia/Shanghai', city: { 'zh-CN': '\u4e0a\u6d77', en: 'Shanghai' }, std: 480, dst: null },
-  { id: 'Asia/Hong_Kong', city: { 'zh-CN': '\u9999\u6e2f', en: 'Hong Kong' }, std: 480, dst: null },
-  { id: 'Asia/Singapore', city: { 'zh-CN': '\u65b0\u52a0\u5761', en: 'Singapore' }, std: 480, dst: null },
-  { id: 'Asia/Tokyo', city: { 'zh-CN': '\u4e1c\u4eac', en: 'Tokyo' }, std: 540, dst: null },
-  { id: 'Asia/Seoul', city: { 'zh-CN': '\u9996\u5c14', en: 'Seoul' }, std: 540, dst: null },
-  { id: 'Asia/Dubai', city: { 'zh-CN': '\u8fea\u62dc', en: 'Dubai' }, std: 240, dst: null },
-  { id: 'Asia/Kolkata', city: { 'zh-CN': '\u52a0\u5c14\u5404\u7b54', en: 'Kolkata' }, std: 330, dst: null },
-  { id: 'Europe/London', city: { 'zh-CN': '\u4f26\u6566', en: 'London' }, std: 0, dst: { kind: 'eu' } },
-  { id: 'Europe/Amsterdam', city: { 'zh-CN': '\u963f\u59c6\u65af\u7279\u4e39', en: 'Amsterdam' }, std: 60, dst: { kind: 'eu' } },
-  { id: 'Europe/Berlin', city: { 'zh-CN': '\u67cf\u6797', en: 'Berlin' }, std: 60, dst: { kind: 'eu' } },
-  { id: 'America/New_York', city: { 'zh-CN': '\u7ebd\u7ea6', en: 'New York' }, std: -300, dst: { kind: 'us' } },
-  { id: 'America/Chicago', city: { 'zh-CN': '\u829d\u52a0\u54e5', en: 'Chicago' }, std: -360, dst: { kind: 'us' } },
-  { id: 'America/Los_Angeles', city: { 'zh-CN': '\u6d1b\u6749\u77f6', en: 'Los Angeles' }, std: -480, dst: { kind: 'us' } },
-  { id: 'Australia/Sydney', city: { 'zh-CN': '\u6089\u5c3c', en: 'Sydney' }, std: 600, dst: { kind: 'au' } },
+  { id: 'UTC', std: 0, dst: null },
+  { id: 'Asia/Shanghai', std: 480, dst: null },
+  { id: 'Asia/Hong_Kong', std: 480, dst: null },
+  { id: 'Asia/Singapore', std: 480, dst: null },
+  { id: 'Asia/Tokyo', std: 540, dst: null },
+  { id: 'Asia/Seoul', std: 540, dst: null },
+  { id: 'Asia/Dubai', std: 240, dst: null },
+  { id: 'Asia/Kolkata', std: 330, dst: null },
+  { id: 'Europe/London', std: 0, dst: { kind: 'eu' } },
+  { id: 'Europe/Amsterdam', std: 60, dst: { kind: 'eu' } },
+  { id: 'Europe/Berlin', std: 60, dst: { kind: 'eu' } },
+  { id: 'America/New_York', std: -300, dst: { kind: 'us' } },
+  { id: 'America/Chicago', std: -360, dst: { kind: 'us' } },
+  { id: 'America/Los_Angeles', std: -480, dst: { kind: 'us' } },
+  { id: 'Australia/Sydney', std: 600, dst: { kind: 'au' } },
 ]);
 
 const ZONE_BY_ID = new Map(ZONES.map((zone) => [zone.id, zone]));
@@ -154,7 +155,14 @@ function intlOffset(instant, tz) {
   const values = {};
   for (const part of parts) values[part.type] = Number(part.value);
   // Older engines may ignore hourCycle and report midnight as 24.
-  const wall = Date.UTC(values.year, values.month - 1, values.day, values.hour % 24, values.minute, values.second);
+  const wall = Date.UTC(
+    values.year,
+    values.month - 1,
+    values.day,
+    values.hour % 24,
+    values.minute,
+    values.second,
+  );
   return Math.round((wall - instant.getTime()) / 60000);
 }
 
@@ -196,7 +204,9 @@ function candidateOffsets(wallMs, tz) {
   const zone = zoneInfo(tz);
   if (zone) return [zone.std, zone.dst ? zone.std + 60 : null].filter((value) => value !== null);
   const samples = [0, -6, 6, -24, 24, -48, 48, -370 * 24, 370 * 24];
-  return [...new Set(samples.map((hours) => offsetMinutes(new Date(wallMs + hours * 3600000), tz)))];
+  return [
+    ...new Set(samples.map((hours) => offsetMinutes(new Date(wallMs + hours * 3600000), tz))),
+  ];
 }
 
 function fromZoned(dateStr, timeStr, tz) {
@@ -234,7 +244,14 @@ function spanDays(startAt, endAt, tz) {
   const first = dayKey(start, tz);
   const last = end.getTime() <= start.getTime() ? first : dayKey(new Date(end.getTime() - 1), tz);
   const days = [];
-  const cursor = new Date(Date.UTC(...first.split('-').map(Number).map((value, index) => index === 1 ? value - 1 : value)));
+  const cursor = new Date(
+    Date.UTC(
+      ...first
+        .split('-')
+        .map(Number)
+        .map((value, index) => (index === 1 ? value - 1 : value)),
+    ),
+  );
   const lastSerial = dateSerial(last);
   while (cursor.getTime() / 86400000 <= lastSerial) {
     const parts = utcDateParts(cursor);
@@ -252,7 +269,6 @@ function dualTime(instant, itemTz, viewerTz) {
   const viewer = toZoned(instant, viewerTz);
   const own = toZoned(instant, itemTz);
   if (viewer.offset === own.offset) return null;
-  const zone = ZONE_BY_ID.get(itemTz);
   const difference = dateSerial(own.date) - dateSerial(viewer.date);
   return {
     viewer: { date: viewer.date, time: viewer.time },
@@ -260,7 +276,7 @@ function dualTime(instant, itemTz, viewerTz) {
       date: own.date,
       time: own.time,
       dayShift: difference < 0 ? -1 : difference > 0 ? 1 : 0,
-      city: zone ? zone.city : { 'zh-CN': itemTz, en: itemTz },
+      zone: itemTz,
     },
   };
 }
@@ -282,7 +298,10 @@ function deviceZone() {
   }
   const current = new Date();
   const currentOffset = -current.getTimezoneOffset();
-  const preferred = ['Asia/Shanghai', ...ZONES.map((zone) => zone.id).filter((id) => id !== 'Asia/Shanghai')];
+  const preferred = [
+    'Asia/Shanghai',
+    ...ZONES.map((zone) => zone.id).filter((id) => id !== 'Asia/Shanghai'),
+  ];
   for (const id of preferred) {
     const zone = ZONE_BY_ID.get(id);
     if (zone && tableOffsetAt(current, zone) === currentOffset) return id;

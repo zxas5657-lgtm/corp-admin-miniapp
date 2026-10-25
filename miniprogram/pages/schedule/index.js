@@ -1,8 +1,8 @@
 const i18nBehavior = require('../../behaviors/i18n');
 const { getStore } = require('../../store/index');
 const clock = require('../../domain/clock');
-const { ROLES } = require('../../data/reference');
 const { scheduleView } = require('../../viewmodels/schedule');
+const { session } = require('../../utils/session');
 const { refreshVehicleBadge } = require('../../utils/badge');
 
 function activeScope(view) {
@@ -93,7 +93,8 @@ Component({
       refreshVehicleBadge(this);
       if (typeof this.t !== 'function') return;
       const store = getStore();
-      const role = store.getRole();
+      const current = session(store);
+      const role = current.actor ? current.actor.role : '';
       if (this._role !== role) {
         this._role = role;
         this._scope = '';
@@ -103,8 +104,9 @@ Component({
         date: store.ui.getSelectedDate(),
         now: clock.now(),
         focusId: this._focusId || '',
-        role: role,
-        personId: ROLES[role],
+        actor: current.actor,
+        viewerTz: current.viewerTz,
+        ctx: current.ctx,
         scope: this._scope || undefined
       });
       if (!this._scope) this._scope = activeScope(view);

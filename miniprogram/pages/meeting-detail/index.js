@@ -2,8 +2,8 @@ const i18nBehavior = require('../../behaviors/i18n');
 const { getStore } = require('../../store/index');
 const clock = require('../../domain/clock');
 const { cancelMeeting } = require('../../domain/meeting');
-const { ROLES } = require('../../data/reference');
 const { meetingDetailView } = require('../../viewmodels/meetings');
+const { session } = require('../../utils/session');
 
 Component({
   behaviors: [i18nBehavior],
@@ -46,13 +46,14 @@ Component({
     refresh() {
       if (typeof this.t !== 'function') return;
       const store = getStore();
-      const role = store.getRole();
+      const current = session(store);
       const view = meetingDetailView({
         state: store.getState(),
         id: this._id || '',
         now: clock.now(),
-        role: role,
-        personId: ROLES[role]
+        actor: current.actor,
+        viewerTz: current.viewerTz,
+        ctx: current.ctx
       });
       this.setData({
         view: view,
@@ -91,21 +92,21 @@ Component({
     onConfirmCancel() {
       const store = getStore();
       const state = store.getState();
-      const meetings = state.meetings || [];
+      const items = state.items || [];
       let meeting = null;
-      for (let i = 0; i < meetings.length; i += 1) {
-        if (meetings[i].id === this._id) meeting = meetings[i];
+      for (let i = 0; i < items.length; i += 1) {
+        if (items[i].id === this._id) meeting = items[i];
       }
       if (!meeting) {
         this.setData({ cancelOpen: false });
         this.refresh();
         return;
       }
-      const role = store.getRole();
+      const current = session(store);
       const result = cancelMeeting(meeting, {
-        role: role,
-        personId: ROLES[role],
-        now: clock.now()
+        actor: current.actor,
+        now: clock.now(),
+        ctx: current.ctx
       });
       if (!result || result.ok !== true) {
         const code = result && result.code ? result.code : 'meeting.cancel.notAllowed';
@@ -115,7 +116,7 @@ Component({
         });
         return;
       }
-      const saved = store.updateMeeting(result.meeting);
+      const saved = store.updateItem(result.item);
       if (!saved || saved.ok !== true) {
         this.setData({
           cancelOpen: false,

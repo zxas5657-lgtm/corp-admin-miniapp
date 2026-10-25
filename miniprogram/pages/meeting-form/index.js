@@ -5,6 +5,7 @@ const clock = require('../../domain/clock');
 const { can } = require('../../domain/permissions');
 const { validateMeeting, createMeeting, findConflicts } = require('../../domain/meeting');
 const reference = require('../../data/reference');
+const { session } = require('../../utils/session');
 const {
   formOptions,
   formDefaults,
@@ -12,8 +13,6 @@ const {
   conflictWarnings,
   labels
 } = require('../../viewmodels/meeting-form');
-
-const { ROLES } = reference;
 
 const FIELD_IDS = {
   title: 'field-title',
@@ -65,7 +64,7 @@ Component({
       this._submitting = false;
       this._guardBack = false;
       this._defaults = null;
-      this._personId = '';
+      this._actor = null;
       this._writeTimer = null;
     },
     attached() {
@@ -93,16 +92,21 @@ Component({
   methods: {
     onLoad() {
       const store = getStore();
-      const role = store.getRole();
-      this._personId = ROLES[role] || '';
-      if (!can(role, 'meeting.create')) {
+      const current = session(store);
+      this._actor = current.actor;
+      this._viewerTz = current.viewerTz;
+      if (!can(current.actor, 'meeting.create')) {
         this.setData({
           allowed: false,
           deniedText: this.t('error.permission.denied')
         });
         return;
       }
-      const defaults = formDefaults({ now: clock.now(), personId: this._personId });
+      const defaults = formDefaults({
+        now: clock.now(),
+        viewerTz: this._viewerTz,
+        personId: this._actor && this._actor.personId
+      });
       this._defaults = defaults;
       this._options = formOptions();
       const form = {
@@ -246,6 +250,17 @@ Component({
         // Scrolling to a field must not break the page.
       }
     },
+    draftMeeting(form, id) {
+      const current = session(getStore());
+      return createMeeting(form, {
+        id: id,
+        actor: current.actor,
+        now: clock.now(),
+        tz: current.viewerTz,
+        isLeader: reference.isLeader,
+        needsConfirm: true
+      });
+    },
     onSubmit() {
       if (this._submitting || this.data.submitting || !this.data.allowed) return;
       const form = this.data.form;
@@ -257,11 +272,13 @@ Component({
         return;
       }
       this.setData({ errors: {} });
+      const record = this.draftMeeting(form, 'preview');
       const state = getStore().getState() || {};
-      const conflicts = findConflicts(form, state.meetings || [], reference);
+      const conflicts = findConflicts(record, state.items || [], reference);
       const conflictView = conflictWarnings(conflicts, {
         state: getStore().getState(),
-        refs: reference
+        refs: reference,
+        viewerTz: session(getStore()).viewerTz
       });
       if (conflictView.warnings.length) {
         this.setData({
@@ -274,11 +291,13 @@ Component({
       this.beginWrite(form);
     },
     openConflicts(form) {
+      const record = this.draftMeeting(form, 'preview');
       const state = getStore().getState() || {};
-      const conflicts = findConflicts(form, state.meetings || [], reference);
+      const conflicts = findConflicts(record, state.items || [], reference);
       const conflictView = conflictWarnings(conflicts, {
         state: getStore().getState(),
-        refs: reference
+        refs: reference,
+        viewerTz: session(getStore()).viewerTz
       });
       this.setData({
         conflictList: conflictView.warnings,
@@ -309,13 +328,9 @@ Component({
       const run = function () {
         page._writeTimer = null;
         if (!page._alive || !page._submitting) return;
-        const record = createMeeting(form, {
-          id: 'm' + Date.now().toString(36),
-          organizerId: page._personId,
-          now: clock.now()
-        });
+        const record = page.draftMeeting(form, 'm' + Date.now().toString(36));
         if (!page._alive || !page._submitting) return;
-        const saved = getStore().addMeeting(record);
+        const saved = getStore().addItem(record);
         if (!page._alive || !page._submitting) return;
         if (!saved || saved.ok !== true) {
           page._submitting = false;
@@ -328,9 +343,9 @@ Component({
           return;
         }
         const store = getStore();
-        store.ui.setSelectedDate(record.date);
+        store.ui.setSelectedDate(form.date);
         store.ui.setPendingFocus({
-          date: record.date,
+          date: form.date,
           meetingId: record.id,
           banner: true
         });
