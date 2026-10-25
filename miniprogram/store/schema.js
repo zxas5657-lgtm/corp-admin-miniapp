@@ -6,6 +6,7 @@ const SCHEMA_VERSION = 3;
 const DATA_KEY = 'corp-admin-v2';
 const LOCALE_KEY = 'corp-admin-locale';
 const ROLE_KEY = 'corp-admin-role';
+const PREFS_KEY = 'corp-admin-prefs';
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
@@ -154,4 +155,12 @@ function migrate(data, migrations) {
   };
   return { ok: true, data: clean, dropped };
 }
-module.exports = { SCHEMA_VERSION, DATA_KEY, LOCALE_KEY, ROLE_KEY, MIGRATIONS, migrate };
+module.exports = {
+  SCHEMA_VERSION,
+  DATA_KEY,
+  LOCALE_KEY,
+  ROLE_KEY,
+  PREFS_KEY,
+  MIGRATIONS,
+  migrate,
+};

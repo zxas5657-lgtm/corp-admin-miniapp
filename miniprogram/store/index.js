@@ -265,6 +265,10 @@ function createStore(options) {
     setLocale,
     getRole,
     setRole,
+    getAdapter() {
+      return adapter;
+    },
+    notify,
     ui,
     subscribe(fn) {
       if (typeof fn !== 'function') throw new TypeError('subscribe requires a function');

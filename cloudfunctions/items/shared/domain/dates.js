@@ -10,11 +10,8 @@ function parseDateStr(value) {
   const date = new Date(0);
   date.setHours(0, 0, 0, 0);
   date.setFullYear(year, month - 1, day);
-  if (
-    date.getFullYear() !== year ||
-    date.getMonth() !== month - 1 ||
-    date.getDate() !== day
-  ) return null;
+  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day)
+    return null;
   return date;
 }
 
@@ -60,9 +57,18 @@ function nowParts(date) {
 
 function addDays(dateStr, amount) {
   const value = parseDateStr(dateStr);
-  if (!value || !Number.isInteger(amount)) throw new RangeError('Expected a valid date and integer day count');
+  if (!value || !Number.isInteger(amount))
+    throw new RangeError('Expected a valid date and integer day count');
   value.setDate(value.getDate() + amount);
   return toDateStr(value);
+}
+
+function diffDays(from, to) {
+  if (!isDateStr(from) || !isDateStr(to)) throw new RangeError('Expected valid date strings');
+  // UTC midnights keep DST changes out of the count.
+  const utc = (value) =>
+    Date.UTC(...value.split('-').map((part, index) => Number(part) - (index === 1 ? 1 : 0)));
+  return Math.round((utc(to) - utc(from)) / 86400000);
 }
 
 function compareDate(left, right) {
@@ -113,6 +119,7 @@ module.exports = {
   toTimeStr,
   nowParts,
   addDays,
+  diffDays,
   compareDate,
   toMinutes,
   weekdayOf,

@@ -241,6 +241,27 @@ function itemStatus(item, now) {
   return 'done';
 }
 
+function markArrived(item, options) {
+  const config = options || {};
+  const actor = config.actor || {};
+  if (!item || item.kind !== 'visit') return { ok: false, code: 'item.notVisible' };
+  if (!['receptionist', 'receptionAdmin'].includes(actor.role))
+    return { ok: false, code: 'permission.denied' };
+  if (item.status === 'cancelled' || item.arrivedAt)
+    return { ok: false, code: 'item.alreadyChanged' };
+  const at = asDate(config.now) || new Date();
+  return {
+    ok: true,
+    item: {
+      ...item,
+      arrivedAt: at.toISOString(),
+      updatedAt: at.toISOString(),
+      updatedBy: actor.personId,
+      rev: (item.rev || 0) + 1,
+    },
+  };
+}
+
 function expandWeekly(input, options) {
   const value = input || {};
   const config = options || {};
@@ -285,4 +306,5 @@ module.exports = {
   itemStatus,
   expandWeekly,
   createSeries,
+  markArrived,
 };
