@@ -12,6 +12,7 @@ const LOCALES = ['zh-CN', 'en'];
 const DATA_KEY = 'corp-admin-v2';
 const PAUSE_MS = 500;
 const AUTO_PORT = Number(process.env.WX_AUTO_PORT) || 9420;
+let currentMini = null;
 
 const SHOT_MEETING = {
   id: 'm-shot',
@@ -81,9 +82,17 @@ async function openPage(mini, url) {
   return page;
 }
 
+// page.callMethod cannot see methods on Component()-built pages, so call the
+// method on the top page instance from getCurrentPages() instead.
 async function callPage(page, method, arg) {
-  if (arg === undefined) await page.callMethod(method);
-  else await page.callMethod(method, arg);
+  await page.waitFor(0);
+  await currentMini.evaluate(function (name, payload) {
+    var pages = getCurrentPages();
+    var top = pages[pages.length - 1];
+    if (!top || typeof top[name] !== 'function') throw new Error('page method missing: ' + name);
+    if (payload === undefined) top[name]();
+    else top[name](payload);
+  }, method, arg);
   await page.waitFor(PAUSE_MS);
 }
 
@@ -577,6 +586,7 @@ async function main() {
   let mini = null;
   try {
     mini = await launchDevTools();
+    currentMini = mini;
     for (const locale of LOCALES) {
       for (const scenario of SCENARIOS) {
         try {
