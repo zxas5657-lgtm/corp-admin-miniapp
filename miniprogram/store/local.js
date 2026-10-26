@@ -142,6 +142,9 @@ function createLocalApi(options) {
   async function whoami() {
     const employee = reference.personById(actor.personId);
     if (!employee) return { ok: false, code: 'auth.notBound' };
+    const supports = {};
+    if (actor.role === 'secretary')
+      supports[actor.personId] = [...(reference.SUPPORTS[actor.personId] || [])];
     return {
       ok: true,
       bound: true,
@@ -153,6 +156,7 @@ function createLocalApi(options) {
       },
       dispatcher: Boolean(actor.dispatcher),
       sysAdmin: Boolean(actor.sysAdmin),
+      supports,
     };
   }
 

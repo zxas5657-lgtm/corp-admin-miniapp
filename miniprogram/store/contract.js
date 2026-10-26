@@ -2,6 +2,7 @@
 
 // Payloads are documented here so local and remote implementations stay interchangeable.
 const CONTRACT = Object.freeze([
+  // Success includes employee, dispatcher, sysAdmin, and supports for secretary callers.
   { method: 'whoami', fn: 'auth', action: 'whoami' },
   { method: 'redeemInvite', fn: 'auth', action: 'redeemInvite' },
   { method: 'directory', fn: 'directory', action: 'list' },

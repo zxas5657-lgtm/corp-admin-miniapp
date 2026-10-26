@@ -65,7 +65,14 @@ function createHandler(config) {
     await db.collection('rate_limits').doc(openid).remove();
   }
 
-  function whoamiResult(employee, actor) {
+  async function whoamiResult(employee, actor) {
+    const supports = {};
+    if (actor.role === 'secretary') {
+      const record = await getDoc(db, 'supports', employee._id);
+      supports[employee._id] = Array.isArray(record && record.leaderIds)
+        ? [...record.leaderIds]
+        : [];
+    }
     return ok({
       bound: true,
       employee: {
@@ -76,6 +83,7 @@ function createHandler(config) {
       },
       dispatcher: actor.dispatcher,
       sysAdmin: actor.sysAdmin,
+      supports,
     });
   }
 

@@ -69,6 +69,7 @@ test('auth reports unbound, disabled, and bound callers', async () => {
     },
     dispatcher: false,
     sysAdmin: false,
+    supports: {},
   });
   await db
     .collection('employees')

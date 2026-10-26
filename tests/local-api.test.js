@@ -43,6 +43,13 @@ function makeLocal(role, options) {
   };
 }
 
+test('local whoami returns only the caller secretary support mapping', async () => {
+  assert.deepEqual((await makeLocal('secretary').api.whoami()).supports, {
+    'p-lin': ['p-chen'],
+  });
+  assert.deepEqual((await makeLocal('leader').api.whoami()).supports, {});
+});
+
 test('local visibility follows role needs to know rules', async () => {
   const leader = await makeLocal('leader').api.listItems({});
   assert.ok(leader.items.some((item) => item.leaderIds.includes('p-chen')));
@@ -239,24 +246,25 @@ function contractDb() {
   return createFakeDb({
     employees: [
       {
-        _id: 'p1',
+        _id: 'p-lin',
         name: { 'zh-CN': '甲', en: 'A' },
         title: { 'zh-CN': '员工', en: 'Staff' },
-        role: 'leader',
+        role: 'secretary',
         active: true,
         status: 'active',
-        dispatcher: false,
+        dispatcher: true,
         sysAdmin: false,
       },
     ],
-    bindings: [{ _id: 'open-p1', employeeId: 'p1' }],
+    bindings: [{ _id: 'open-p-lin', employeeId: 'p-lin' }],
+    supports: [{ _id: 'p-lin', leaderIds: ['p-chen'] }],
     rooms: [{ _id: 'room', active: true, sort: 1 }],
     cars: [{ _id: 'car', active: true, sort: 1 }],
   });
 }
 
 test('the shared contract scenarios run through local and in-process remote APIs', async () => {
-  const local = makeLocal('leader').api;
+  const local = makeLocal('secretary').api;
   const db = contractDb();
   const now = () => new Date('2026-10-25T00:00:00.000Z');
   const handlers = {
@@ -265,10 +273,14 @@ test('the shared contract scenarios run through local and in-process remote APIs
     prefs: prefsHandler({ db, now, log() {} }),
   };
   const remote = createRemoteApi({
-    call: (fn, event) => handlers[fn](event, { openid: 'open-p1' }),
+    call: (fn, event) => handlers[fn](event, { openid: 'open-p-lin' }),
   });
+  const localWhoami = await local.whoami();
+  const remoteWhoami = await remote.whoami();
+  assert.equal(localWhoami.ok, true);
+  assert.equal(remoteWhoami.ok, true);
+  assert.deepEqual(remoteWhoami.supports, localWhoami.supports);
   for (const api of [local, remote]) {
-    assert.equal((await api.whoami()).ok, true);
     const directory = await api.directory();
     assert.equal(directory.ok, true);
     assert.ok(directory.rooms.length > 0);

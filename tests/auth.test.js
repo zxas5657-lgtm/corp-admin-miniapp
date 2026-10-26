@@ -42,7 +42,51 @@ test('redeeming an invite binds the caller and returns whoami data', async () =>
   assert.equal(result.ok, true);
   assert.equal(result.bound, true);
   assert.equal(result.employee.id, 'leader');
+  assert.deepEqual(result.supports, {});
   assert.equal((await auth({ action: 'whoami' }, { openid: 'ol' })).bound, true);
+});
+
+test('whoami returns a secretary support mapping and an empty mapping when absent', async () => {
+  const db = createFakeDb({
+    employees: [
+      { _id: 'secretary', role: 'secretary', active: true, status: 'active' },
+      { _id: 'leader', role: 'leader', active: true, status: 'active' },
+    ],
+    bindings: [
+      { _id: 'secretary-openid', employeeId: 'secretary' },
+      { _id: 'leader-openid', employeeId: 'leader' },
+    ],
+    supports: [{ _id: 'secretary', leaderIds: ['leader'] }],
+  });
+  const auth = createAuth({ db, now: () => at });
+  assert.deepEqual((await auth({ action: 'whoami' }, { openid: 'secretary-openid' })).supports, {
+    secretary: ['leader'],
+  });
+  await db.collection('supports').doc('secretary').remove();
+  assert.deepEqual((await auth({ action: 'whoami' }, { openid: 'secretary-openid' })).supports, {
+    secretary: [],
+  });
+  assert.deepEqual((await auth({ action: 'whoami' }, { openid: 'leader-openid' })).supports, {});
+});
+
+test('redeemInvite returns the secretary support mapping', async () => {
+  const db = createFakeDb({
+    employees: [
+      { _id: 'admin', role: 'secretaryAdmin', active: true, status: 'active', sysAdmin: true },
+      { _id: 'secretary', role: 'secretary', active: true, status: 'active' },
+    ],
+    bindings: [{ _id: 'admin-openid', employeeId: 'admin' }],
+    supports: [{ _id: 'secretary', leaderIds: ['leader'] }],
+  });
+  const issue = await createAdmin({ db, now: () => at, randomInt: () => 0 })(
+    { action: 'issueInvite', employeeId: 'secretary' },
+    { openid: 'admin-openid' },
+  );
+  const result = await createAuth({ db, now: () => at })(
+    { action: 'redeemInvite', code: issue.code },
+    { openid: 'secretary-openid' },
+  );
+  assert.deepEqual(result.supports, { secretary: ['leader'] });
 });
 
 test('redeemInvite rate limits five failed attempts and resets after an hour', async () => {
