@@ -169,6 +169,7 @@ module.exports = {
     backToToday: '回到今天',
     emptyTitle: '这周没有安排',
     emptyBody: '新的行程会显示在这里。',
+    noSupportedLeaders: '没有支持的领导',
     confirm: '确认',
     question: '有疑问',
     marker: {
@@ -472,6 +473,14 @@ module.exports = {
   todo: {
     emptyTitle: '这里还没有待办',
     emptyBody: '领导留言和待确认事项以后会出现在这里。',
+    staffOnly: '此收件箱供秘书使用。',
+    section: { notes: '领导留言', pending: '待确认', declined: '已退回' },
+    relative: {
+      justNow: '刚刚',
+      minutes: '{n}分钟前',
+      hours: '{n}小时前',
+      days: '{n}天前',
+    },
   },
   'meeting.detail.cancelAction': '取消会议',
   'vehicle.form.reasonPlaceholder': '请填写用车事由',

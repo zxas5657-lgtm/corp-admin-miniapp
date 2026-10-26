@@ -248,3 +248,143 @@ test('empty rows merge only calendar-consecutive days and name a single day', ()
   assert.match(labels[0], /^Sat, Oct 24: no plans$/);
   assert.match(labels[1], /^Sun, Oct 18 - Fri, Oct 23: no plans$/);
 });
+
+test('secretary week view exposes supported leaders and switches itinerary', () => {
+  const state = seed();
+  const staffCtx = {
+    supports: { 'p-lin': ['p-chen', 'p-wang'] },
+    isLeader: ref.isLeader,
+  };
+  const secretary = ref.actorFor('secretary');
+  const chen = leaderWeekView({
+    state,
+    refs: ref,
+    date: '2026-10-26',
+    now,
+    actor: secretary,
+    viewerTz: 'Asia/Shanghai',
+    ctx: staffCtx,
+  });
+  assert.deepEqual(
+    chen.leaders.map((leader) => [leader.id, leader.active]),
+    [
+      ['p-chen', true],
+      ['p-wang', false],
+    ],
+  );
+  assert.ok(allItems(chen).some((item) => item.id === 'm4'));
+  assert.equal(
+    allItems(chen).some((item) => item.id === 'm6'),
+    false,
+  );
+
+  const wang = leaderWeekView({
+    state,
+    refs: ref,
+    date: '2026-10-26',
+    now,
+    leaderId: 'p-wang',
+    actor: secretary,
+    viewerTz: 'Asia/Shanghai',
+    ctx: staffCtx,
+  });
+  assert.equal(wang.leaders.find((leader) => leader.active).id, 'p-wang');
+  assert.deepEqual(
+    allItems(wang).map((item) => item.id),
+    ['m6'],
+  );
+
+  const fallback = leaderWeekView({
+    state,
+    refs: ref,
+    date: '2026-10-26',
+    now,
+    leaderId: 'unsupported',
+    actor: secretary,
+    viewerTz: 'Asia/Shanghai',
+    ctx: staffCtx,
+  });
+  assert.equal(fallback.leaders.find((leader) => leader.active).id, 'p-chen');
+});
+
+test('secretary admin sees every leader and staff rows expose decline and edit state', () => {
+  const state = seed();
+  const declined = state.items.find((item) => item.id === 'm4');
+  const entry = declined.leaders.find((leader) => leader.leaderId === 'p-chen');
+  entry.confirm = 'declined';
+  entry.declineReason = 'Schedule conflict';
+  const result = leaderWeekView({
+    state,
+    refs: ref,
+    date: '2026-10-26',
+    now,
+    actor: ref.actorFor('secretaryAdmin'),
+    viewerTz: 'Asia/Shanghai',
+    ctx,
+  });
+  assert.deepEqual(
+    result.leaders.map((leader) => leader.id),
+    ['p-chen', 'p-wang'],
+  );
+  const row = allItems(result).find((item) => item.id === 'm4');
+  assert.ok(row.markers.includes('declined'));
+  assert.equal(row.declineReason, 'Schedule conflict');
+  assert.equal(row.canEdit, true);
+  assert.equal(row.canCancel, true);
+  assert.equal(row.canConfirm, false);
+  assert.equal(row.canDecline, false);
+
+  const leaderResult = leaderWeekView({
+    state,
+    refs: ref,
+    date: '2026-10-26',
+    now,
+    actor: ref.actorFor('leader'),
+    viewerTz: 'Asia/Shanghai',
+    ctx,
+  });
+  assert.equal(
+    allItems(leaderResult).some((item) => item.id === 'm6'),
+    false,
+  );
+});
+
+test('staff week rows use the selected leader marker and unique row keys', () => {
+  const state = seed();
+  const travel = state.items.find((item) => item.id === 't1');
+  travel.leaders.find((leader) => leader.leaderId === 'p-chen').confirm = 'pending';
+  const result = leaderWeekView({
+    state,
+    refs: ref,
+    date: '2026-10-28',
+    now,
+    actor: ref.actorFor('secretary'),
+    viewerTz: 'Asia/Shanghai',
+    ctx,
+  });
+  const rows = allItems(result).filter((item) => item.id === 't1');
+  assert.equal(rows.length, 2);
+  assert.deepEqual(
+    rows.map((item) => item.rowKey),
+    ['t1:2026-10-28', 't1:2026-10-29'],
+  );
+  assert.ok(rows.every((item) => item.markers.includes('pending')));
+});
+
+test('staff pending filter uses the selected leader entry', () => {
+  i18n.setLocale('en');
+  const state = seed();
+  const m = state.items.find((item) => item.id === 'm1');
+  m.leaders.find((entry) => entry.leaderId === 'p-chen').confirm = 'pending';
+  const result = view({
+    state,
+    actor: ref.actorFor('secretary'),
+    leaderId: 'p-chen',
+    filter: 'pending',
+  });
+  const tile = result.overview.find((entry) => entry.key === 'pending');
+  const rows = result.days.flatMap((day) => day.items || []);
+  assert.ok(tile && tile.count > 0);
+  assert.ok(rows.some((item) => item.id === 'm1'));
+  assert.ok(rows.every((item) => item.markers.includes('pending')));
+});

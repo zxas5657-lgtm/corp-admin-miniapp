@@ -196,6 +196,7 @@ module.exports = {
     backToToday: 'Back to today',
     emptyTitle: 'Nothing this week',
     emptyBody: 'New plans will show up here.',
+    noSupportedLeaders: 'No supported leaders',
     confirm: 'Confirm',
     question: 'Question',
     marker: {
@@ -544,6 +545,14 @@ module.exports = {
   todo: {
     emptyTitle: 'Nothing waiting here',
     emptyBody: 'The notes inbox and pending confirmations will appear here.',
+    staffOnly: 'This inbox is available to secretaries.',
+    section: { notes: 'Leader notes', pending: 'Awaiting confirmation', declined: 'Sent back' },
+    relative: {
+      justNow: 'Just now',
+      minutes: '{n}m ago',
+      hours: '{n}h ago',
+      days: '{n}d ago',
+    },
   },
   'meeting.detail.cancelAction': 'Cancel meeting',
   'vehicle.form.reasonPlaceholder': 'Enter a reason for the vehicle request',

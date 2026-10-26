@@ -5,7 +5,7 @@ const reference = require('../data/reference');
 const zones = require('../data/zones');
 const dates = require('../domain/dates');
 const tz = require('../domain/tz');
-const { visibleItems, visibleVehicles } = require('../domain/visibility');
+const { visibleItems, visibleVehicles, canEditItem } = require('../domain/visibility');
 const { normalizeRole } = require('../domain/permissions');
 
 const HOME_TZ = 'Asia/Shanghai';
@@ -43,6 +43,27 @@ function ownLeader(item, actor) {
 
 function isLeaderActor(actor) {
   return normalizeRole(actor && actor.role) === 'leader';
+}
+
+function isStaffActor(actor) {
+  return ['secretary', 'secretaryAdmin'].includes(normalizeRole(actor && actor.role));
+}
+
+function leaderDirectory(refs) {
+  const people = Array.isArray(refs && refs.PEOPLE) ? refs.PEOPLE : reference.PEOPLE;
+  return (people || []).filter((person) => person && person.role === 'leader');
+}
+
+function staffLeaderList(actor, refs, ctx) {
+  const role = normalizeRole(actor && actor.role);
+  const supported =
+    role === 'secretary'
+      ? (ctx && ctx.supports && ctx.supports[actor.personId]) || []
+      : leaderDirectory(refs).map((person) => person.id);
+  const allowed = new Set(supported);
+  return leaderDirectory(refs)
+    .filter((person) => allowed.has(person.id))
+    .map((person) => ({ id: person.id, name: personName(person.id, refs) }));
 }
 
 function leaderVisibleItems(actor, items, ctx) {
@@ -217,14 +238,19 @@ function detailFor(item, allItems, viewerTz, refs) {
 
 function viewItem(item, kind, rowDate, config, allItems) {
   const record = item;
-  const own = ownLeader(record, config.actor);
+  const staff = Boolean(config.staffLeaderId);
+  const own = staff
+    ? (record.leaders || []).find((entry) => entry.leaderId === config.staffLeaderId) || null
+    : ownLeader(record, config.actor);
   const isVehicle = kind === 'vehicle';
   const icon = isVehicle ? 'vehicle' : typeOf(record);
   const title = isVehicle ? text(record.reason) : text(record.title);
   const place = isVehicle ? text(record.destination) : itemPlace(record, config.refs);
   const visibleRecord = isVehicle ? { ...record, kind: 'vehicle' } : record;
-  return {
+  const declined = Boolean(staff && own && own.confirm === 'declined');
+  const result = {
     id: record.id,
+    rowKey: `${record.id}:${rowDate}`,
     kind: isVehicle ? 'vehicle' : record.kind,
     icon,
     timeLabel: formatTime(isVehicle ? record : visibleRecord, config.viewerTz),
@@ -236,8 +262,12 @@ function viewItem(item, kind, rowDate, config, allItems) {
       config.viewerTz,
     ),
     markers: markerList(record, own),
-    canConfirm: Boolean(own && own.confirm === 'pending' && record.status !== 'cancelled'),
-    canDecline: Boolean(own && own.confirm === 'pending' && record.status !== 'cancelled'),
+    canConfirm: Boolean(
+      !staff && own && own.confirm === 'pending' && record.status !== 'cancelled',
+    ),
+    canDecline: Boolean(
+      !staff && own && own.confirm === 'pending' && record.status !== 'cancelled',
+    ),
     expectedRev: record.rev,
     detail: detailFor(
       isVehicle ? { ...record, kind: 'vehicle', startAt: record.departAt } : record,
@@ -246,6 +276,15 @@ function viewItem(item, kind, rowDate, config, allItems) {
       config.refs,
     ),
   };
+  if (declined) {
+    result.markers = [...result.markers, 'declined'];
+  }
+  if (staff) {
+    result.declineReason = declined ? own.declineReason || '' : null;
+    result.canEdit = canEditItem(config.actor, record, config.ctx);
+    result.canCancel = Boolean(result.canEdit && record.status !== 'cancelled');
+  }
+  return result;
 }
 
 function rangeLabel(days) {
@@ -276,11 +315,35 @@ function leaderWeekView(options) {
   const viewerTz = config.viewerTz || HOME_TZ;
   const now = asDate(config.now) || new Date();
   const actor = config.actor || null;
+  const staff = isStaffActor(actor);
+  const leaders = staff ? staffLeaderList(actor, refs, config.ctx) : [];
+  const requestedLeaderId = config.leaderId;
+  const activeLeaderId = staff
+    ? (leaders.some((leader) => leader.id === requestedLeaderId)
+        ? requestedLeaderId
+        : leaders[0] && leaders[0].id) || null
+    : null;
+  const leaderSwitcher = leaders.map((leader) => ({
+    ...leader,
+    active: leader.id === activeLeaderId,
+  }));
   const todayDate = tz.toZoned(now, viewerTz).date;
   const requestedDate = config.date || todayDate;
   const weekDates = dates.weekDays(requestedDate, i18n.firstDayOfWeek());
-  const sourceItems = leaderVisibleItems(actor, state.items || [], config.ctx);
-  const sourceVehicles = leaderVisibleVehicles(actor, state.vehicles || [], config.ctx);
+  const sourceItems = leaderVisibleItems(actor, state.items || [], config.ctx).filter(
+    (item) => !staff || (activeLeaderId && (item.leaderIds || []).includes(activeLeaderId)),
+  );
+  const sourceVehicles = leaderVisibleVehicles(actor, state.vehicles || [], config.ctx).filter(
+    (vehicle) => !staff || (activeLeaderId && vehicle.forLeaderId === activeLeaderId),
+  );
+  // The leader entry that drives markers and the pending filter: the viewer's own entry, or
+  // for staff the selected leader's entry.
+  const ownPending = (record) => {
+    const own = staff
+      ? (record.leaders || []).find((entry) => entry.leaderId === activeLeaderId)
+      : ownLeader(record, actor);
+    return Boolean(own && own.confirm === 'pending');
+  };
   const nonStops = sourceItems.filter((item) => item.kind !== 'stop');
   const entries = [
     ...nonStops.map((record) => ({
@@ -304,10 +367,7 @@ function leaderWeekView(options) {
           : ['pendingConfirmation', 'pending-confirmation', 'confirmation'].includes(config.filter)
             ? 'pending'
             : config.filter;
-    if (normalized === 'pending')
-      return Boolean(
-        ownLeader(entry.record, actor) && ownLeader(entry.record, actor).confirm === 'pending',
-      );
+    if (normalized === 'pending') return ownPending(entry.record);
     if (normalized === 'meetings') return entry.kind === 'meeting';
     if (normalized === 'trips') return entry.kind === 'travel' || entry.kind === 'trip';
     if (normalized === 'visits') return entry.kind === 'visit';
@@ -336,7 +396,13 @@ function leaderWeekView(options) {
       isToday: date === todayDate,
       empty: dayEntries.length === 0,
       items: dayEntries.map((entry) =>
-        viewItem(entry.record, entry.kind, date, { ...config, refs, viewerTz, actor }, sourceItems),
+        viewItem(
+          entry.record,
+          entry.kind,
+          date,
+          { ...config, refs, viewerTz, actor, staffLeaderId: activeLeaderId },
+          sourceItems,
+        ),
       ),
     };
   });
@@ -357,10 +423,6 @@ function leaderWeekView(options) {
     days.push({ empty: true, label: emptyLabel(rawDays[index].date, rawDays[end].date) });
     index = end;
   }
-  const ownPending = (record) => {
-    const own = ownLeader(record, actor);
-    return Boolean(own && own.confirm === 'pending');
-  };
   // Tiles count the whole week, so choosing one tile does not hide the others.
   const count = (kind) =>
     entries.filter((entry) => {
@@ -388,7 +450,7 @@ function leaderWeekView(options) {
   // Today mode keeps the day object even when it has no items; empty-row compaction
   // is a week-only presentation concern.
   const shownDays = mode === 'today' ? rawDays.filter((day) => day.date === todayDate) : days;
-  return {
+  const result = {
     title: i18n.t('week.title'),
     rangeLabel: rangeLabel(weekDates),
     mode,
@@ -396,7 +458,10 @@ function leaderWeekView(options) {
     weekDates,
     overview,
     days: shownDays,
+    leaders: leaderSwitcher,
   };
+  if (staff && !activeLeaderId) result.emptyReason = i18n.t('week.noSupportedLeaders');
+  return result;
 }
 
 module.exports = { leaderWeekView };
