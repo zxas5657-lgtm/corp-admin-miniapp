@@ -23,7 +23,7 @@ function main() {
     .readdirSync(sourceDomain)
     .filter((name) => name.endsWith('.js'))
     .sort();
-  const dataFiles = ['seed.js', 'reference.js', 'zones.js'];
+  const dataFiles = ['seed.js', 'reference.js', 'zones.js', 'labels.js'];
   const libFiles = fs
     .readdirSync(path.join(root, 'cloudfunctions', '_lib'))
     .filter((name) => name.endsWith('.js'))
@@ -33,7 +33,7 @@ function main() {
     resetDirectory(shared);
     copyFiles(sourceDomain, path.join(shared, 'domain'), domainFiles);
     copyFiles(path.join(root, 'cloudfunctions', '_lib'), path.join(shared, 'lib'), libFiles);
-    if (name === 'devSeed') copyFiles(sourceData, path.join(shared, 'data'), dataFiles);
+    copyFiles(sourceData, path.join(shared, 'data'), dataFiles);
     console.log(`synced ${name}`);
   }
 }

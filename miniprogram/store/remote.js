@@ -30,9 +30,11 @@ function createRemoteApi(options) {
     const entry = BY_METHOD[method];
     const value =
       method === 'redeemInvite' && typeof payload === 'string' ? { code: payload } : payload || {};
+    const wirePayload = toServer(value);
+    if (value.id !== undefined) wirePayload.id = value.id;
     let raw;
     try {
-      raw = await call(entry.fn, { action: entry.action, ...toServer(value) });
+      raw = await call(entry.fn, { action: entry.action, ...wirePayload });
     } catch (error) {
       return { ok: false, code: 'network.failed' };
     }

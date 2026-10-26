@@ -107,10 +107,14 @@ function matchesValue(actual, expected) {
 }
 
 function matches(document, query) {
-  if (query && query.__fakeCommand === 'and')
-    return query.value.every((item) => matches(document, item));
-  if (query && query.__fakeCommand === 'or')
-    return query.value.some((item) => matches(document, item));
+  function clauseMatches(item) {
+    if (item && item.__fakeCommand && ['and', 'or'].includes(item.__fakeCommand))
+      return matches(document, item);
+    if (item && typeof item === 'object' && !item.__fakeCommand) return matches(document, item);
+    return matchesValue(document, item);
+  }
+  if (query && query.__fakeCommand === 'and') return query.value.every(clauseMatches);
+  if (query && query.__fakeCommand === 'or') return query.value.some(clauseMatches);
   if (!query || Object.keys(query).length === 0) return true;
   return Object.entries(query).every(([field, expected]) =>
     matchesValue(getPath(document, field), expected),

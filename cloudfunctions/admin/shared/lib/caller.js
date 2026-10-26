@@ -1,6 +1,7 @@
 'use strict';
 
 const { fail } = require('./result');
+const { fetchAll } = require('./fetch');
 
 function isMissing(error) {
   if (!error) return false;
@@ -49,9 +50,9 @@ function requireSupportsEditor(actor) {
 }
 
 async function loadSupports(db) {
-  const result = await db.collection('supports').get();
+  const records = await fetchAll(db.collection('supports'));
   const supports = {};
-  for (const record of result.data || []) supports[record._id] = [...(record.leaderIds || [])];
+  for (const record of records) supports[record._id] = [...(record.leaderIds || [])];
   return supports;
 }
 

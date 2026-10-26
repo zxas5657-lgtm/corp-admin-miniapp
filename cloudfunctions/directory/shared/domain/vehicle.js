@@ -58,6 +58,23 @@ function carAvailability(cars, vehicles, options) {
   });
 }
 
+function resourceBusy(vehicles, field, id, departAt, options) {
+  const config = options || {};
+  const target = asDate(departAt);
+  const windowMinutes = config.windowMinutes === undefined ? 120 : config.windowMinutes;
+  if (!target) return false;
+  return (vehicles || []).some((vehicle) => {
+    if (
+      vehicle.id === config.excludeVehicleId ||
+      vehicle.status !== 'assigned' ||
+      vehicle[field] !== id
+    )
+      return false;
+    const other = asDate(vehicle.departAt);
+    return other && Math.abs(other.getTime() - target.getTime()) < windowMinutes * 60000;
+  });
+}
+
 function seatWarning(car, passengers) {
   if (!car || !Number.isInteger(passengers) || passengers <= car.seats) return null;
   return { code: 'vehicle.seats.exceeded', seats: car.seats, passengers };
@@ -209,6 +226,7 @@ module.exports = {
   availableActions,
   transition,
   carAvailability,
+  resourceBusy,
   seatWarning,
   validateVehicle,
   createVehicleRequest,

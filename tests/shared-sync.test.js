@@ -33,11 +33,17 @@ test('committed CloudBase shared copies match their sources', () => {
       assert.deepEqual(bytes(copy), bytes(source), `${copy} differs; run npm run sync`);
     }
     if (name !== 'devSeed') continue;
-    for (const file of ['seed.js', 'reference.js', 'zones.js']) {
+    for (const file of ['seed.js', 'reference.js', 'zones.js', 'labels.js']) {
       const source = path.join(root, 'miniprogram', 'data', file);
       const copy = path.join(root, 'cloudfunctions', name, 'shared', 'data', file);
       assert.ok(fs.existsSync(copy), `missing ${copy}; run npm run sync`);
       assert.deepEqual(bytes(copy), bytes(source), `${copy} differs; run npm run sync`);
     }
+  }
+  for (const name of functions) {
+    const source = path.join(root, 'miniprogram', 'data', 'labels.js');
+    const copy = path.join(root, 'cloudfunctions', name, 'shared', 'data', 'labels.js');
+    assert.ok(fs.existsSync(copy), `missing ${copy}; run npm run sync`);
+    assert.deepEqual(bytes(copy), bytes(source), `${copy} differs; run npm run sync`);
   }
 });

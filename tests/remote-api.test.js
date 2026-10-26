@@ -76,7 +76,7 @@ test('remote payloads carry the action and server documents are converted', asyn
   assert.deepEqual(calls, [
     {
       fn: 'items',
-      data: { action: 'edit', patch: { title: 'Updated' }, expectedRev: 2 },
+      data: { action: 'edit', id: 'i-1', patch: { title: 'Updated' }, expectedRev: 2 },
     },
   ]);
 });

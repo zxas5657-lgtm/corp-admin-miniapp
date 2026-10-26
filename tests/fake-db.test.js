@@ -119,6 +119,46 @@ test('fake db supports filters, ordering, paging, counts, and updates', async ()
   assert.equal((await many.collection('things').get()).data.length, 100);
 });
 
+test('fake db matches compound and/or queries with field operators', async () => {
+  const db = createFakeDb({
+    things: [
+      {
+        _id: 'timed',
+        startAt: new Date('2027-01-01T01:00:00.000Z'),
+        endAt: new Date('2027-01-01T02:00:00.000Z'),
+      },
+      { _id: 'day', allDay: true, date: '2027-01-01' },
+      {
+        _id: 'outside',
+        startAt: new Date('2027-01-03T01:00:00.000Z'),
+        endAt: new Date('2027-01-03T02:00:00.000Z'),
+      },
+    ],
+  });
+  const command = db.command;
+  const result = await db
+    .collection('things')
+    .where(
+      command.and(
+        command.or([
+          {
+            startAt: command.lt(new Date('2027-01-02T00:00:00.000Z')),
+            endAt: command.gt(new Date('2027-01-01T00:00:00.000Z')),
+          },
+          {
+            allDay: true,
+            date: command.and(command.gte('2026-12-31'), command.lte('2027-01-02')),
+          },
+        ]),
+      ),
+    )
+    .get();
+  assert.deepEqual(
+    result.data.map((item) => item._id),
+    ['timed', 'day'],
+  );
+});
+
 test('fake db deep copies reads and writes and rolls back transactions', async () => {
   const date = new Date('2026-01-01T00:00:00.000Z');
   const db = createFakeDb({ things: [{ _id: 'a', date }] });

@@ -189,6 +189,8 @@ Fields as v1: `reason`, `destination`, `passengers`, `applicantId`, `note`, `sta
 
 Indexes: `status + departAt`, `applicantId + departAt`, `forLeaderId + departAt`, `carId + departAt`, `driverId + departAt`.
 
+**Dispatch race guard, `locks`:** a transaction cannot query, so a car's or driver's availability is checked before the dispatch transaction. Inside the transaction, the dispatch then rewrites `locks/car:<carId>:<YYYY-MM-DD>` and `locks/driver:<driverId>:<YYYY-MM-DD>` (the departure day in the request's `tz`) with `rev + 1`. Two concurrent dispatches for the same car or driver on the same day write the same lock doc, so CloudBase lets only one transaction commit. Fields: `resourceType`, `resourceId`, `date`, `rev`, `updatedAt`. Rule: deny all clients. No index needed.
+
 ### 5.10 `leader_notes`: rough requests from a leader
 `_id`, `leaderId`, `text`, `status` (`open | converted | closed`), `itemIds[]`, `handledBy`, `createdAt`, `handledAt`, `v`, `rev`. Visible to the leader, their mapped secretaries and secretary admins. A secretary converts a note into one or more items; those reach the leader through confirmation.
 

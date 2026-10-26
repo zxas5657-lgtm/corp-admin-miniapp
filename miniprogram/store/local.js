@@ -13,6 +13,7 @@ const { visibleItems, visibleVehicles, canEditItem } = require('../domain/visibi
 const tz = require('../domain/tz');
 const { defaults, updatePrefs } = require('../domain/prefs');
 const { PREFS_KEY } = require('./schema');
+const { VISITOR_PICKUP_REASON } = require('../data/labels');
 
 function clone(value) {
   return value === undefined ? undefined : JSON.parse(JSON.stringify(value));
@@ -174,6 +175,35 @@ function createLocalApi(options) {
     const value = payload || {};
     const result = createOne(value.kind, value.input, value.needsConfirm, newId('item'));
     if (!result.ok) return result;
+    if (value.kind === 'visit' && value.input && value.input.transport === 'pickup') {
+      const vehicle = createVehicleRequest(
+        {
+          reason: VISITOR_PICKUP_REASON.en,
+          destination: '',
+          note: '',
+          date: value.input.date,
+          time: value.input.start,
+          passengers: value.input.headcount,
+        },
+        {
+          actor,
+          now: now(),
+          tz: result.item.tz,
+          id: newId('vehicle'),
+        },
+      );
+      if (!vehicle || vehicle.ok === false) return vehicle;
+      vehicle.reason = VISITOR_PICKUP_REASON;
+      vehicle.destination = { 'zh-CN': '', en: '' };
+      vehicle.note = { 'zh-CN': '', en: '' };
+      vehicle.forLeaderId = null;
+      vehicle.itemId = result.item.id;
+      result.item.vehicleRequestId = vehicle.id;
+      const itemSaved = write('addItem', result.item);
+      if (!itemSaved.ok) return itemSaved;
+      const vehicleSaved = write('updateVehicle', vehicle);
+      return vehicleSaved.ok ? { ...result, item: result.item } : vehicleSaved;
+    }
     const saved = write('addItem', result.item);
     return saved.ok ? result : saved;
   }
@@ -202,8 +232,42 @@ function createLocalApi(options) {
         needsConfirm: value.needsConfirm,
       }),
     );
+    const pickupVehicles = [];
+    if (value.kind === 'visit' && value.input && value.input.transport === 'pickup') {
+      for (const item of items) {
+        const vehicle = createVehicleRequest(
+          {
+            reason: VISITOR_PICKUP_REASON.en,
+            destination: '',
+            note: '',
+            date: value.input.date,
+            time: value.input.start,
+            passengers: value.input.headcount,
+          },
+          {
+            actor,
+            now: now(),
+            tz: item.tz,
+            id: newId('vehicle'),
+          },
+        );
+        if (!vehicle || vehicle.ok === false) return vehicle;
+        vehicle.reason = VISITOR_PICKUP_REASON;
+        vehicle.destination = { 'zh-CN': '', en: '' };
+        vehicle.note = { 'zh-CN': '', en: '' };
+        vehicle.forLeaderId = null;
+        vehicle.itemId = item.id;
+        item.vehicleRequestId = vehicle.id;
+        pickupVehicles.push(vehicle);
+      }
+    }
     const saved = write('addItems', items);
-    return saved.ok ? { ok: true, items } : saved;
+    if (!saved.ok) return saved;
+    for (const vehicle of pickupVehicles) {
+      const vehicleSaved = write('updateVehicle', vehicle);
+      if (!vehicleSaved.ok) return vehicleSaved;
+    }
+    return { ok: true, items };
   }
 
   async function editItemApi(payload) {

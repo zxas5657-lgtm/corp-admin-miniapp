@@ -26,6 +26,7 @@ Create these collections in CloudBase. Every collection has the security rule:
 | `subscriptions`      | `_id`                                                                                                                                    |
 | `notification_jobs`  | `status + dueAt`                                                                                                                         |
 | `audit_log`          | `entity + entityId + at`; `actorId + at`                                                                                                 |
+| `locks`              | none (dispatch race guard, read and written by id only)                                                                                  |
 
 ## Upload
 

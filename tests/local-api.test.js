@@ -14,8 +14,6 @@ const directoryHandler = require('../cloudfunctions/directory/handler');
 const prefsHandler = require('../cloudfunctions/prefs/handler');
 const { createFakeDb } = require('./support/fake-db');
 
-test.todo('B4: route items.*, notes.*, and vehicles.* contract actions through cloud handlers');
-
 function makeClock() {
   let value = new Date('2026-10-24T01:20:00.000Z');
   return {
@@ -277,6 +275,212 @@ test('the shared contract scenarios run through local and in-process remote APIs
     assert.equal((await api.getPrefs()).ok, true);
     assert.equal((await api.updatePrefs({ patch: { itemOffsetMin: 20 } })).ok, true);
   }
+});
+
+test('items notes and vehicles contract actions stay usable through local and remote APIs', async () => {
+  const localStore = createStore({ adapter: createMemoryAdapter(), seed, clock });
+  const local = {
+    leader: createLocalApi({ store: localStore, actor: reference.actorFor('leader'), clock }),
+    secretary: createLocalApi({ store: localStore, actor: reference.actorFor('secretary'), clock }),
+    receptionist: createLocalApi({
+      store: localStore,
+      actor: reference.actorFor('receptionist'),
+      clock,
+    }),
+    driver: createLocalApi({ store: localStore, actor: reference.actorFor('driver'), clock }),
+  };
+  const db = createFakeDb({
+    bindings: [
+      { _id: 'open-p-chen', employeeId: 'p-chen' },
+      { _id: 'open-p-lin', employeeId: 'p-lin' },
+      { _id: 'open-p-zhou', employeeId: 'p-zhou' },
+      { _id: 'open-p-zhao', employeeId: 'p-zhao' },
+    ],
+  });
+  const devSeed = require('../cloudfunctions/devSeed/handler');
+  await devSeed({ db, now: () => new Date('2026-10-25T00:00:00.000Z'), log() {} })(
+    {
+      action: 'run',
+      allowEnvs: ['dev'],
+      confirm: 'seed-dev',
+    },
+    { env: 'dev' },
+  );
+  const items = require('../cloudfunctions/items/handler')({
+    db,
+    now: () => new Date('2026-10-25T00:00:00.000Z'),
+    newId: (() => {
+      let value = 0;
+      return () => `remote-item-${++value}`;
+    })(),
+    log() {},
+  });
+  const notes = require('../cloudfunctions/notes/handler')({
+    db,
+    now: () => new Date('2026-10-25T00:00:00.000Z'),
+    newId: (() => {
+      let value = 0;
+      return () => `remote-note-${++value}`;
+    })(),
+    log() {},
+  });
+  const vehicles = require('../cloudfunctions/vehicles/handler')({
+    db,
+    now: () => new Date('2026-10-25T00:00:00.000Z'),
+    newId: (() => {
+      let value = 0;
+      return () => `remote-vehicle-${++value}`;
+    })(),
+    log() {},
+  });
+  const remote = {
+    leader: createRemoteApi({
+      call: (fn, event) => ({ items, notes, vehicles })[fn](event, { openid: 'open-p-chen' }),
+    }),
+    secretary: createRemoteApi({
+      call: (fn, event) => ({ items, notes, vehicles })[fn](event, { openid: 'open-p-lin' }),
+    }),
+    receptionist: createRemoteApi({
+      call: (fn, event) => ({ items, notes, vehicles })[fn](event, { openid: 'open-p-zhou' }),
+    }),
+    driver: createRemoteApi({
+      call: (fn, event) => ({ items, notes, vehicles })[fn](event, { openid: 'open-p-zhao' }),
+    }),
+  };
+  assert.equal((await local.leader.listItems({})).ok, true);
+  assert.equal((await remote.leader.listItems({})).ok, true);
+  const itemInput = {
+    title: 'Parity milestone',
+    allDay: true,
+    date: '2027-01-20',
+    leaderIds: ['p-chen'],
+  };
+  const localCreated = await local.leader.createItem({ kind: 'milestone', input: itemInput });
+  const remoteCreated = await remote.leader.createItem({ kind: 'milestone', input: itemInput });
+  assert.equal(localCreated.ok, true);
+  assert.equal(remoteCreated.ok, true);
+  const seriesInput = { ...itemInput, title: 'Parity series', date: '2027-01-21' };
+  assert.equal(
+    (
+      await local.leader.createSeries({
+        kind: 'milestone',
+        input: seriesInput,
+        until: '2027-02-04',
+      })
+    ).items.length,
+    3,
+  );
+  assert.equal(
+    (
+      await remote.leader.createSeries({
+        kind: 'milestone',
+        input: seriesInput,
+        until: '2027-02-04',
+      })
+    ).items.length,
+    3,
+  );
+  assert.equal(
+    (
+      await local.leader.editItem({
+        id: localCreated.item.id,
+        patch: { title: 'Edited parity' },
+      })
+    ).ok,
+    true,
+  );
+  assert.equal(
+    (
+      await remote.leader.editItem({
+        id: remoteCreated.item.id,
+        patch: { title: 'Edited parity' },
+      })
+    ).ok,
+    true,
+  );
+  for (const api of [local.leader, remote.leader]) {
+    assert.equal((await api.confirmItem({ id: 'm4' })).ok, true);
+    assert.equal((await api.declineItem({ id: 'm4', reason: 'Changed plan' })).ok, true);
+    assert.equal((await api.markSeen({ id: 'm4' })).ok, true);
+  }
+  assert.equal((await local.leader.cancelItem({ id: localCreated.item.id })).ok, true);
+  assert.equal((await remote.leader.cancelItem({ id: remoteCreated.item.id })).ok, true);
+  const localNote = await local.leader.createNote({ text: 'Parity note' });
+  const remoteNote = await remote.leader.createNote({ text: 'Parity note' });
+  assert.equal(localNote.ok, true);
+  assert.equal(remoteNote.ok, true);
+  assert.equal(
+    (await local.secretary.convertNote({ id: localNote.note.id, itemIds: ['m4'] })).ok,
+    true,
+  );
+  assert.equal(
+    (await remote.secretary.convertNote({ id: remoteNote.note.id, itemIds: ['m4'] })).ok,
+    true,
+  );
+  assert.equal((await local.secretary.closeNote({ id: localNote.note.id })).ok, true);
+  assert.equal((await remote.secretary.closeNote({ id: remoteNote.note.id })).ok, true);
+  const vehicleInput = {
+    reason: 'Parity trip',
+    destination: 'Office',
+    date: '2026-10-24',
+    time: '03:00',
+    passengers: 1,
+    forLeaderId: 'p-chen',
+  };
+  const localVehicle = await local.leader.requestVehicle({ input: vehicleInput });
+  const remoteVehicle = await remote.leader.requestVehicle({ input: vehicleInput });
+  assert.equal(localVehicle.ok, true);
+  assert.equal(remoteVehicle.ok, true);
+  assert.equal(
+    (
+      await local.secretary.dispatchVehicle({
+        id: localVehicle.vehicle.id,
+        carId: 'gl8a',
+        driverId: 'p-zhao',
+        expectedRev: 0,
+      })
+    ).ok,
+    true,
+  );
+  assert.equal(
+    (
+      await remote.secretary.dispatchVehicle({
+        id: remoteVehicle.vehicle.id,
+        carId: 'gl8a',
+        driverId: 'p-zhao',
+        expectedRev: 0,
+      })
+    ).ok,
+    true,
+  );
+  assert.equal(
+    (await local.driver.completeVehicle({ id: localVehicle.vehicle.id, expectedRev: 1 })).ok,
+    true,
+  );
+  assert.equal(
+    (await remote.driver.completeVehicle({ id: remoteVehicle.vehicle.id, expectedRev: 1 })).ok,
+    true,
+  );
+  const visitInput = {
+    title: 'Parity visitor',
+    date: '2027-01-22',
+    start: '09:00',
+    end: '10:00',
+    leaderIds: ['p-chen'],
+    visitorName: 'Guest',
+    org: 'Org',
+    headcount: 1,
+    purpose: 'Review',
+    visitorType: 'customer',
+    receptionLevel: 'A',
+    transport: 'pickup',
+  };
+  const localVisit = await local.receptionist.createItem({ kind: 'visit', input: visitInput });
+  const remoteVisit = await remote.receptionist.createItem({ kind: 'visit', input: visitInput });
+  assert.equal(localVisit.ok, true);
+  assert.equal(remoteVisit.ok, true);
+  assert.equal(localVisit.item.vehicleRequestId !== undefined, true);
+  assert.equal(remoteVisit.item.vehicleRequestId !== undefined, true);
 });
 
 test('following edits keep each occurrence on its own week and skip other revisions', async () => {

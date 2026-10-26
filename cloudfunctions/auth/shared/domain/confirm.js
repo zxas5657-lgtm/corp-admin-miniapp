@@ -41,6 +41,7 @@ function updateItem(item, actor, now, update) {
 function confirmOne(item, options) {
   const config = options || {};
   const actor = config.actor || {};
+  if (item && item.status === 'cancelled') return { ok: false, code: 'item.alreadyChanged' };
   const denied = permission(item, actor);
   if (denied) return denied;
   return {
@@ -57,6 +58,7 @@ function confirmOne(item, options) {
 function declineOne(item, options) {
   const config = options || {};
   const actor = config.actor || {};
+  if (item && item.status === 'cancelled') return { ok: false, code: 'item.alreadyChanged' };
   const denied = permission(item, actor);
   if (denied) return denied;
   if (typeof config.reason !== 'string' || config.reason.trim() === '')
