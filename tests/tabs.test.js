@@ -9,11 +9,15 @@ function keys(actor) {
   return tabsFor(actor).map(function (item) { return item.key; });
 }
 
-test('leader tabs are schedule, compose and me', function () {
+test('leader tabs are week, compose and me', function () {
   const tabs = tabsFor({ role: 'leader' });
-  assert.deepEqual(keys({ role: 'leader' }), ['schedule', 'compose', 'me']);
+  assert.deepEqual(keys({ role: 'leader' }), ['week', 'compose', 'me']);
+  assert.equal(tabs[0].url, '/pages/week/index');
+  assert.equal(tabs[0].labelKey, 'tab.schedule');
+  assert.equal(tabs[0].icon, '/assets/icons/schedule.svg');
   assert.equal(tabs[1].url, '');
-  assert.equal(homeUrl({ role: 'leader' }), '/pages/schedule/index');
+  assert.equal(tabs[1].labelKey, 'week.note.title');
+  assert.equal(homeUrl({ role: 'leader' }), '/pages/week/index');
 });
 
 test('secretary roles share schedule, todo, vehicles and me', function () {
@@ -39,7 +43,9 @@ test('driver tabs label trips and open on vehicles', function () {
 });
 
 test('canOpen follows page access, not the tab bar', function () {
-  assert.deepEqual(pagesFor({ role: 'leader' }), ['schedule', 'me', 'vehicles', 'meetings']);
+  assert.deepEqual(pagesFor({ role: 'leader' }), [
+    'week', 'schedule', 'me', 'vehicles', 'meetings'
+  ]);
   assert.equal(canOpen({ role: 'leader' }, 'vehicles'), true);
   assert.equal(canOpen({ role: 'leader' }, 'todo'), false);
   assert.equal(canOpen({ role: 'driver' }, 'meetings'), false);

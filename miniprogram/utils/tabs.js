@@ -24,8 +24,8 @@ function tabsFor(actor) {
   const role = actor && actor.role;
   if (role === 'leader') {
     return [
-      tab('schedule'),
-      { key: 'compose', url: '', labelKey: 'common.comingSoon', icon: '', activeIcon: '' },
+      tab('week', 'tab.schedule', 'schedule'),
+      { key: 'compose', url: '', labelKey: 'week.note.title', icon: '', activeIcon: '' },
       tab('me')
     ];
   }
@@ -49,7 +49,7 @@ function homeUrl(actor) {
 
 function pagesFor(actor) {
   const role = actor && actor.role;
-  if (role === 'leader') return ['schedule', 'me', 'vehicles', 'meetings'];
+  if (role === 'leader') return ['week', 'schedule', 'me', 'vehicles', 'meetings'];
   if (role === 'driver') return ['vehicles', 'me'];
   if (role === 'receptionist' || role === 'receptionAdmin') {
     return ['visitors', 'vehicles', 'me', 'meetings'];

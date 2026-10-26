@@ -23,4 +23,12 @@
 | 前台 | Front Desk | Reception schedules and requests | S3
 | 前台主管 | Front Desk Lead | Reception administration | S3
 | 这条已被他人修改，已重新加载 | This was changed by someone else; reloaded | Shown after a stale rev write, then the page reloads | S3
-| 隐私政策 | Privacy policy | Consent step and the policy page | S3
+| 隐私政策 | Privacy policy | Consent step and the policy page | S3 |
+| 我的一周 | My week | Leader week-view title. | S3 |
+| 今天 / 本周 | Today / This week | Leader week-view mode switch. | S3 |
+| 待确认 | Pending | Leader marker. The overview tile may say Pending confirmation. | S3 |
+| 已更新 | Updated | Leader marker. Clears after the leader opens the row. | S3 |
+| 重要 | Important | Leader marker. Outline pill, title weight 600. | S3 |
+| 已取消 | Cancelled | Leader marker. Strike-through and 60% card opacity. | S3 |
+| 确认 / 有疑问 | Confirm / Question | Leader response to a pending row. Question asks for a reason. | S3 |
+| 给秘书留言 | Note to your secretary | Leader + sheet. Success toast: 已发给秘书 / Sent to your secretary. | S3 |

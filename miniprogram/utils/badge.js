@@ -4,10 +4,19 @@ const { visibleVehicles } = require('../domain/visibility');
 const { session } = require('./session');
 const { catalogWindow, loadRange } = require('./data');
 
+function tabBarOf(page) {
+  if (!page) return null;
+  if (typeof page.getTabBar === 'function') {
+    const native = page.getTabBar();
+    if (native) return native;
+  }
+  if (typeof page.selectComponent === 'function') return page.selectComponent('#app-tab-bar');
+  return null;
+}
+
 function refreshVehicleBadge(page) {
   try {
-    if (!page || typeof page.getTabBar !== 'function') return;
-    const bar = page.getTabBar();
+    const bar = tabBarOf(page);
     if (!bar || typeof bar.setBadge !== 'function') return;
     const current = session(getStore());
     const span = catalogWindow(current.viewerTz);

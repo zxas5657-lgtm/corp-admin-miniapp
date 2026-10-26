@@ -123,3 +123,34 @@
   font-variant-numeric: tabular-nums;
   box-sizing: border-box;
 }
+
+.tab-bar.is-canvas {
+  background: rgba(30, 32, 24, 0.72);
+  border-top-color: transparent;
+  color: var(--on-canvas, #FFFFFF);
+}
+
+.tab-bar.is-canvas .tab-item {
+  color: var(--on-canvas, #FFFFFF);
+}
+
+.tab-bar.is-canvas .tab-icon {
+  filter: brightness(0) invert(1);
+}
+
+.tab-bar.is-canvas .tab-dot {
+  background: var(--highlight, #EBC9A6);
+}
+
+.tab-bar.is-canvas .tab-plus {
+  border-color: transparent;
+  background: #FFFFFF;
+}
+
+@supports ((backdrop-filter: blur(20px)) or (-webkit-backdrop-filter: blur(20px))) {
+  .tab-bar.is-canvas {
+    background: rgba(14, 28, 46, 0.55);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+  }
+}

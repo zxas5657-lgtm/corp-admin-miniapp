@@ -67,6 +67,10 @@ function attachDevHook(app) {
     setSeason(value) {
       return season.setSetting(value);
     },
+    setViewerTz(zone) {
+      app.globalData.viewerTzOverride = zone || '';
+      return { ok: true };
+    },
   };
 }
 

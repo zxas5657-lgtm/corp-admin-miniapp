@@ -1,6 +1,7 @@
 {
   "pages": [
     "pages/schedule/index",
+    "pages/week/index",
     "pages/meetings/index",
     "pages/vehicles/index",
     "pages/me/index",
@@ -30,8 +31,8 @@
     "backgroundColor": "#FFFFFF",
     "borderStyle": "white",
     "list": [
+      { "pagePath": "pages/week/index", "text": "Itinerary" },
       { "pagePath": "pages/schedule/index", "text": "Schedule" },
-      { "pagePath": "pages/todo/index", "text": "To-do" },
       { "pagePath": "pages/visitors/index", "text": "Visitors" },
       { "pagePath": "pages/vehicles/index", "text": "Vehicles" },
       { "pagePath": "pages/me/index", "text": "Me" }

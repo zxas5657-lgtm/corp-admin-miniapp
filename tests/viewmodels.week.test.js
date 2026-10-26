@@ -59,8 +59,8 @@ test('today mode returns one row and empty rows are merged', () => {
   assert.equal(result.days.length, 1);
   assert.equal(result.days[0].date, '2026-10-24');
   const empty = view({ state: { items: [], vehicles: [] } });
-  assert.equal(empty.days.length, 1);
-  assert.equal(empty.days[0].empty, true);
+  assert.equal(empty.days.length, 2);
+  assert.ok(empty.days.every((day) => day.empty));
 });
 
 test('overview counts and filters use the leader entry', () => {
@@ -237,4 +237,14 @@ test('no zone line when the item is in the viewer zone', () => {
   const shanghai = allItems(result).filter((item) => item.kind === 'meeting');
   assert.ok(shanghai.length > 0);
   assert.ok(shanghai.every((item) => item.zoneLine === null));
+});
+
+test('empty rows merge only calendar-consecutive days and name a single day', () => {
+  i18n.setLocale('en');
+  const result = view({ state: { items: [], vehicles: [] } });
+  const labels = result.days.filter((day) => day.empty).map((day) => day.label);
+  // Today (Sat 24) comes first, then the wrap to Sun 18 – Fri 23 as one chronological range.
+  assert.deepEqual(labels.length, 2);
+  assert.match(labels[0], /^Sat, Oct 24: no plans$/);
+  assert.match(labels[1], /^Sun, Oct 18 - Fri, Oct 23: no plans$/);
 });

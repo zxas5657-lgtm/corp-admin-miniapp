@@ -105,6 +105,46 @@
   to { background-position: -100% 0; }
 }
 
+.state.is-canvas .text-title,
+.state.is-canvas .body {
+  color: var(--on-canvas, #FFFFFF);
+}
+
+.state.is-canvas .body {
+  color: var(--on-canvas-2, rgba(255, 255, 255, 0.85));
+}
+
+.state.is-canvas .mark-empty {
+  background: var(--glass, rgba(255, 255, 255, 0.14));
+}
+
+.state.is-canvas .dash {
+  background: var(--on-canvas, #FFFFFF);
+}
+
+.state.is-canvas .action {
+  background: #FFFFFF;
+  color: var(--ink, #1B2230);
+}
+
+.state.is-canvas .action:active {
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.state.is-canvas .secondary {
+  color: var(--on-canvas, #FFFFFF);
+}
+
+.state.is-canvas .skel {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.16),
+    rgba(255, 255, 255, 0.36),
+    rgba(255, 255, 255, 0.16)
+  );
+  background-size: 200% 100%;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .skel {
     animation: none;

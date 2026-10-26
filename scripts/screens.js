@@ -60,6 +60,84 @@ const SHOT_MEETING = {
   rev: 0,
 };
 
+const TRIP_MEETING = {
+  id: 'trip-shot',
+  kind: 'meeting',
+  title: { 'zh-CN': '客户现场会', en: 'Client site meeting' },
+  startAt: wall('2026-10-28', '10:00'),
+  endAt: wall('2026-10-28', '11:00'),
+  allDay: false,
+  tz: 'Asia/Shanghai',
+  location: '',
+  roomId: 'online',
+  attendeeIds: ['p-chen', 'p-lin'],
+  organizerId: 'p-lin',
+  category: 'regular',
+  important: false,
+  parentId: 't1',
+  seriesId: null,
+  notes: '',
+  noteId: null,
+  leaderIds: ['p-chen'],
+  leaders: [{
+    leaderId: 'p-chen',
+    confirm: 'confirmed',
+    confirmedAt: SHOT_CREATED,
+    declineReason: '',
+    changedAt: null,
+    changeNote: '',
+    seenAt: SHOT_CREATED,
+  }],
+  status: 'active',
+  createdBy: 'p-lin',
+  createdAt: SHOT_CREATED,
+  updatedAt: SHOT_CREATED,
+  updatedBy: 'p-lin',
+  cancelledAt: null,
+  cancelledBy: null,
+  v: 1,
+  rev: 0,
+};
+
+const ZONE_MEETING = {
+  id: 'zone-meeting',
+  kind: 'meeting',
+  title: { 'zh-CN': '跨时区晨会', en: 'Cross-zone briefing' },
+  startAt: '2026-10-23T21:00:00.000Z',
+  endAt: '2026-10-23T22:00:00.000Z',
+  allDay: false,
+  tz: 'Asia/Shanghai',
+  location: '',
+  roomId: 'online',
+  attendeeIds: ['p-chen'],
+  organizerId: 'p-lin',
+  category: 'regular',
+  important: false,
+  parentId: null,
+  seriesId: null,
+  notes: '',
+  noteId: null,
+  leaderIds: ['p-chen'],
+  leaders: [{
+    leaderId: 'p-chen',
+    confirm: 'confirmed',
+    confirmedAt: SHOT_CREATED,
+    declineReason: '',
+    changedAt: null,
+    changeNote: '',
+    seenAt: SHOT_CREATED,
+  }],
+  status: 'active',
+  createdBy: 'p-lin',
+  createdAt: SHOT_CREATED,
+  updatedAt: SHOT_CREATED,
+  updatedBy: 'p-lin',
+  cancelledAt: null,
+  cancelledBy: null,
+  v: 1,
+  rev: 0,
+};
+
 const BUSY_VEHICLE = {
   id: 'v-busy',
   reason: { 'zh-CN': '重叠行程', en: 'Overlapping trip' },
@@ -128,6 +206,10 @@ async function resetSeed(mini, locale, role) {
   await dev(mini, 'clearFocus');
   await dev(mini, 'setAuthStub', null);
   await dev(mini, 'setPrivacyAccepted', true);
+  const zoneResult = await dev(mini, 'setViewerTz', '');
+  if (!zoneResult || zoneResult.ok !== true) {
+    throw new Error('setViewerTz failed');
+  }
 }
 
 async function openPage(mini, url) {
@@ -198,6 +280,65 @@ async function stageBusyCar(mini, passengers) {
   if (!updated || updated.ok !== true) {
     throw new Error('could not raise v4 passengers');
   }
+}
+
+function leaderEntry(item) {
+  const leaders = item.leaders || [];
+  for (let i = 0; i < leaders.length; i += 1) {
+    if (leaders[i].leaderId === 'p-chen') return leaders[i];
+  }
+  throw new Error('leader entry missing on ' + item.id);
+}
+
+async function patchItem(mini, id, change) {
+  const state = await dev(mini, 'getState');
+  const items = state && state.items ? state.items : [];
+  const current = items.find(function (item) { return item.id === id; });
+  if (!current) throw new Error('missing item ' + id);
+  change(current);
+  const saved = await dev(mini, 'updateItem', current);
+  if (!saved || saved.ok !== true) throw new Error('updateItem failed for ' + id);
+}
+
+function weekItems(view) {
+  const rows = [];
+  ((view && view.days) || []).forEach(function (day) {
+    (day.items || []).forEach(function (item) { rows.push(item); });
+  });
+  return rows;
+}
+
+async function readyWeek(page) {
+  let phase = '';
+  for (let i = 0; i < 25; i += 1) {
+    phase = await page.data('phase');
+    if (phase === 'ready' || phase === 'error') return phase;
+    await page.waitFor(200);
+  }
+  throw new Error('week phase stayed ' + phase);
+}
+
+async function scrollTo(mini, page, selector) {
+  await mini.evaluate(function (target) {
+    wx.pageScrollTo({ selector: target, duration: 0 });
+  }, selector);
+  await page.waitFor(300);
+}
+
+async function openLeaderSeason(mini, locale, setting) {
+  await resetSeed(mini, locale, 'leader');
+  await dev(mini, 'setDate', '2026-10-24');
+  const saved = await dev(mini, 'setSeason', setting);
+  if (!saved || saved.ok !== true) throw new Error('setSeason failed: ' + setting);
+  const page = await openPage(mini, '/pages/week/index');
+  const expected = 'season-' + setting;
+  let actual = '';
+  for (let i = 0; i < 25; i += 1) {
+    actual = await page.data('seasonClass');
+    if (actual === expected && await page.data('phase') === 'ready') return page;
+    await page.waitFor(200);
+  }
+  throw new Error('week season ' + actual + ' expected ' + expected);
 }
 
 async function rearmCreatedMeeting(mini) {
@@ -648,9 +789,14 @@ const SCENARIOS = [
     title: 'Leader home tab set',
     async run(mini, locale) {
       await resetSeed(mini, locale, 'leader');
-      await openPage(mini, '/pages/schedule/index');
-      const keys = await tabKeys(mini);
-      if (keys.join(',') !== 'schedule,compose,me') {
+      const page = await openPage(mini, '/pages/week/index');
+      let keys = [];
+      for (let i = 0; i < 10; i += 1) {
+        keys = await tabKeys(mini);
+        if (keys.join(',') === 'week,compose,me') break;
+        await page.waitFor(200);
+      }
+      if (keys.join(',') !== 'week,compose,me') {
         throw new Error('leader tabs: ' + keys.join(','));
       }
       await saveShot(mini, locale, this.id + '.png');
@@ -1114,6 +1260,257 @@ const SCENARIOS = [
       if (await page.data('appearanceOpen') !== true) {
         throw new Error('appearance sheet did not open');
       }
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '72-week-autumn',
+    title: 'Leader week, autumn',
+    async run(mini, locale) {
+      await resetSeed(mini, locale, 'leader');
+      await dev(mini, 'setDate', '2026-10-24');
+      const page = await openPage(mini, '/pages/week/index');
+      if (await readyWeek(page) !== 'ready') throw new Error('week did not load');
+      if ((await page.data('view')).mode !== 'week') throw new Error('week mode missing');
+      await page.waitFor(1100);
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '73-week-spring',
+    title: 'Leader week, spring',
+    async run(mini, locale) {
+      const page = await openLeaderSeason(mini, locale, 'spring');
+      await page.waitFor(1100);
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '74-week-winter',
+    title: 'Leader week, winter',
+    async run(mini, locale) {
+      const page = await openLeaderSeason(mini, locale, 'winter');
+      await page.waitFor(1100);
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '75-week-today',
+    title: 'Leader week, today',
+    async run(mini, locale) {
+      await resetSeed(mini, locale, 'leader');
+      await dev(mini, 'setDate', '2026-10-24');
+      const page = await openPage(mini, '/pages/week/index');
+      if (await readyWeek(page) !== 'ready') throw new Error('week did not load');
+      await callPage(page, 'onMode', eventWith('mode', 'today'));
+      if ((await page.data('view')).mode !== 'today') throw new Error('today mode missing');
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '76-week-filter',
+    title: 'Leader week, meeting filter',
+    async run(mini, locale) {
+      await resetSeed(mini, locale, 'leader');
+      await dev(mini, 'setDate', '2026-10-24');
+      const page = await openPage(mini, '/pages/week/index');
+      if (await readyWeek(page) !== 'ready') throw new Error('week did not load');
+      await callPage(page, 'onTile', eventWith('key', 'meetings'));
+      const tiles = (await page.data('view')).overview || [];
+      const tile = tiles.find(function (item) { return item.key === 'meetings'; });
+      if (!tile || tile.active !== true) throw new Error('meeting tile is not active');
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '77-week-trip-open',
+    title: 'Leader week, expanded trip',
+    async run(mini, locale) {
+      await resetSeed(mini, locale, 'leader');
+      const saved = await dev(mini, 'addItem', TRIP_MEETING);
+      if (!saved || saved.ok !== true) throw new Error('addItem failed');
+      await dev(mini, 'setDate', '2026-10-28');
+      const page = await openPage(mini, '/pages/week/index');
+      if (await readyWeek(page) !== 'ready') throw new Error('week did not load');
+      const trip = weekItems(await page.data('view')).find(function (item) {
+        return item.id === 't1';
+      });
+      const meetings = trip && trip.detail ? trip.detail.meetings || [] : [];
+      if (!trip || !trip.detail || !trip.detail.departure || !(trip.detail.stops || []).length) {
+        throw new Error('trip detail is missing stops');
+      }
+      if (!meetings.some(function (item) { return item.id === 'trip-shot'; })) {
+        throw new Error('in-trip meeting is missing');
+      }
+      await callPage(page, 'onToggle', eventWith('id', 't1'));
+      if (await page.data('expandedId') !== 't1') throw new Error('trip did not expand');
+      await scrollTo(mini, page, '#item-2026-10-28-t1');
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '78-week-pending',
+    title: 'Leader week, pending confirm',
+    async run(mini, locale) {
+      await resetSeed(mini, locale, 'leader');
+      await dev(mini, 'setDate', '2026-10-24');
+      await patchItem(mini, 'm1', function (item) {
+        const own = leaderEntry(item);
+        own.confirm = 'pending';
+        own.confirmedAt = null;
+      });
+      const page = await openPage(mini, '/pages/week/index');
+      if (await readyWeek(page) !== 'ready') throw new Error('week did not load');
+      const item = weekItems(await page.data('view')).find(function (row) {
+        return row.id === 'm1';
+      });
+      if (!item || item.canConfirm !== true) throw new Error('confirm action is missing');
+      await scrollTo(mini, page, '#item-2026-10-23-m1');
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '79-week-question',
+    title: 'Leader week, question reason error',
+    async run(mini, locale) {
+      await resetSeed(mini, locale, 'leader');
+      await dev(mini, 'setDate', '2026-10-24');
+      await patchItem(mini, 'm1', function (item) {
+        const own = leaderEntry(item);
+        own.confirm = 'pending';
+        own.confirmedAt = null;
+      });
+      const page = await openPage(mini, '/pages/week/index');
+      if (await readyWeek(page) !== 'ready') throw new Error('week did not load');
+      await callPage(page, 'onQuestion', eventWith('id', 'm1'));
+      await callPage(page, 'onSendQuestion');
+      if (await page.data('questionOpen') !== true || !await page.data('questionError')) {
+        throw new Error('question reason error is missing');
+      }
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '80-week-updated',
+    title: 'Leader week, updated item',
+    async run(mini, locale) {
+      await resetSeed(mini, locale, 'leader');
+      await dev(mini, 'setDate', '2026-10-24');
+      await patchItem(mini, 'm1', function (item) {
+        const own = leaderEntry(item);
+        own.changedAt = '2026-10-24T03:00:00.000Z';
+        own.seenAt = null;
+        item.important = true;
+      });
+      const page = await openPage(mini, '/pages/week/index');
+      if (await readyWeek(page) !== 'ready') throw new Error('week did not load');
+      const item = weekItems(await page.data('view')).find(function (row) {
+        return row.id === 'm1';
+      });
+      const markers = item && item.markers ? item.markers : [];
+      if (markers.indexOf('updated') === -1 || markers.indexOf('important') === -1) {
+        throw new Error('updated markers: ' + markers.join(','));
+      }
+      await scrollTo(mini, page, '#item-2026-10-23-m1');
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '81-week-cancelled',
+    title: 'Leader week, cancelled item',
+    async run(mini, locale) {
+      await resetSeed(mini, locale, 'leader');
+      await dev(mini, 'setDate', '2026-10-24');
+      await patchItem(mini, 'm1', function (item) {
+        item.status = 'cancelled';
+      });
+      const page = await openPage(mini, '/pages/week/index');
+      if (await readyWeek(page) !== 'ready') throw new Error('week did not load');
+      const item = weekItems(await page.data('view')).find(function (row) {
+        return row.id === 'm1';
+      });
+      const markers = item && item.markers ? item.markers : [];
+      if (markers.indexOf('cancelled') === -1) throw new Error('cancelled marker missing');
+      await scrollTo(mini, page, '#item-2026-10-23-m1');
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '82-week-note-empty',
+    title: 'Leader note sheet, empty',
+    async run(mini, locale) {
+      await resetSeed(mini, locale, 'leader');
+      const page = await openPage(mini, '/pages/week/index');
+      if (await readyWeek(page) !== 'ready') throw new Error('week did not load');
+      await callPage(page, 'openLeaderNote');
+      if (await page.data('noteOpen') !== true || await page.data('noteText') !== '') {
+        throw new Error('empty note sheet did not open');
+      }
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '83-week-note-text',
+    title: 'Leader note sheet, with text',
+    async run(mini, locale) {
+      await resetSeed(mini, locale, 'leader');
+      const page = await openPage(mini, '/pages/week/index');
+      if (await readyWeek(page) !== 'ready') throw new Error('week did not load');
+      await callPage(page, 'openLeaderNote');
+      const sample = locale === 'en' ? 'Shenzhen next week' : '下周想去趟深圳';
+      await callPage(page, 'onNoteInput', { detail: { value: sample } });
+      if (await page.data('noteText') !== sample) throw new Error('note text was not kept');
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '84-week-loading',
+    title: 'Leader week, loading',
+    async run(mini, locale) {
+      await resetSeed(mini, locale, 'leader');
+      await dev(mini, 'setApiStub', { listItems: { pending: true } });
+      const page = await openPage(mini, '/pages/week/index');
+      if (await page.data('phase') !== 'loading' || await page.data('view')) {
+        throw new Error('week did not stay on the first-load skeleton');
+      }
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '85-week-network',
+    title: 'Leader week, network error',
+    async run(mini, locale) {
+      await resetSeed(mini, locale, 'leader');
+      await dev(mini, 'setApiStub', { listItems: { ok: false, code: 'network.failed' } });
+      const page = await openPage(mini, '/pages/week/index');
+      const title = await page.data('errorTitle');
+      const retry = await page.data('retryText');
+      if (await page.data('phase') !== 'error' || !title || !retry) {
+        throw new Error('week network error is missing a Retry action');
+      }
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '86-week-zone',
+    title: 'Leader week, cross-zone line',
+    async run(mini, locale) {
+      await resetSeed(mini, locale, 'leader');
+      const saved = await dev(mini, 'addItem', ZONE_MEETING);
+      if (!saved || saved.ok !== true) throw new Error('addItem failed');
+      const zone = await dev(mini, 'setViewerTz', 'America/Los_Angeles');
+      if (!zone || zone.ok !== true) throw new Error('setViewerTz failed');
+      await dev(mini, 'setDate', '2026-10-23');
+      const page = await openPage(mini, '/pages/week/index');
+      if (await readyWeek(page) !== 'ready') throw new Error('week did not load');
+      const item = weekItems(await page.data('view')).find(function (row) {
+        return row.id === 'zone-meeting';
+      });
+      const city = locale === 'en' ? 'Shanghai' : '上海';
+      if (!item || !item.zoneLine || item.zoneLine.indexOf(city) === -1) {
+        throw new Error('zone line ' + (item && item.zoneLine));
+      }
+      await scrollTo(mini, page, '#item-2026-10-23-zone-meeting');
       await saveShot(mini, locale, this.id + '.png');
     },
   },

@@ -262,7 +262,7 @@ function rangeLabel(days) {
 }
 
 function emptyLabel(start, end) {
-  if (start === end) return i18n.t('week.emptyDay');
+  if (start === end) return i18n.t('week.emptyOne', { day: i18n.fmt.dayHeading(start) });
   return i18n.t('week.emptyDays', {
     start: i18n.fmt.dayHeading(start),
     end: i18n.fmt.dayHeading(end),
@@ -347,7 +347,13 @@ function leaderWeekView(options) {
       continue;
     }
     let end = index;
-    while (end + 1 < rawDays.length && rawDays[end + 1].empty) end += 1;
+    // Merge only calendar-consecutive days: the today-first order wraps around the week.
+    while (
+      end + 1 < rawDays.length &&
+      rawDays[end + 1].empty &&
+      rawDays[end + 1].date === dates.addDays(rawDays[end].date, 1)
+    )
+      end += 1;
     days.push({ empty: true, label: emptyLabel(rawDays[index].date, rawDays[end].date) });
     index = end;
   }

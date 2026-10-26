@@ -1,4 +1,4 @@
-<view class="tab-bar {{seasonClass}} {{hidden ? 'is-hidden' : ''}}">
+<view class="tab-bar {{seasonClass}} {{surface === 'canvas' ? 'is-canvas' : ''}} {{hidden ? 'is-hidden' : ''}}">
   <view
     class="tab-item {{selected === index ? 'is-on' : ''}} {{item.plus ? 'is-plus' : ''}}"
     wx:for="{{list}}"
@@ -7,7 +7,7 @@
     hover-class="none"
     bindtap="onTap"
   >
-    <view wx:if="{{item.plus}}" class="tab-plus" aria-role="button">
+    <view wx:if="{{item.plus}}" class="tab-plus" aria-role="button" aria-label="{{item.text}}">
       <text class="plus-mark">+</text>
     </view>
     <block wx:else>

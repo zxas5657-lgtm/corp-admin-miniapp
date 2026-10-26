@@ -7,4 +7,5 @@
     body="{{i18n.todo.emptyBody}}"
   />
   <privacy-sheet id="privacy-sheet" />
+  <app-tab-bar id="app-tab-bar" />
 </view>

@@ -1,4 +1,4 @@
-<view class="state">
+<view class="state {{surface === 'canvas' ? 'is-canvas' : ''}}">
   <block wx:if="{{kind === 'loading'}}">
     <view class="skel"></view>
     <view class="skel skel-short"></view>
@@ -16,7 +16,7 @@
     class="btn-primary action"
     aria-role="button"
     catchtap="onAction"
-  >{{actionText}}</view>
+  >{{actionText}}<text wx:if="{{surface === 'canvas'}}"> →</text></view>
   <view
     wx:if="{{secondaryText}}"
     class="secondary"

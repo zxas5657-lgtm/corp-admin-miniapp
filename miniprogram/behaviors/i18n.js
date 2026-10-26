@@ -18,6 +18,11 @@ function readTabKey(page) {
   return typeof key === 'string' ? key : '';
 }
 
+function readTabSurface(page) {
+  const value = page.data && page.data.tabSurface;
+  return value === 'canvas' ? 'canvas' : 'paper';
+}
+
 module.exports = Behavior({
   data: {
     i18n: {},
@@ -102,18 +107,29 @@ module.exports = Behavior({
     applySeason() {
       const next = season.seasonClass();
       if (this.data.seasonClass !== next) this.setData({ seasonClass: next });
-      const bar = this.getTabBar && this.getTabBar();
+      const bar = this._bar();
       if (bar && typeof bar.setSeasonClass === 'function') bar.setSeasonClass(next);
+      if (bar && typeof bar.setSurface === 'function') bar.setSurface(readTabSurface(this));
       if (typeof this.onSeasonChange === 'function') this.onSeasonChange();
     },
 
+    _bar() {
+      let bar = null;
+      if (typeof this.getTabBar === 'function') bar = this.getTabBar();
+      if (!bar && typeof this.selectComponent === 'function') {
+        bar = this.selectComponent('#app-tab-bar');
+      }
+      return bar || null;
+    },
+
     _refreshTabBar() {
-      const bar = this.getTabBar && this.getTabBar();
+      const bar = this._bar();
       if (!bar) return;
       if (typeof bar.sync === 'function') bar.sync(session(getStore()).actor);
       if (typeof bar.setSeasonClass === 'function') {
         bar.setSeasonClass(this.data.seasonClass || season.seasonClass());
       }
+      if (typeof bar.setSurface === 'function') bar.setSurface(readTabSurface(this));
       if (!this._shown) return;
       const key = readTabKey(this);
       if (!key || typeof bar.setSelected !== 'function') return;
