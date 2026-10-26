@@ -162,6 +162,7 @@ module.exports = {
     genericErrorBody: 'Please try again',
     retry: 'Retry',
     reset: 'Reset demo data',
+    changedByOther: 'This was changed by someone else; reloaded',
   },
   schedule: {
     emptyTitle: 'No plans for this day',

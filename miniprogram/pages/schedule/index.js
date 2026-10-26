@@ -5,6 +5,7 @@ const { scheduleView } = require('../../viewmodels/schedule');
 const { session } = require('../../utils/session');
 const { refreshVehicleBadge } = require('../../utils/badge');
 const { prepareTab } = require('../../utils/shell');
+const data = require('../../utils/data');
 
 function activeScope(view) {
   const scopes = (view && view.scopes) || [];
@@ -33,15 +34,32 @@ function writeLoadResult(result) {
   }
 }
 
+function storagePatch(page) {
+  return {
+    phase: 'error',
+    loadFailed: true,
+    authReady: true,
+    errorCode: 'storage.readFailed',
+    errorTitle: page.t('state.genericErrorTitle'),
+    errorBody: page.t('state.genericErrorBody'),
+    retryText: page.t('state.retry')
+  };
+}
+
 Component({
   behaviors: [i18nBehavior],
   data: {
-    i18nKeys: ['state', 'a11y'],
+    i18nKeys: ['state', 'a11y', 'error'],
     navTitleKey: 'nav.schedule',
     tabKey: 'schedule',
     authReady: false,
+    phase: 'loading',
     view: null,
     loadFailed: false,
+    errorTitle: '',
+    errorBody: '',
+    errorCode: '',
+    retryText: '',
     banner: ''
   },
   lifetimes: {
@@ -49,25 +67,27 @@ Component({
       const page = this;
       this._role = '';
       this._scope = '';
-      if (!this._offStore) {
-        this._offStore = getStore().subscribe(function () {
-          page.refresh();
-        });
-      }
+      this._state = null;
+      this._refs = null;
+      this._gate = data.createGate();
+      this._offData = data.onChange(function () {
+        if (page._shown) page.load();
+      });
     },
     detached() {
       this.stopClock();
       this.clearHighlight();
       this.clearBannerTimer();
-      if (typeof this._offStore === 'function') this._offStore();
-      this._offStore = null;
+      if (typeof this._offData === 'function') this._offData();
+      this._offData = null;
     }
   },
   pageLifetimes: {
     show() {
       const page = this;
+      this._shown = true;
       prepareTab('schedule').then(function (ready) {
-        if (!ready.ok) return;
+        if (!page._shown || !ready.ok) return;
         page.setData({ authReady: true });
         const focus = getStore().ui.takePendingFocus();
         const pending = focus && typeof focus === 'object' ? focus : null;
@@ -75,7 +95,7 @@ Component({
         page._focusId = pending && pending.meetingId ? pending.meetingId : null;
         page.clearHighlight();
         if (page._focusId) page.armHighlight();
-        page.refresh({
+        page.load({
           banner: Boolean(pending && pending.banner === true),
           clearBanner: !(pending && pending.banner === true),
           scrollId: page._focusId || ''
@@ -84,6 +104,7 @@ Component({
       });
     },
     hide() {
+      this._shown = false;
       this.stopClock();
       this.clearHighlight();
       this.clearBannerTimer();
@@ -100,12 +121,60 @@ Component({
       }
     },
     onLocaleChange() {
-      this.refresh({ refreshBanner: true });
+      if (this.data.loadFailed) {
+        this.setData(storagePatch(this));
+        return;
+      }
+      if (this.data.phase === 'error') {
+        this.setData(data.failurePatch(this.data.errorCode, this.t.bind(this)));
+        return;
+      }
+      if (this._state) this.render({ refreshBanner: true });
     },
     refresh(options) {
+      if (this._state && !readLoadFailed()) this.render(options);
+      else this.load(options);
+    },
+    load(options) {
       const opts = options || {};
-      refreshVehicleBadge(this);
+      const page = this;
       if (typeof this.t !== 'function') return;
+      if (readLoadFailed()) {
+        this.setData(storagePatch(this));
+        return;
+      }
+      const token = this._gate.next();
+      const hadView = Boolean(this.data.view) && this.data.phase === 'ready';
+      if (!hadView) this.setData({ phase: 'loading', loadFailed: false, authReady: true });
+      const store = getStore();
+      const current = session(store);
+      const span = data.weekWindow(store.ui.getSelectedDate(), current.viewerTz);
+      Promise.all([
+        data.loadDirectory({ fresh: Boolean(opts.fresh) }),
+        data.loadRange(span, { fresh: Boolean(opts.fresh) })
+      ]).then(function (results) {
+        if (!page._gate.isCurrent(token)) return;
+        const directory = results[0];
+        const range = results[1];
+        if (!directory.ok || !range.ok) {
+          const code = !directory.ok ? directory.code : range.code;
+          if (hadView) return;
+          page.setData(Object.assign(
+            { authReady: true, loadFailed: false },
+            data.failurePatch(code, page.t.bind(page))
+          ));
+          return;
+        }
+        page._refs = directory.refs;
+        page._state = range.state;
+        page.render(opts);
+      });
+    },
+    render(options) {
+      const opts = options || {};
+      this._renderOpts = opts;
+      refreshVehicleBadge(this);
+      if (typeof this.t !== 'function' || !this._state) return;
       const store = getStore();
       const current = session(store);
       const role = current.actor ? current.actor.role : '';
@@ -114,7 +183,8 @@ Component({
         this._scope = '';
       }
       const view = scheduleView({
-        state: store.getState(),
+        state: this._state,
+        refs: this._refs,
         date: store.ui.getSelectedDate(),
         now: clock.now(),
         focusId: this._focusId || '',
@@ -125,8 +195,10 @@ Component({
       });
       if (!this._scope) this._scope = activeScope(view);
       const patch = {
+        phase: 'ready',
+        authReady: true,
+        loadFailed: false,
         view: view,
-        loadFailed: readLoadFailed(),
         meetingsLink: this.t('me.meetings')
       };
       if (opts.banner) {
@@ -197,7 +269,7 @@ Component({
       this._focusId = null;
       this.clearHighlight();
       getStore().ui.setSelectedDate(date);
-      this.refresh();
+      this.load();
     },
     onBackToday() {
       const today = this.data.view && this.data.view.todayDate;
@@ -205,7 +277,7 @@ Component({
       this._focusId = null;
       this.clearHighlight();
       getStore().ui.setSelectedDate(today);
-      this.refresh();
+      this.load();
     },
     onPickDate(event) {
       const date = event.detail && event.detail.value;
@@ -213,7 +285,7 @@ Component({
       this._focusId = null;
       this.clearHighlight();
       getStore().ui.setSelectedDate(date);
-      this.refresh();
+      this.load();
     },
     onScope(event) {
       const key = event.currentTarget.dataset.key;
@@ -221,7 +293,7 @@ Component({
       this._scope = key;
       this._focusId = null;
       this.clearHighlight();
-      this.refresh();
+      this.render();
     },
     onOpenItem(event) {
       const url = event.currentTarget.dataset.url;
@@ -236,14 +308,24 @@ Component({
       }
     },
     onRetry() {
-      const result = getStore().load();
-      writeLoadResult(result);
-      this.refresh();
+      if (this.data.loadFailed) {
+        const result = getStore().load();
+        writeLoadResult(result);
+        if (!result || result.ok !== true) {
+          this.setData(storagePatch(this));
+          return;
+        }
+        data.resetSession();
+      }
+      this.load({ fresh: true });
     },
     onReset() {
       const result = getStore().resetDemo();
-      if (result && result.ok === true) writeLoadResult({ ok: true });
-      this.refresh();
+      if (result && result.ok === true) {
+        writeLoadResult({ ok: true });
+        data.resetSession();
+      }
+      this.load({ fresh: true });
     },
     onCloseBanner() {
       this.clearBannerTimer();
@@ -253,7 +335,8 @@ Component({
       this.stopClock();
       const page = this;
       this._clock = setInterval(function () {
-        page.refresh();
+        if (page._state && page.data.phase === 'ready') page.render();
+        else page.load();
       }, 60000);
     },
     stopClock() {
@@ -268,7 +351,7 @@ Component({
       this._highlightTimer = setTimeout(function () {
         page._highlightTimer = null;
         page._focusId = null;
-        page.refresh();
+        page.render();
       }, 1200);
     },
     clearHighlight() {

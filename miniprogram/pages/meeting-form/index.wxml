@@ -1,7 +1,16 @@
 <view class="page">
   <top-progress active="{{submitting}}" />
+  <state-view wx:if="{{phase === 'loading'}}" kind="loading" />
   <state-view
-    wx:if="{{!allowed}}"
+    wx:elif="{{phase === 'error'}}"
+    kind="error"
+    title="{{errorTitle}}"
+    body="{{errorBody}}"
+    action-text="{{retryText}}"
+    bind:action="onRetry"
+  />
+  <state-view
+    wx:elif="{{!allowed}}"
     kind="error"
     title="{{deniedText}}"
     action-text="{{i18n.nav.back}}"
@@ -139,6 +148,7 @@
       <primary-button
         text="{{labels.submit}}"
         loading="{{submitting}}"
+        disabled="{{submitting}}"
         loading-text="{{labels.submitting}}"
         bind:press="onSubmit"
       />

@@ -1,13 +1,17 @@
 const i18nBehavior = require('../../behaviors/i18n');
 const i18n = require('../../i18n/index');
 const { getStore } = require('../../store/index');
+// Demo role list only. Bound profiles use directory refs.
 const { ROLE_ORDER, personById, actorFor } = require('../../data/reference');
 const { DEV_ROLE_SWITCH } = require('../../config');
 const { changeLocale } = require('../../utils/locale');
 const { refreshVehicleBadge } = require('../../utils/badge');
+const { session } = require('../../utils/session');
 const { isDemo } = require('../../utils/env');
 const { prepareTab } = require('../../utils/shell');
 const { homeUrl } = require('../../utils/tabs');
+const { currentMe } = require('../../utils/auth');
+const data = require('../../utils/data');
 
 function firstCharacter(value) {
   const chars = Array.from(value || '');
@@ -45,6 +49,11 @@ Component({
     navTitleKey: 'nav.me',
     tabKey: 'me',
     authReady: false,
+    phase: 'loading',
+    errorTitle: '',
+    errorBody: '',
+    errorCode: '',
+    retryText: '',
     devRoleSwitch: false,
     languageOpen: false,
     resetOpen: false,
@@ -63,13 +72,14 @@ Component({
   },
   lifetimes: {
     attached() {
+      const page = this;
+      this._gate = data.createGate();
+      this._refs = null;
       if (!this._offStore) {
-        const page = this;
         this._offStore = getStore().subscribe(function () {
-          page.rebuild();
+          if (page.data.phase === 'ready') page.rebuild();
         });
       }
-      this.rebuild();
     },
     detached() {
       if (typeof this._offStore === 'function') this._offStore();
@@ -81,8 +91,7 @@ Component({
       const page = this;
       prepareTab('me').then(function (ready) {
         if (!ready.ok) return;
-        page.setData({ authReady: true });
-        page.rebuild();
+        page.load();
         setTabBarHidden(page, page.data.languageOpen || page.data.resetOpen);
       });
     },
@@ -91,12 +100,60 @@ Component({
     }
   },
   methods: {
+    onLocaleChange() {
+      if (this.data.phase === 'error') {
+        this.setData(data.failurePatch(this.data.errorCode, this.t.bind(this)));
+        return;
+      }
+      this.rebuild();
+    },
+    load(options) {
+      const opts = options || {};
+      const page = this;
+      if (typeof this.t !== 'function') return;
+      const token = this._gate.next();
+      const hadReady = this.data.phase === 'ready';
+      if (!hadReady) this.setData({ phase: 'loading' });
+      const span = data.catalogWindow(session(getStore()).viewerTz);
+      Promise.all([
+        data.loadDirectory({ fresh: Boolean(opts.fresh) }),
+        data.loadRange(span, { fresh: Boolean(opts.fresh) })
+      ]).then(function (results) {
+        if (!page._gate.isCurrent(token)) return;
+        if (!results[0].ok || !results[1].ok) {
+          if (hadReady) return;
+          const code = !results[0].ok ? results[0].code : results[1].code;
+          page.setData(data.failurePatch(code, page.t.bind(page)));
+          return;
+        }
+        page._refs = results[0].refs;
+        page.setData({ phase: 'ready', authReady: true });
+        page.rebuild();
+      });
+    },
+    onRetry() {
+      this.load({ fresh: true });
+    },
+    shownPerson(roleId) {
+      if (isDemo()) {
+        const currentActor = actorFor(roleId);
+        return currentActor ? personById(currentActor.personId) : null;
+      }
+      const me = currentMe();
+      const actorId = me && me.personId;
+      if (this._refs && actorId) {
+        const fromDirectory = this._refs.personById(actorId);
+        if (fromDirectory) return fromDirectory;
+      }
+      return me && me.employee ? me.employee : null;
+    },
     rebuild() {
       refreshVehicleBadge(this);
       if (typeof this.t !== 'function') return;
-      const roleId = getStore().getRole();
-      const currentActor = actorFor(roleId);
-      const person = currentActor ? personById(currentActor.personId) : null;
+      const roleId = isDemo()
+        ? getStore().getRole()
+        : ((currentMe() && currentMe().role) || '');
+      const person = this.shownPerson(roleId);
       const roles = ROLE_ORDER.map(function (id) {
         const actor = actorFor(id);
         const item = actor ? personById(actor.personId) : null;
@@ -165,6 +222,7 @@ Component({
         this.setData({ notice: noticeFor(this, result) });
         return;
       }
+      data.resetSession();
       this.setData({ notice: '' });
       try {
         wx.showToast({ title: this.t('demo.switched'), icon: 'none' });
@@ -189,6 +247,7 @@ Component({
     onConfirmReset() {
       const result = getStore().resetDemo();
       const failed = !result || result.ok !== true;
+      if (!failed) data.resetSession();
       this.setData({
         resetOpen: false,
         notice: failed ? noticeFor(this, result) : ''

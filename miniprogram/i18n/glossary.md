@@ -18,3 +18,4 @@
 | 秘书主管 | Secretariat Admin | All leader schedules and support management | S3
 | 前台 | Front Desk | Reception schedules and requests | S3
 | 前台主管 | Front Desk Lead | Reception administration | S3
+| 这条已被他人修改，已重新加载 | This was changed by someone else; reloaded | Shown after a stale rev write, then the page reloads | S3

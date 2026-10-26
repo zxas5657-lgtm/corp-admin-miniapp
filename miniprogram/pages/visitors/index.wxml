@@ -1,5 +1,13 @@
 <view class="page">
-  <state-view wx:if="{{!authReady}}" kind="loading" />
+  <state-view wx:if="{{phase === 'loading'}}" kind="loading" />
+  <state-view
+    wx:elif="{{phase === 'error'}}"
+    kind="error"
+    title="{{errorTitle}}"
+    body="{{errorBody}}"
+    action-text="{{retryText}}"
+    bind:action="onRetry"
+  />
   <block wx:else>
   <text class="lead">{{i18n.visitors.lead}}</text>
   <view class="cell-group">

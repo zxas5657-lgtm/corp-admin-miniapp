@@ -94,6 +94,7 @@ function dev(mini, method, value) {
 }
 
 async function resetSeed(mini, locale, role) {
+  await dev(mini, 'setApiStub', null);
   await mini.callWxMethod('clearStorageSync');
   const loaded = await dev(mini, 'reload');
   if (!loaded || loaded.ok !== true) {
@@ -799,6 +800,95 @@ const SCENARIOS = [
         throw new Error('unconfigured used the offline copy');
       }
       if (!await page.data('title')) throw new Error('unconfigured copy is missing');
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '51-schedule-loading',
+    title: 'Schedule first load pending',
+    async run(mini, locale) {
+      await resetSeed(mini, locale, 'secretary');
+      await dev(mini, 'setApiStub', { listItems: { pending: true } });
+      const page = await openPage(mini, '/pages/schedule/index');
+      if (await page.data('phase') !== 'loading' || await page.data('view')) {
+        throw new Error('schedule did not stay on the first-load skeleton');
+      }
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '52-schedule-network',
+    title: 'Schedule network error with Retry',
+    async run(mini, locale) {
+      await resetSeed(mini, locale, 'secretary');
+      await dev(mini, 'setApiStub', { listItems: { ok: false, code: 'network.failed' } });
+      const page = await openPage(mini, '/pages/schedule/index');
+      const title = await page.data('errorTitle');
+      const retry = await page.data('retryText');
+      if (await page.data('phase') !== 'error' || !title || !retry) {
+        throw new Error('schedule network error is missing a Retry action');
+      }
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '53-vehicles-server-error',
+    title: 'Vehicles server error',
+    async run(mini, locale) {
+      await resetSeed(mini, locale, 'secretary');
+      await dev(mini, 'setApiStub', { listVehicles: { ok: false, code: 'server.error' } });
+      const page = await openPage(mini, '/pages/vehicles/index');
+      if (await page.data('phase') !== 'error' || await page.data('errorCode') !== 'server.error') {
+        throw new Error('vehicles server error is missing');
+      }
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '54-meeting-cancel-network',
+    title: 'Meeting cancel, network failure',
+    async run(mini, locale) {
+      await resetSeed(mini, locale, 'secretary');
+      await dev(mini, 'setApiStub', { cancelItem: { ok: false, code: 'network.failed' } });
+      const page = await openPage(mini, '/pages/meeting-detail/index?id=m3');
+      await callPage(page, 'onOpenCancel');
+      await callPage(page, 'onConfirmCancel');
+      const notice = await page.data('notice');
+      if (!notice || await page.data('writing') === true) {
+        throw new Error('cancel network failure did not surface');
+      }
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '55-meeting-cancel-conflict',
+    title: 'Meeting cancel, someone else changed it',
+    async run(mini, locale) {
+      await resetSeed(mini, locale, 'secretary');
+      await dev(mini, 'setApiStub', { cancelItem: { ok: false, code: 'item.alreadyChanged' } });
+      const page = await openPage(mini, '/pages/meeting-detail/index?id=m3');
+      await callPage(page, 'onOpenCancel');
+      await callPage(page, 'onConfirmCancel');
+      const notice = await page.data('notice');
+      const expected = locale === 'en'
+        ? 'This was changed by someone else; reloaded'
+        : '这条已被他人修改，已重新加载';
+      if (notice !== expected) throw new Error('rev-conflict notice: ' + notice);
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '56-vehicle-form-submitting',
+    title: 'Vehicle form submitting, button disabled',
+    async run(mini, locale) {
+      await resetSeed(mini, locale, 'secretary');
+      await dev(mini, 'setApiStub', { requestVehicle: { pending: true } });
+      const page = await openPage(mini, '/pages/vehicle-form/index');
+      await callPage(page, 'setForm', { reason: 'Airport', destination: 'Airport' });
+      await callPage(page, 'onSubmit');
+      if (await page.data('submitting') !== true) {
+        throw new Error('submit did not disable the button');
+      }
       await saveShot(mini, locale, this.id + '.png');
     },
   },

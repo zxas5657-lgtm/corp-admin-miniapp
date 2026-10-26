@@ -179,6 +179,7 @@ function accept(result) {
 }
 
 module.exports = {
+  api,
   bootstrap,
   ready,
   open,

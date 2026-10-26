@@ -1,5 +1,14 @@
 <view class="page">
-  <block wx:if="{{view}}">
+  <state-view wx:if="{{phase === 'loading'}}" kind="loading" />
+  <state-view
+    wx:elif="{{phase === 'error'}}"
+    kind="error"
+    title="{{errorTitle}}"
+    body="{{errorBody}}"
+    action-text="{{retryText}}"
+    bind:action="onRetry"
+  />
+  <block wx:elif="{{view}}">
     <scroll-view class="filters" scroll-x aria-label="{{i18n.a11y.filterMeetings}}">
       <view
         wx:for="{{view.filters}}"

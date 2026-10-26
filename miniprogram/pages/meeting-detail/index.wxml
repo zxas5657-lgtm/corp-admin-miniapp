@@ -1,5 +1,14 @@
 <view class="page">
-  <block wx:if="{{view}}">
+  <state-view wx:if="{{phase === 'loading'}}" kind="loading" />
+  <state-view
+    wx:elif="{{phase === 'error'}}"
+    kind="error"
+    title="{{errorTitle}}"
+    body="{{errorBody}}"
+    action-text="{{retryText}}"
+    bind:action="onRetry"
+  />
+  <block wx:elif="{{view}}">
     <state-view
       wx:if="{{view.notFound}}"
       kind="empty"
@@ -56,6 +65,7 @@
         title="{{view.cancelSheet.title}}"
         cancel-text="{{view.cancelSheet.cancelText}}"
         confirm-text="{{view.cancelSheet.confirmText}}"
+        confirm-disabled="{{writing}}"
         danger="{{true}}"
         mask-label="{{i18n.a11y.closeSheet}}"
         bind:close="onCloseCancel"

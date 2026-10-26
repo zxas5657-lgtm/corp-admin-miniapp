@@ -139,6 +139,7 @@ module.exports = {
     genericErrorBody: '请重试',
     retry: '重试',
     reset: '恢复演示数据',
+    changedByOther: '这条已被他人修改，已重新加载',
   },
   schedule: {
     emptyTitle: '这天没有安排',

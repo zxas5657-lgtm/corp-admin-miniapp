@@ -1,16 +1,15 @@
 <view class="page">
-  <state-view wx:if="{{!authReady}}" kind="loading" />
-  <block wx:elif="{{loadFailed}}">
-    <state-view
-      kind="error"
-      title="{{i18n.state.genericErrorTitle}}"
-      body="{{i18n.state.genericErrorBody}}"
-      action-text="{{i18n.state.retry}}"
-      secondary-text="{{i18n.state.reset}}"
-      bind:action="onRetry"
-      bind:secondary="onReset"
-    />
-  </block>
+  <state-view wx:if="{{phase === 'loading'}}" kind="loading" />
+  <state-view
+    wx:elif="{{phase === 'error'}}"
+    kind="error"
+    title="{{errorTitle}}"
+    body="{{errorBody}}"
+    action-text="{{retryText}}"
+    secondary-text="{{loadFailed ? i18n.state.reset : ''}}"
+    bind:action="onRetry"
+    bind:secondary="onReset"
+  />
   <block wx:elif="{{view}}">
     <view wx:if="{{banner}}" id="created-banner" class="created-banner">
       <notice-bar

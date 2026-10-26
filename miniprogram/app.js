@@ -1,11 +1,11 @@
 const i18n = require('./i18n/index');
 const { getStore } = require('./store/index');
-const { getApi } = require('./store/api');
 const clock = require('./domain/clock');
 const { DEV_ROLE_SWITCH } = require('./config');
 const { changeLocale } = require('./utils/locale');
 const { dataMode, isDemo, cloudEnv } = require('./utils/env');
 const auth = require('./utils/auth');
+const data = require('./utils/data');
 
 function attachDevHook(app) {
   if (!isDemo() || !DEV_ROLE_SWITCH) return;
@@ -14,7 +14,9 @@ function attachDevHook(app) {
       return changeLocale(locale);
     },
     setRole(role) {
-      return getStore().setRole(role);
+      const result = getStore().setRole(role);
+      if (result && result.ok === true) data.resetSession();
+      return result;
     },
     setDate(date) {
       getStore().ui.setSelectedDate(date);
@@ -23,6 +25,7 @@ function attachDevHook(app) {
     reload() {
       const result = getStore().load();
       app.globalData.loadResult = result;
+      data.resetSession();
       return result;
     },
     addItem(record) {
@@ -48,6 +51,10 @@ function attachDevHook(app) {
     setAuthStub(value) {
       auth.setAuthStub(value);
       return auth.bootstrap();
+    },
+    setApiStub(value) {
+      data.setApiStub(value);
+      return true;
     },
     bootstrap() {
       return auth.bootstrap();
@@ -97,7 +104,7 @@ App({
       }
     }
     i18n.setLocale(i18n.normalizeLocale(lang));
-    getApi({ mode: dataMode(), onAuthLost: auth.onAuthLost });
+    auth.api();
     attachDevHook(this);
     auth.bootstrap().then(function (result) {
       auth.open(result);
