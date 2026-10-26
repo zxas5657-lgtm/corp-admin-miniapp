@@ -1,3 +1,67 @@
-.pill {
+.marker {
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
   max-width: 100%;
+  height: 22px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+.marker-text {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.marker-soft {
+  color: var(--accent, #8A4A22);
+  background: var(--accent-soft, #F5E9DF);
+}
+
+.marker-dot {
+  color: var(--accent, #8A4A22);
+  background: transparent;
+}
+
+.marker-outline {
+  color: var(--accent, #8A4A22);
+  background: transparent;
+  border-color: var(--accent, #8A4A22);
+}
+
+.marker-cancel {
+  color: var(--cancel, #9B2C3C);
+  background: var(--cancel-soft, #F7E3E6);
+}
+
+.marker-done,
+.marker-plain {
+  color: var(--mute, #5E6676);
+  background: var(--mute-soft, #ECEEF2);
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  margin-right: 4px;
+  border-radius: 50%;
+  background: var(--accent, #8A4A22);
+  flex: none;
+}
+
+.check {
+  width: 4px;
+  height: 7px;
+  margin-right: 4px;
+  margin-top: -2px;
+  border-right: 1.5px solid var(--mute, #5E6676);
+  border-bottom: 1.5px solid var(--mute, #5E6676);
+  transform: rotate(45deg);
+  flex: none;
 }

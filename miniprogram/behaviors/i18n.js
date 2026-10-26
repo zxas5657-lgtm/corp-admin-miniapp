@@ -1,4 +1,5 @@
 const i18n = require('../i18n/index');
+const season = require('../utils/season');
 const { getStore } = require('../store/index');
 const { session } = require('../utils/session');
 
@@ -20,17 +21,20 @@ function readTabKey(page) {
 module.exports = Behavior({
   data: {
     i18n: {},
-    locale: 'zh-CN'
+    locale: 'zh-CN',
+    seasonClass: 'season-autumn'
   },
 
   lifetimes: {
     created() {
       this._shown = false;
       this._offLocale = null;
+      this._offSeason = null;
     },
     attached() {
       this._subscribe();
       this.applyI18n();
+      this.applySeason();
     },
     ready() {
       this._refreshTabBar();
@@ -45,6 +49,7 @@ module.exports = Behavior({
     show() {
       this._shown = true;
       this.applyI18n();
+      this.applySeason();
     },
     hide() {
       this._shown = false;
@@ -94,10 +99,21 @@ module.exports = Behavior({
       }
     },
 
+    applySeason() {
+      const next = season.seasonClass();
+      if (this.data.seasonClass !== next) this.setData({ seasonClass: next });
+      const bar = this.getTabBar && this.getTabBar();
+      if (bar && typeof bar.setSeasonClass === 'function') bar.setSeasonClass(next);
+      if (typeof this.onSeasonChange === 'function') this.onSeasonChange();
+    },
+
     _refreshTabBar() {
       const bar = this.getTabBar && this.getTabBar();
       if (!bar) return;
       if (typeof bar.sync === 'function') bar.sync(session(getStore()).actor);
+      if (typeof bar.setSeasonClass === 'function') {
+        bar.setSeasonClass(this.data.seasonClass || season.seasonClass());
+      }
       if (!this._shown) return;
       const key = readTabKey(this);
       if (!key || typeof bar.setSelected !== 'function') return;
@@ -110,12 +126,18 @@ module.exports = Behavior({
       this._offLocale = i18n.onChange(function () {
         page.applyI18n();
       });
+      this._offSeason = season.onChange(function () {
+        page.applySeason();
+      });
     },
 
     _unsubscribe() {
       const off = this._offLocale;
       this._offLocale = null;
       if (typeof off === 'function') off();
+      const offSeason = this._offSeason;
+      this._offSeason = null;
+      if (typeof offSeason === 'function') offSeason();
     }
   }
 });

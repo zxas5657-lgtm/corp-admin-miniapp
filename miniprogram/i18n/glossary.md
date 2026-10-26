@@ -2,7 +2,11 @@
 
 | Chinese | English | Note | Status |
 | --- | --- | --- | --- |
-| 日程 / 会议 / 用车 / 我的 | Schedule / Meetings / Vehicles / Me | Tab labels stay short (9 characters or fewer). | Starter |
+| 行程 | Itinerary | Home tab and page title for leaders and secretaries. 9 characters or fewer. | S3 |
+| 外观 | Appearance | Device-only season setting. Reset demo data does not change it. | S3 |
+| 自动 / 春 / 夏 / 秋 / 冬 / 品牌蓝 | Auto / Spring / Summer / Autumn / Winter / Brand blue | Brand blue uses the summer accent. | S3 |
+| 日程 | Schedule | A calendar entry in general. Not the home tab or its page title. | S3 |
+| 会议 / 用车 / 我的 | Meetings / Vehicles / Me | Tab labels stay short (9 characters or fewer). | Starter |
 | 领导 | Executive | Leadership is an alternative. | Starter |
 | 行政专员 | Admin Specialist |  | Starter |
 | 司机/车管 | Driver / Fleet | Split later into Driver and Fleet Manager if needed. | Starter |

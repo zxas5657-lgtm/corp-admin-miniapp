@@ -29,8 +29,8 @@
 }
 
 .chip.is-on {
-  background: var(--primary-soft, #E7F0FA);
-  color: var(--primary, #1F4E89);
+  background: var(--accent-soft, #F5E9DF);
+  color: var(--accent, #8A4A22);
   font-weight: 600;
 }
 

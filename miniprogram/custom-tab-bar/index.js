@@ -1,4 +1,5 @@
 const i18n = require('../i18n/index');
+const season = require('../utils/season');
 const { tabsFor } = require('../utils/tabs');
 
 function buildList(actor) {
@@ -23,15 +24,18 @@ Component({
     selected: -1,
     badges: [],
     hidden: false,
-    list: []
+    list: [],
+    seasonClass: 'season-autumn'
   },
 
   lifetimes: {
     attached() {
       this._offLocale = null;
+      this._offSeason = null;
       this._selectedKey = '';
       this._badges = {};
       this._actor = null;
+      this.setSeasonClass(season.seasonClass());
       this.sync(null);
       this._subscribe();
     },
@@ -68,6 +72,12 @@ Component({
       const next = Boolean(hidden);
       if (this.data.hidden === next) return;
       this.setData({ hidden: next });
+    },
+
+    setSeasonClass(name) {
+      const next = name || season.seasonClass();
+      if (this.data.seasonClass === next) return;
+      this.setData({ seasonClass: next });
     },
 
     setBadge(key, n) {
@@ -107,12 +117,18 @@ Component({
       this._offLocale = i18n.onChange(function () {
         bar.sync(bar._actor);
       });
+      this._offSeason = season.onChange(function () {
+        bar.setSeasonClass(season.seasonClass());
+      });
     },
 
     _unsubscribe() {
       const off = this._offLocale;
       this._offLocale = null;
       if (typeof off === 'function') off();
+      const offSeason = this._offSeason;
+      this._offSeason = null;
+      if (typeof offSeason === 'function') offSeason();
     }
   }
 });

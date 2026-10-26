@@ -1,6 +1,6 @@
-<view class="tab-bar {{hidden ? 'is-hidden' : ''}}">
+<view class="tab-bar {{seasonClass}} {{hidden ? 'is-hidden' : ''}}">
   <view
-    class="tab-item {{selected === index ? 'is-on' : ''}}"
+    class="tab-item {{selected === index ? 'is-on' : ''}} {{item.plus ? 'is-plus' : ''}}"
     wx:for="{{list}}"
     wx:key="key"
     data-index="{{index}}"
@@ -12,14 +12,11 @@
     </view>
     <block wx:else>
       <view class="tab-icon-wrap">
-        <image
-          class="tab-icon"
-          src="{{selected === index ? item.activeIcon : item.icon}}"
-          mode="aspectFit"
-        />
+        <image class="tab-icon" src="{{item.icon}}" mode="aspectFit" />
         <text class="tab-badge" wx:if="{{badges[index] > 0}}">{{badges[index]}}</text>
       </view>
       <text class="tab-label">{{item.text}}</text>
+      <view wx:if="{{selected === index}}" class="tab-dot"></view>
     </block>
   </view>
 </view>

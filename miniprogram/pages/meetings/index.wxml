@@ -1,4 +1,4 @@
-<view class="page">
+<view class="page {{seasonClass}}">
   <state-view wx:if="{{phase === 'loading'}}" kind="loading" />
   <state-view
     wx:elif="{{phase === 'error'}}"
@@ -43,9 +43,16 @@
         >
           <view class="card-line">
             <view class="card-title {{meeting.cancelled ? 'is-strike' : ''}}">{{meeting.title}}</view>
-            <status-pill class="pill-host" text="{{meeting.statusText}}" tone="{{meeting.tone}}" />
+            <status-pill
+              class="pill-host"
+              text="{{meeting.statusText}}"
+              tone="{{meeting.cancelled ? 'cancel' : meeting.tone}}"
+            />
           </view>
-          <text class="meta text-secondary">{{meeting.timeText}} · {{meeting.roomName}}</text>
+          <view class="type-line">
+            <image class="type-icon" src="/assets/icons/type-meeting.svg" mode="aspectFit" />
+            <text class="type-label">{{i18n.type.meeting}} · {{meeting.timeText}} · {{meeting.roomName}}</text>
+          </view>
           <text class="meta text-secondary">{{meeting.organizerName}}</text>
         </view>
       </view>

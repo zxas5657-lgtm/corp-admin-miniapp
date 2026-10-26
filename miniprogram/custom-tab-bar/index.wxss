@@ -1,8 +1,9 @@
+@import "../styles/seasons.wxss";
+
 .tab-bar {
-  --primary: #1F4E89;
-  --icon: #8B95A5;
-  --line: #E6E9EE;
-  --danger: #9F1D1D;
+  --ink: #1B2230;
+  --line: #E3E6EB;
+  --cancel: #9B2C3C;
   position: fixed;
   left: 0;
   right: 0;
@@ -15,9 +16,9 @@
   width: 100%;
   min-height: calc(64px + constant(safe-area-inset-bottom));
   min-height: calc(64px + env(safe-area-inset-bottom));
-  padding: var(--space-4, 4px) 0 var(--space-14, 14px);
-  padding-bottom: calc(var(--space-14, 14px) + constant(safe-area-inset-bottom));
-  padding-bottom: calc(var(--space-14, 14px) + env(safe-area-inset-bottom));
+  padding: var(--space-4, 4px) 0 var(--space-6, 6px);
+  padding-bottom: calc(var(--space-6, 6px) + constant(safe-area-inset-bottom));
+  padding-bottom: calc(var(--space-6, 6px) + env(safe-area-inset-bottom));
   background: #FFFFFF;
   border-top: 1px solid var(--line);
 }
@@ -38,15 +39,20 @@
   min-height: 44px;
   padding: 0 var(--space-2, 2px);
   background: transparent;
-  color: var(--icon);
+  color: var(--ink);
   font-size: 11px;
   font-weight: 500;
   line-height: 14px;
 }
 
-.tab-item.is-on {
-  background: transparent;
-  color: var(--primary);
+.tab-icon,
+.tab-label {
+  opacity: 0.62;
+}
+
+.tab-item.is-on .tab-icon,
+.tab-item.is-on .tab-label {
+  opacity: 1;
 }
 
 .tab-icon-wrap {
@@ -73,6 +79,14 @@
   text-overflow: clip;
 }
 
+.tab-dot {
+  width: 4px;
+  height: 4px;
+  margin-top: 2px;
+  border-radius: 50%;
+  background: var(--accent, #8A4A22);
+}
+
 .tab-plus {
   display: flex;
   align-items: center;
@@ -80,13 +94,13 @@
   box-sizing: border-box;
   width: 44px;
   height: 44px;
-  border: 1px solid var(--line, #E6E9EE);
+  border: 1px solid var(--line, #E3E6EB);
   border-radius: 999px;
   background: #FFFFFF;
 }
 
 .plus-mark {
-  color: var(--ink, #1C2430);
+  color: var(--ink, #1B2230);
   font-size: 24px;
   font-weight: 500;
   line-height: 44px;
@@ -100,7 +114,7 @@
   height: 16px;
   padding: 0 var(--space-4, 4px);
   border-radius: 8px;
-  background: var(--danger);
+  background: var(--cancel);
   color: #FFFFFF;
   font-size: 10px;
   font-weight: 600;

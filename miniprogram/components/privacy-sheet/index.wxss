@@ -61,7 +61,7 @@
 .link {
   display: block;
   margin-top: var(--space-12, 12px);
-  color: var(--primary, #1F4E89);
+  color: var(--accent, #8A4A22);
   font-size: 15px;
   font-weight: 600;
   line-height: 1.4;
@@ -96,7 +96,7 @@
 
 .agree {
   border: 1px solid transparent;
-  background: var(--primary, #1F4E89);
+  background: var(--accent, #8A4A22);
   color: #FFFFFF;
 }
 
@@ -105,5 +105,5 @@
 }
 
 .agree.is-pressed {
-  background: var(--primary-press, #173C6B);
+  background: var(--accent-press, #6E3A1A);
 }

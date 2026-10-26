@@ -49,7 +49,7 @@ function storagePatch(page) {
 Component({
   behaviors: [i18nBehavior],
   data: {
-    i18nKeys: ['state', 'a11y', 'error'],
+    i18nKeys: ['state', 'a11y', 'error', 'type'],
     navTitleKey: 'nav.schedule',
     tabKey: 'schedule',
     authReady: false,
@@ -335,6 +335,7 @@ Component({
       this.stopClock();
       const page = this;
       this._clock = setInterval(function () {
+        if (typeof page.applySeason === 'function') page.applySeason();
         if (page._state && page.data.phase === 'ready') page.render();
         else page.load();
       }, 60000);

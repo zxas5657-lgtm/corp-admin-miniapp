@@ -1,28 +1,38 @@
+@import "styles/seasons.wxss";
+
 page {
-  --ink: #1C2430;
-  --ink-2: #5C6778;
-  --ink-3: #6B7585;
-  --icon: #8B95A5;
-  --line: #E6E9EE;
-  --bg: #F3F5F8;
+  --bg: #F4F5F7;
   --card: #FFFFFF;
-  --primary: #1F4E89;
-  --primary-press: #173C6B;
-  --primary-soft: #E7F0FA;
-  --warn: #8A4B0F;
-  --warn-soft: #FBF3E6;
-  --ok: #146C3F;
-  --ok-soft: #E7F6EE;
-  --danger: #9F1D1D;
-  --danger-soft: #FDECEC;
-  --mute: #5C6778;
-  --mute-soft: #EEF1F5;
-  --vehicle: #C47B2B;
-  --disabled: #C5CED8;
-  --shadow: 0 1px 2px rgba(28, 36, 48, 0.04);
+  --ink: #1B2230;
+  --ink-2: #4F5868;
+  --ink-3: #687284;
+  --icon: #98A1AF;
+  --line: #E3E6EB;
+  --mute: #5E6676;
+  --mute-soft: #ECEEF2;
+  --cancel: #9B2C3C;
+  --cancel-soft: #F7E3E6;
+  --disabled: #C9CED6;
+  --canvas-c: #0E1C2E;
+  --glass: rgba(255, 255, 255, 0.14);
+  --glass-strong: rgba(255, 255, 255, 0.22);
+  --glass-line: rgba(255, 255, 255, 0.20);
+  --on-canvas: #FFFFFF;
+  --on-canvas-2: rgba(255, 255, 255, 0.85);
+  --on-canvas-3: rgba(255, 255, 255, 0.70);
+  --accent: #8A4A22;
+  --accent-press: #6E3A1A;
+  --accent-soft: #F5E9DF;
+  --canvas-a: #5A3320;
+  --canvas-b: #3A2A2C;
+  --highlight: #EBC9A6;
+  --on-highlight: #4A2A14;
+  --shadow: 0 1px 2px rgba(27, 34, 48, 0.04);
   --radius-sm: 8px;
-  --radius: 12px;
-  --radius-sheet: 16px;
+  --radius: 16px;
+  --radius-btn: 16px;
+  --radius-sheet: 24px;
+  --radius-glass: 24px;
   --radius-pill: 999px;
   --space-2: 2px;
   --space-4: 4px;
@@ -32,6 +42,7 @@ page {
   --space-12: 12px;
   --space-14: 14px;
   --space-16: 16px;
+  --space-20: 20px;
   --space-24: 24px;
   --space-32: 32px;
   background: var(--bg);
@@ -115,21 +126,6 @@ textarea {
   box-shadow: var(--shadow);
 }
 
-.card::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: var(--space-12);
-  bottom: var(--space-12);
-  width: 3px;
-  border-radius: 0 3px 3px 0;
-  background: var(--primary);
-}
-
-.card.vehicle::before {
-  background: var(--vehicle);
-}
-
 .section-label {
   margin: var(--space-14) var(--space-4) var(--space-8);
   font-size: 12px;
@@ -155,6 +151,30 @@ textarea {
   line-height: 1.45;
   color: var(--ink-3);
   text-align: center;
+}
+
+.type-line {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  margin-top: var(--space-4);
+}
+
+.type-icon {
+  width: 16px;
+  height: 16px;
+  margin-right: var(--space-6);
+  flex: none;
+}
+
+.type-label {
+  min-width: 0;
+  color: var(--ink-2);
+  font-size: 13px;
+  line-height: 1.4;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .cell-group {
@@ -233,47 +253,6 @@ textarea {
   text-align: left;
 }
 
-.pill {
-  display: inline-block;
-  box-sizing: border-box;
-  max-width: 200px;
-  height: 22px;
-  padding: 0 var(--space-8);
-  border-radius: var(--radius-pill);
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 22px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  vertical-align: middle;
-}
-
-.pill-warn {
-  color: var(--warn);
-  background: var(--warn-soft);
-}
-
-.pill-info {
-  color: var(--primary);
-  background: var(--primary-soft);
-}
-
-.pill-ok {
-  color: var(--ok);
-  background: var(--ok-soft);
-}
-
-.pill-danger {
-  color: var(--danger);
-  background: var(--danger-soft);
-}
-
-.pill-mute {
-  color: var(--mute);
-  background: var(--mute-soft);
-}
-
 .btn-primary {
   display: flex;
   align-items: center;
@@ -281,12 +260,12 @@ textarea {
   box-sizing: border-box;
   width: 100%;
   max-width: 100%;
-  height: 44px;
+  height: 52px;
   margin: 0;
   padding: 0 var(--space-16);
   border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  background: var(--primary);
+  border-radius: var(--radius-btn);
+  background: var(--accent);
   color: #FFFFFF;
   font-size: 16px;
   font-weight: 600;
@@ -299,21 +278,21 @@ textarea {
 }
 
 .btn-primary:active {
-  background: var(--primary-press);
+  background: var(--accent-press);
 }
 
 .btn-primary[disabled],
 .btn-primary.is-disabled {
   opacity: 1;
   background: #FFFFFF;
-  color: var(--ink-3);
+  color: var(--disabled);
   border-color: var(--line);
 }
 
 .btn-primary[disabled]:active,
 .btn-primary.is-disabled:active {
   background: #FFFFFF;
-  color: var(--ink-3);
+  color: var(--disabled);
 }
 
 .safe-bottom {

@@ -1,4 +1,4 @@
-<view class="page">
+<view class="page {{seasonClass}}">
   <state-view wx:if="{{phase === 'loading'}}" kind="loading" />
   <state-view
     wx:elif="{{phase === 'error'}}"
@@ -28,7 +28,11 @@
       />
       <view class="title-row">
         <text class="text-detail title {{view.cancelled ? 'is-strike' : ''}}">{{view.title}}</text>
-        <status-pill class="pill-host" text="{{view.statusText}}" tone="{{view.tone}}" />
+        <status-pill
+          class="pill-host"
+          text="{{view.statusText}}"
+          tone="{{view.cancelled ? 'cancel' : view.tone}}"
+        />
       </view>
       <view class="cell-group">
         <cell-row

@@ -2,7 +2,7 @@
 
 module.exports = {
   tab: {
-    schedule: 'Schedule',
+    schedule: 'Itinerary',
     meetings: 'Meetings',
     vehicles: 'Vehicles',
     me: 'Me',
@@ -12,7 +12,7 @@ module.exports = {
   },
   nav: {
     back: 'Back',
-    schedule: 'Schedule',
+    schedule: 'Itinerary',
     meetings: 'Meetings',
     vehicles: 'Vehicles',
     me: 'Me',
@@ -230,7 +230,7 @@ module.exports = {
       cancelBody: 'Cancel “{title}”?',
       cancelConfirm: 'Cancel meeting',
       cancelBack: 'Keep meeting',
-      viewInSchedule: 'View in schedule',
+      viewInSchedule: 'View in itinerary',
       cancelledToast: 'Meeting cancelled',
     },
     conflict: {
@@ -371,6 +371,7 @@ module.exports = {
   },
   me: {
     language: '语言 / Language',
+    appearance: 'Appearance',
     privacy: 'Privacy policy',
     reset: 'Reset demo data',
     visitorsHint: 'Appointments, check-in, and records',
@@ -383,6 +384,21 @@ module.exports = {
     zh: '简体中文',
     en: 'English',
   },
+  appearance: {
+    auto: 'Auto',
+    spring: 'Spring',
+    summer: 'Summer',
+    autumn: 'Autumn',
+    winter: 'Winter',
+    brand: 'Brand blue',
+  },
+  type: {
+    meeting: 'Meeting',
+    trip: 'Trip',
+    visit: 'Visit',
+    milestone: 'Milestone',
+    vehicle: 'Vehicle',
+  },
   a11y: {
     weekPicker: 'Choose a date',
     filterMeetings: 'Filter meetings',
@@ -394,7 +410,7 @@ module.exports = {
     resetNotice: 'Demo data reset',
     title: 'Demo role',
     hint: 'For the demo only. Switching opens the home tab for that role.',
-    resetBody: 'Demo data will be restored. The language setting is kept.',
+    resetBody: 'Demo data will be restored. Language and appearance settings are kept.',
     resetConfirm: 'Restore',
     switched: 'Role switched',
   },

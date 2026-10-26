@@ -93,6 +93,23 @@ function dev(mini, method, value) {
   }, method, value);
 }
 
+async function openInSeason(mini, locale, setting, url) {
+  await resetSeed(mini, locale, 'secretary');
+  const saved = await dev(mini, 'setSeason', setting);
+  if (!saved || saved.ok !== true) {
+    throw new Error('setSeason failed: ' + setting);
+  }
+  const page = await openPage(mini, url);
+  const expected = setting === 'brand' ? 'season-summer' : 'season-' + setting;
+  let actual = '';
+  for (let i = 0; i < 25; i += 1) {
+    actual = await page.data('seasonClass');
+    if (actual === expected && await page.data('phase') === 'ready') return page;
+    await page.waitFor(200);
+  }
+  throw new Error(url + ' season ' + actual + ' expected ' + expected);
+}
+
 async function resetSeed(mini, locale, role) {
   await dev(mini, 'setApiStub', null);
   await mini.callWxMethod('clearStorageSync');
@@ -931,8 +948,8 @@ const SCENARIOS = [
       const sections = await page.data('sections');
       const last = sections && sections[sections.length - 1];
       const dateText = locale === 'en'
-        ? 'Effective date to be provided'
-        : '生效日期待填写';
+        ? 'Effective date: To be provided'
+        : '生效日期：待填写';
       if (!last || last.id !== 'privacy-end' || last.body.indexOf(dateText) < 0) {
         throw new Error('effective date placeholder missing');
       }
@@ -1012,6 +1029,91 @@ const SCENARIOS = [
       }
       const expected = locale === 'en' ? 'Privacy policy' : '隐私政策';
       if (label !== expected) throw new Error('privacy row: ' + label);
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '63-schedule-spring',
+    title: 'Schedule, spring',
+    async run(mini, locale) {
+      await openInSeason(mini, locale, 'spring', '/pages/schedule/index');
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '64-schedule-summer',
+    title: 'Schedule, summer',
+    async run(mini, locale) {
+      await openInSeason(mini, locale, 'summer', '/pages/schedule/index');
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '65-schedule-winter',
+    title: 'Schedule, winter',
+    async run(mini, locale) {
+      await openInSeason(mini, locale, 'winter', '/pages/schedule/index');
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '66-schedule-brand',
+    title: 'Schedule, brand blue',
+    async run(mini, locale) {
+      await openInSeason(mini, locale, 'brand', '/pages/schedule/index');
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '67-vehicles-spring',
+    title: 'Vehicles, spring',
+    async run(mini, locale) {
+      await openInSeason(mini, locale, 'spring', '/pages/vehicles/index');
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '68-vehicles-summer',
+    title: 'Vehicles, summer',
+    async run(mini, locale) {
+      await openInSeason(mini, locale, 'summer', '/pages/vehicles/index');
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '69-vehicles-winter',
+    title: 'Vehicles, winter',
+    async run(mini, locale) {
+      await openInSeason(mini, locale, 'winter', '/pages/vehicles/index');
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '70-vehicles-brand',
+    title: 'Vehicles, brand blue',
+    async run(mini, locale) {
+      await openInSeason(mini, locale, 'brand', '/pages/vehicles/index');
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '71-me-appearance',
+    title: 'Me, appearance sheet',
+    async run(mini, locale) {
+      await resetSeed(mini, locale, 'secretary');
+      const page = await openPage(mini, '/pages/me/index');
+      let label = '';
+      for (let i = 0; i < 25; i += 1) {
+        label = await page.data('i18n.me.appearance');
+        if (label && await page.data('phase') === 'ready') break;
+        await page.waitFor(200);
+      }
+      const expected = locale === 'en' ? 'Appearance' : '外观';
+      if (label !== expected) throw new Error('appearance row: ' + label);
+      await callPage(page, 'onOpenAppearance');
+      if (await page.data('appearanceOpen') !== true) {
+        throw new Error('appearance sheet did not open');
+      }
       await saveShot(mini, locale, this.id + '.png');
     },
   },

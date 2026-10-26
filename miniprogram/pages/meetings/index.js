@@ -10,7 +10,7 @@ const data = require('../../utils/data');
 Component({
   behaviors: [i18nBehavior],
   data: {
-    i18nKeys: ['a11y', 'state'],
+    i18nKeys: ['a11y', 'state', 'type'],
     navTitleKey: 'nav.meetings',
     phase: 'loading',
     filter: 'all',

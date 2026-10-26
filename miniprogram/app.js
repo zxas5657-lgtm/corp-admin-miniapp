@@ -7,6 +7,7 @@ const { dataMode, isDemo, cloudEnv } = require('./utils/env');
 const auth = require('./utils/auth');
 const data = require('./utils/data');
 const privacy = require('./utils/privacy');
+const season = require('./utils/season');
 
 function attachDevHook(app) {
   if (!isDemo() || !DEV_ROLE_SWITCH) return;
@@ -62,6 +63,9 @@ function attachDevHook(app) {
     },
     setPrivacyAccepted(value) {
       return privacy.setAccepted(Boolean(value));
+    },
+    setSeason(value) {
+      return season.setSetting(value);
     },
   };
 }

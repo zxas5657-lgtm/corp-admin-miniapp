@@ -5,6 +5,7 @@ const { getStore } = require('../../store/index');
 const { ROLE_ORDER, personById, actorFor } = require('../../data/reference');
 const { DEV_ROLE_SWITCH } = require('../../config');
 const { changeLocale } = require('../../utils/locale');
+const season = require('../../utils/season');
 const { refreshVehicleBadge } = require('../../utils/badge');
 const { session } = require('../../utils/session');
 const { isDemo } = require('../../utils/env');
@@ -27,6 +28,30 @@ function initialFor(person) {
   return firstCharacter(person.name['zh-CN']);
 }
 
+const APPEARANCE_IDS = ['auto', 'spring', 'summer', 'autumn', 'winter', 'brand'];
+
+function appearancePatch(page) {
+  const setting = season.getSetting();
+  const live = season.calendarSeason();
+  const options = [];
+  for (let i = 0; i < APPEARANCE_IDS.length; i += 1) {
+    const id = APPEARANCE_IDS[i];
+    let swatch = id;
+    if (id === 'auto') swatch = live;
+    if (id === 'brand') swatch = 'summer';
+    options.push({
+      id: id,
+      label: page.t('appearance.' + id),
+      swatch: swatch,
+      selected: id === setting
+    });
+  }
+  return {
+    appearanceLabel: page.t('appearance.' + setting),
+    appearanceOptions: options
+  };
+}
+
 function noticeFor(page, result) {
   const code = result && result.code ? result.code : 'storage.writeFailed';
   return page.t('error.' + code);
@@ -45,7 +70,9 @@ function setTabBarHidden(page, hidden) {
 Component({
   behaviors: [i18nBehavior],
   data: {
-    i18nKeys: ['nav', 'me', 'lang', 'role', 'demo', 'common', 'a11y', 'error', 'state'],
+    i18nKeys: [
+      'nav', 'me', 'lang', 'role', 'demo', 'common', 'a11y', 'error', 'state', 'appearance'
+    ],
     navTitleKey: 'nav.me',
     tabKey: 'me',
     authReady: false,
@@ -56,6 +83,9 @@ Component({
     retryText: '',
     devRoleSwitch: false,
     languageOpen: false,
+    appearanceOpen: false,
+    appearanceLabel: '',
+    appearanceOptions: [],
     resetOpen: false,
     notice: '',
     roleId: '',
@@ -92,7 +122,8 @@ Component({
       prepareTab('me').then(function (ready) {
         if (!ready.ok) return;
         page.load();
-        setTabBarHidden(page, page.data.languageOpen || page.data.resetOpen);
+        const sheets = page.data.languageOpen || page.data.resetOpen || page.data.appearanceOpen;
+        setTabBarHidden(page, sheets);
       });
     },
     hide() {
@@ -100,6 +131,9 @@ Component({
     }
   },
   methods: {
+    onSeasonChange() {
+      if (this.data.phase === 'ready') this.rebuild();
+    },
     onLocaleChange() {
       if (this.data.phase === 'error') {
         this.setData(data.failurePatch(this.data.errorCode, this.t.bind(this)));
@@ -165,6 +199,7 @@ Component({
           selected: id === roleId
         };
       }, this);
+      const appearance = appearancePatch(this);
       this.setData({
         roleId: roleId,
         initial: initialFor(person),
@@ -173,7 +208,9 @@ Component({
         roleLabel: this.t('role.' + roleId + '.label'),
         roles: roles,
         devRoleSwitch: isDemo() && DEV_ROLE_SWITCH,
-        showVehicleEntry: roleId === 'leader'
+        showVehicleEntry: roleId === 'leader',
+        appearanceLabel: appearance.appearanceLabel,
+        appearanceOptions: appearance.appearanceOptions
       });
     },
     onOpenLanguage() {
@@ -182,7 +219,7 @@ Component({
     },
     onCloseLanguage() {
       this.setData({ languageOpen: false });
-      setTabBarHidden(this, this.data.resetOpen);
+      setTabBarHidden(this, this.data.resetOpen || this.data.appearanceOpen);
     },
     onPickLocale(event) {
       const locale = event.currentTarget.dataset.locale;
@@ -193,7 +230,23 @@ Component({
         languageOpen: false,
         notice: failed ? this.t('error.storage.writeFailed') : ''
       });
-      setTabBarHidden(this, this.data.resetOpen);
+      setTabBarHidden(this, this.data.resetOpen || this.data.appearanceOpen);
+    },
+    onOpenAppearance() {
+      this.setData({ appearanceOpen: true });
+      setTabBarHidden(this, true);
+    },
+    onCloseAppearance() {
+      this.setData({ appearanceOpen: false });
+      setTabBarHidden(this, this.data.languageOpen || this.data.resetOpen);
+    },
+    onPickAppearance(event) {
+      const setting = event.currentTarget.dataset.season;
+      const result = season.setSetting(setting);
+      const failed = !result || result.ok !== true;
+      const patch = failed ? {} : appearancePatch(this);
+      patch.notice = failed ? this.t('error.storage.writeFailed') : '';
+      this.setData(patch);
     },
     onCloseNotice() {
       this.setData({ notice: '' });
@@ -242,7 +295,7 @@ Component({
     },
     onCloseReset() {
       this.setData({ resetOpen: false });
-      setTabBarHidden(this, this.data.languageOpen);
+      setTabBarHidden(this, this.data.languageOpen || this.data.appearanceOpen);
     },
     onConfirmReset() {
       const result = getStore().resetDemo();
@@ -252,7 +305,7 @@ Component({
         resetOpen: false,
         notice: failed ? noticeFor(this, result) : ''
       });
-      setTabBarHidden(this, this.data.languageOpen);
+      setTabBarHidden(this, this.data.languageOpen || this.data.appearanceOpen);
       if (failed) return;
       try {
         wx.showToast({ title: this.t('demo.resetNotice'), icon: 'none' });

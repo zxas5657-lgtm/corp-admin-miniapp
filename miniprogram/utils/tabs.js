@@ -2,27 +2,21 @@
 
 const ICONS = {
   schedule: '/assets/icons/schedule.svg',
-  todo: '/assets/icons/meetings.svg',
-  visitors: '/assets/icons/meetings.svg',
+  todo: '/assets/icons/todo.svg',
+  visitors: '/assets/icons/visitors.svg',
   vehicles: '/assets/icons/vehicles.svg',
+  trips: '/assets/icons/trips.svg',
   me: '/assets/icons/me.svg'
 };
 
-const ACTIVE = {
-  schedule: '/assets/icons/schedule-active.svg',
-  todo: '/assets/icons/meetings-active.svg',
-  visitors: '/assets/icons/meetings-active.svg',
-  vehicles: '/assets/icons/vehicles-active.svg',
-  me: '/assets/icons/me-active.svg'
-};
-
-function tab(key, labelKey) {
+function tab(key, labelKey, iconKey) {
+  const name = iconKey || key;
   return {
     key: key,
     url: '/pages/' + key + '/index',
     labelKey: labelKey || 'tab.' + key,
-    icon: ICONS[key] || '',
-    activeIcon: ACTIVE[key] || ''
+    icon: ICONS[name] || '',
+    activeIcon: ICONS[name] || ''
   };
 }
 
@@ -41,7 +35,7 @@ function tabsFor(actor) {
   if (role === 'receptionist' || role === 'receptionAdmin') {
     return [tab('visitors'), tab('vehicles'), tab('me')];
   }
-  if (role === 'driver') return [tab('vehicles', 'tab.trips'), tab('me')];
+  if (role === 'driver') return [tab('vehicles', 'tab.trips', 'trips'), tab('me')];
   return [tab('schedule'), tab('me')];
 }
 

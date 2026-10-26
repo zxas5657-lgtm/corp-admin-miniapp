@@ -1,4 +1,4 @@
-<view class="page">
+<view class="page {{seasonClass}}">
   <state-view wx:if="{{phase === 'loading'}}" kind="loading" />
   <state-view
     wx:elif="{{phase === 'error'}}"
@@ -33,6 +33,12 @@
       value="{{locale === 'en' ? i18n.lang.en : i18n.lang.zh}}"
       arrow="{{true}}"
       bind:press="onOpenLanguage"
+    />
+    <cell-row
+      label="{{i18n.me.appearance}}"
+      value="{{appearanceLabel}}"
+      arrow="{{true}}"
+      bind:press="onOpenAppearance"
     />
     <cell-row
       label="{{i18n.me.privacy}}"
@@ -139,6 +145,30 @@
     >
       <text class="option-label">{{i18n.lang.en}}</text>
       <view wx:if="{{locale === 'en'}}" class="tick is-on" aria-hidden="true">
+        <view class="tick-mark"></view>
+      </view>
+    </view>
+  </bottom-sheet>
+
+  <bottom-sheet
+    show="{{appearanceOpen}}"
+    title="{{i18n.me.appearance}}"
+    cancel-text="{{i18n.common.cancel}}"
+    mask-label="{{i18n.a11y.closeSheet}}"
+    bind:close="onCloseAppearance"
+  >
+    <view
+      wx:for="{{appearanceOptions}}"
+      wx:key="id"
+      class="option"
+      data-season="{{item.id}}"
+      aria-role="button"
+      hover-class="is-pressed"
+      bindtap="onPickAppearance"
+    >
+      <view class="swatch swatch-{{item.swatch}}" aria-hidden="true"></view>
+      <text class="option-label">{{item.label}}</text>
+      <view wx:if="{{item.selected}}" class="tick is-on" aria-hidden="true">
         <view class="tick-mark"></view>
       </view>
     </view>

@@ -2,12 +2,12 @@
 
 module.exports = {
   tab: {
-    schedule: '日程', meetings: '会议', vehicles: '用车', me: '我的',
+    schedule: '行程', meetings: '会议', vehicles: '用车', me: '我的',
     todo: '待办', visitors: '来访', trips: '任务',
   },
   nav: {
     back: '返回',
-    schedule: '日程',
+    schedule: '行程',
     meetings: '会议',
     vehicles: '用车',
     me: '我的',
@@ -199,7 +199,7 @@ module.exports = {
       cancelBody: '确定取消“{title}”？',
       cancelConfirm: '确认取消',
       cancelBack: '暂不取消',
-      viewInSchedule: '在日程中查看',
+      viewInSchedule: '在行程中查看',
       cancelledToast: '会议已取消',
     },
     conflict: {
@@ -315,6 +315,7 @@ module.exports = {
   fmt: { and: '和' },
   me: {
     language: '语言 / Language',
+    appearance: '外观',
     privacy: '隐私政策',
     reset: '恢复演示数据',
     visitorsHint: '预约、核验与接待记录',
@@ -324,6 +325,21 @@ module.exports = {
     vehicles: '我的用车',
   },
   lang: { zh: '简体中文', en: 'English' },
+  appearance: {
+    auto: '自动',
+    spring: '春',
+    summer: '夏',
+    autumn: '秋',
+    winter: '冬',
+    brand: '品牌蓝',
+  },
+  type: {
+    meeting: '会议',
+    trip: '出差',
+    visit: '来访',
+    milestone: '重要节点',
+    vehicle: '用车',
+  },
   a11y: {
     weekPicker: '选择日期',
     filterMeetings: '筛选会议',
@@ -335,7 +351,7 @@ module.exports = {
     resetNotice: '演示数据已恢复',
     title: '演示身份',
     hint: '仅用于演示。切换后会打开该身份的首页。',
-    resetBody: '演示数据会恢复到初始内容。语言设置会保留。',
+    resetBody: '演示数据会恢复到初始内容。语言和外观设置会保留。',
     resetConfirm: '确认恢复',
     switched: '已切换身份',
   },

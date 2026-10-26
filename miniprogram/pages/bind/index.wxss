@@ -45,7 +45,7 @@
 .err {
   display: block;
   margin-bottom: var(--space-8, 8px);
-  color: var(--danger, #9F1D1D);
+  color: var(--cancel, #9B2C3C);
   font-size: 13px;
   line-height: 1.4;
 }
@@ -55,7 +55,7 @@
   align-items: center;
   min-height: 44px;
   margin-bottom: var(--space-8, 8px);
-  color: var(--primary, #1F4E89);
+  color: var(--accent, #8A4A22);
   font-size: 15px;
   font-weight: 600;
 }
@@ -83,8 +83,8 @@
 }
 
 .check.is-on {
-  border-color: var(--primary, #1F4E89);
-  background: var(--primary, #1F4E89);
+  border-color: var(--accent, #8A4A22);
+  background: var(--accent, #8A4A22);
 }
 
 .tick-mark {
@@ -105,7 +105,7 @@
 }
 
 .policy {
-  color: var(--primary, #1F4E89);
+  color: var(--accent, #8A4A22);
   font-weight: 600;
 }
 

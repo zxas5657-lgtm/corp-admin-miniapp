@@ -1,4 +1,4 @@
-<view class="page {{primaryAction ? 'has-action' : ''}}">
+<view class="page {{seasonClass}} {{primaryAction ? 'has-action' : ''}}">
   <state-view wx:if="{{phase === 'loading'}}" kind="loading" />
   <state-view
     wx:elif="{{phase === 'error'}}"
