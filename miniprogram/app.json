@@ -1,6 +1,7 @@
 {
   "pages": [
     "pages/schedule/index",
+    "pages/week/index",
     "pages/meetings/index",
     "pages/vehicles/index",
     "pages/me/index",
@@ -10,24 +11,29 @@
     "pages/meeting-detail/index",
     "pages/meeting-form/index",
     "pages/vehicle-detail/index",
-    "pages/vehicle-form/index"
+    "pages/vehicle-form/index",
+    "pages/todo/index",
+    "pages/bind/index",
+    "pages/blocked/index",
+    "pages/privacy/index"
   ],
   "window": {
     "navigationBarBackgroundColor": "#FFFFFF",
     "navigationBarTextStyle": "black",
     "navigationBarTitleText": "",
-    "backgroundColor": "#F3F5F8",
+    "backgroundColor": "#F4F5F7",
     "backgroundTextStyle": "dark"
   },
   "tabBar": {
     "custom": true,
-    "color": "#8B95A5",
-    "selectedColor": "#1F4E89",
+    "color": "#98A1AF",
+    "selectedColor": "#8A4A22",
     "backgroundColor": "#FFFFFF",
     "borderStyle": "white",
     "list": [
+      { "pagePath": "pages/week/index", "text": "Itinerary" },
       { "pagePath": "pages/schedule/index", "text": "Schedule" },
-      { "pagePath": "pages/meetings/index", "text": "Meetings" },
+      { "pagePath": "pages/visitors/index", "text": "Visitors" },
       { "pagePath": "pages/vehicles/index", "text": "Vehicles" },
       { "pagePath": "pages/me/index", "text": "Me" }
     ]

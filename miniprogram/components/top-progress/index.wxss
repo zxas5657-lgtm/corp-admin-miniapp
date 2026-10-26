@@ -12,7 +12,7 @@
 .bar {
   width: 36%;
   height: 2px;
-  background: var(--primary, #1F4E89);
+  background: var(--accent, #8A4A22);
   animation: progress-slide 0.8s linear infinite;
 }
 

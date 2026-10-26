@@ -1,0 +1,11 @@
+{
+  "navigationStyle": "custom",
+  "navigationBarTextStyle": "white",
+  "backgroundColor": "#0E1C2E",
+  "usingComponents": {
+    "state-view": "/components/state-view/index",
+    "bottom-sheet": "/components/bottom-sheet/index",
+    "notice-bar": "/components/notice-bar/index",
+    "privacy-sheet": "/components/privacy-sheet/index"
+  }
+}

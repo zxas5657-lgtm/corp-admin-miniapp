@@ -2,7 +2,8 @@
 
 const i18n = require('../i18n/index');
 const reference = require('../data/reference');
-const { toDateStr, toTimeStr } = require('../domain/dates');
+const dates = require('../domain/dates');
+const tz = require('../domain/tz');
 
 function formOptions(options) {
   const refs = (options && options.refs) || reference;
@@ -11,74 +12,82 @@ function formOptions(options) {
     people: refs.PEOPLE.map((person) => ({ id: person.id, label: i18n.localName(person) })),
   };
 }
-
 function formDefaults(options) {
   const config = options || {};
-  const current = new Date(config.now.getTime());
-  const next = new Date(current.getTime());
-  next.setHours(next.getHours() + 1, 0, 0, 0);
-  if (next.getDate() !== current.getDate() || next.getHours() >= 23) {
-    next.setDate(current.getDate() + 1);
-    next.setHours(9, 0, 0, 0);
+  const zone = config.viewerTz || 'Asia/Shanghai';
+  const local = tz.toZoned(config.now, zone);
+  const minute = Number(local.time.slice(3));
+  let date = local.date;
+  let hour = Number(local.time.slice(0, 2)) + 1;
+  if (minute > 0) hour += 0;
+  if (hour >= 23) {
+    date = dates.addDays(date, 1);
+    hour = 9;
   }
-  const end = new Date(next.getTime());
-  end.setHours(end.getHours() + 1);
-  if (end.getDate() !== next.getDate()) end.setHours(23, 59, 0, 0);
+  const start = String(hour).padStart(2, '0') + ':00';
+  const endHour = hour + 1;
+  const end = String(Math.min(endHour, 23)).padStart(2, '0') + (endHour > 23 ? ':59' : ':00');
   return {
     title: '',
-    date: toDateStr(next),
-    start: toTimeStr(next),
-    end: toTimeStr(end),
+    date,
+    start,
+    end,
     roomId: '',
     attendeeIds: config.personId ? [config.personId] : [],
     agenda: '',
   };
 }
-
+function displayTime(item, viewerTz) {
+  const start = tz.toZoned(new Date(item.startAt), viewerTz).time;
+  const end = tz.toZoned(new Date(item.endAt), viewerTz).time;
+  return i18n.fmt.timeRange(start, end);
+}
 function fieldErrors(errors) {
   const byField = {};
   let first = null;
   for (const error of errors || []) {
-    if (byField[error.field] === undefined) byField[error.field] = i18n.t(`error.${error.code}`);
+    if (byField[error.field] === undefined) byField[error.field] = i18n.t('error.' + error.code);
     if (first === null) first = error.field;
   }
   return { byField, first };
 }
-
 function conflictWarnings(conflicts, options) {
   const config = options || {};
   const state = config.state || {};
   const refs = config.refs || reference;
+  const viewerTz = config.viewerTz || 'Asia/Shanghai';
+  const items = state.items || [];
   const warnings = [];
   for (const conflict of conflicts || []) {
-    const meeting = (state.meetings || []).find((item) => item.id === conflict.meetingId);
+    const meeting = items.find((item) => item.id === conflict.meetingId);
     if (!meeting) continue;
-    const time = i18n.fmt.timeRange(meeting.start, meeting.end);
+    const time = displayTime(meeting, viewerTz);
     const title = i18n.displayText(meeting.title);
     if (conflict.type === 'room') {
       const room = refs.roomById(meeting.roomId);
-      warnings.push(i18n.t('meeting.conflict.room', {
-        room: room ? i18n.localName(room) : '',
-        time,
-        title,
-      }));
+      warnings.push(
+        i18n.t('meeting.conflict.room', { room: room ? i18n.localName(room) : '', time, title }),
+      );
     } else if (conflict.type === 'attendee') {
       const person = refs.personById(conflict.personId);
-      warnings.push(i18n.t('meeting.conflict.attendee', {
-        person: person ? i18n.localName(person) : '',
-        time,
-        title,
-      }));
+      warnings.push(
+        i18n.t('meeting.conflict.attendee', {
+          person: person ? i18n.localName(person) : '',
+          time,
+          title,
+        }),
+      );
     }
   }
-  const sheet = {
-    title: i18n.t('meeting.conflict.title'),
-    submitAnywayText: i18n.t('meeting.conflict.submitAnyway'),
-    backText: i18n.t('meeting.conflict.back'),
+  return {
+    warnings,
+    sheet: {
+      title: i18n.t('meeting.conflict.title'),
+      submitAnywayText: i18n.t('meeting.conflict.submitAnyway'),
+      backText: i18n.t('meeting.conflict.back'),
+    },
   };
-  return { warnings, sheet };
 }
-
 function labels() {
   return {
     title: i18n.t('meeting.form.title'),
@@ -100,11 +109,4 @@ function labels() {
     },
   };
 }
-
-module.exports = {
-  formOptions,
-  formDefaults,
-  fieldErrors,
-  conflictWarnings,
-  labels,
-};
+module.exports = { formOptions, formDefaults, fieldErrors, conflictWarnings, labels };

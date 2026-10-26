@@ -1,0 +1,53 @@
+<view class="page {{seasonClass}}">
+  <block wx:if="{{demoOnly}}">
+    <text class="title">{{title}}</text>
+    <text class="lead">{{demoLead}}</text>
+    <view class="btn-primary" aria-role="button" bindtap="onHome">{{demoHome}}</view>
+  </block>
+  <block wx:else>
+    <text class="title">{{title}}</text>
+    <text class="lead">{{lead}}</text>
+    <input
+      class="code"
+      value="{{display}}"
+      maxlength="9"
+      bindinput="onCode"
+      disabled="{{locked || submitting}}"
+    />
+    <text wx:if="{{error}}" class="err">{{error}}</text>
+    <view
+      wx:if="{{errorCode === 'network.failed'}}"
+      class="retry"
+      aria-role="button"
+      bindtap="onRetry"
+    >{{retryLabel}}</view>
+    <view class="consent">
+      <view
+        class="check {{agreed ? 'is-on' : ''}}"
+        aria-role="checkbox"
+        aria-checked="{{agreed}}"
+        aria-label="{{consentA11y}}"
+        catchtap="onToggleConsent"
+      >
+        <view wx:if="{{agreed}}" class="tick-mark"></view>
+      </view>
+      <view class="consent-copy">
+        <text catchtap="onToggleConsent">{{consentLead}}</text>
+        <text
+          class="policy {{locale === 'en' ? 'is-gap' : ''}}"
+          catchtap="onOpenPolicy"
+        >{{consentPolicy}}</text>
+      </view>
+    </view>
+    <view
+      class="btn-primary {{canSubmit && !submitting && !locked ? '' : 'is-disabled'}}"
+      aria-role="button"
+      bindtap="onSubmit"
+    >
+      <view wx:if="{{submitting}}" class="spin"></view>
+      <text>{{submitLabel}}</text>
+    </view>
+    <text class="footer">{{footer}}</text>
+  </block>
+  <privacy-sheet id="privacy-sheet" />
+</view>

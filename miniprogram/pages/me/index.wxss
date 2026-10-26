@@ -23,8 +23,8 @@
   height: 56px;
   margin-right: var(--space-12, 12px);
   border-radius: 50%;
-  background: var(--primary-soft, #E7F0FA);
-  color: var(--primary, #1F4E89);
+  background: var(--accent-soft, #F5E9DF);
+  color: var(--accent, #8A4A22);
   font-size: 22px;
   font-weight: 600;
   line-height: 1;
@@ -121,6 +121,19 @@
   line-height: 1.4;
 }
 
+.swatch {
+  width: 16px;
+  height: 16px;
+  margin-right: var(--space-12, 12px);
+  border-radius: 50%;
+  flex: none;
+}
+
+.swatch-spring { background: #1F6B5C; }
+.swatch-summer { background: #093F9C; }
+.swatch-autumn { background: #8A4A22; }
+.swatch-winter { background: #2E3F5C; }
+
 .tick {
   display: flex;
   align-items: center;
@@ -134,8 +147,8 @@
 }
 
 .tick.is-on {
-  border-color: var(--primary, #1F4E89);
-  background: var(--primary, #1F4E89);
+  border-color: var(--accent, #8A4A22);
+  background: var(--accent, #8A4A22);
 }
 
 .tick-mark {

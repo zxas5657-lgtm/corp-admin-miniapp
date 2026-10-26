@@ -1,1 +1,5 @@
-<text class="pill pill-{{tone}}">{{text}}</text>
+<view class="marker marker-{{marker}}">
+  <view wx:if="{{marker === 'dot'}}" class="dot"></view>
+  <view wx:elif="{{marker === 'done'}}" class="check"></view>
+  <text class="marker-text">{{text}}</text>
+</view>

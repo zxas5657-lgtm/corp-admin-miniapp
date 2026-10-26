@@ -3,6 +3,7 @@
   "usingComponents": {
     "status-pill": "/components/status-pill/index",
     "state-view": "/components/state-view/index",
-    "notice-bar": "/components/notice-bar/index"
+    "notice-bar": "/components/notice-bar/index",
+    "privacy-sheet": "/components/privacy-sheet/index"
   }
 }

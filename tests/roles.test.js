@@ -1,57 +1,57 @@
 'use strict';
-
 const test = require('node:test');
 const assert = require('node:assert/strict');
-
 const { seed } = require('../miniprogram/data/seed');
-const { scheduleItems, meetingSource, vehicleSource } = require('../miniprogram/domain/schedule');
+const ref = require('../miniprogram/data/reference');
+const { actorFor } = ref;
 const {
-  filterScheduleByScope,
   filterVehiclesByScope,
-  roleHome,
-  scheduleScopes,
   vehicleBadgeCount,
   vehicleScopes,
+  scheduleScopes,
+  filterScheduleByScope,
+  roleHome,
 } = require('../miniprogram/domain/roles');
-const { parseLocalDateTime } = require('../miniprogram/domain/dates');
-
-test('role homes and vehicle badges are role-aware', () => {
-  const vehicles = seed().vehicles;
+test('role homes scopes and badges use actors', () => {
+  const d = seed();
+  const dispatcher = actorFor('secretary');
+  const driver = actorFor('driver');
   assert.equal(roleHome('driver'), 'vehicles');
-  assert.equal(roleHome('admin'), 'schedule');
-  assert.equal(vehicleBadgeCount('driver', 'p-zhao', vehicles), 1);
-  assert.equal(vehicleBadgeCount('admin', 'p-lin', vehicles), 0);
-  assert.equal(vehicleBadgeCount('reception', 'p-zhou', vehicles), 0);
+  assert.equal(roleHome('secretary'), 'schedule');
+  assert.equal(vehicleBadgeCount(dispatcher, d.vehicles), 2);
+  assert.equal(vehicleBadgeCount(driver, d.vehicles), 1);
+  assert.equal(vehicleScopes(driver).find((x) => x.key === 'todo').default, true);
+  assert.deepEqual(
+    filterVehiclesByScope(d.vehicles, 'todo', { actor: driver }).map((x) => x.id),
+    ['v3'],
+  );
+  assert.deepEqual(
+    filterVehiclesByScope(d.vehicles, 'mine', { actor: dispatcher }).map((x) => x.id),
+    ['v1', 'v3'],
+  );
+});
+test('schedule mine includes direct participation and leader ownership', () => {
+  const d = seed();
+  const items = d.items.filter((x) => x.kind === 'meeting');
+  assert.equal(scheduleScopes(actorFor('leader')).find((x) => x.key === 'all').default, true);
+  assert.deepEqual(
+    filterScheduleByScope(items, 'mine', { actor: actorFor('secretary') }).map((x) => x.id),
+    ['m1', 'm2', 'm3', 'm4', 'm5'],
+  );
+  assert.deepEqual(
+    filterScheduleByScope(items, 'mine', { actor: actorFor('secretaryAdmin') }).map((x) => x.id),
+    ['m6'],
+  );
 });
 
 test('vehicle scopes expose one default and restrict todo to dispatchers', () => {
-  assert.deepEqual(vehicleScopes('driver'), [
-    { key: 'all', default: false },
-    { key: 'mine', default: false },
-    { key: 'todo', default: true },
-  ]);
-  assert.deepEqual(vehicleScopes('admin'), [
-    { key: 'all', default: false },
-    { key: 'mine', default: true },
-  ]);
-  const vehicles = seed().vehicles;
-  assert.deepEqual(filterVehiclesByScope(vehicles, 'mine', { role: 'admin', personId: 'p-lin' }).map((item) => item.id), ['v1', 'v3']);
-  assert.deepEqual(filterVehiclesByScope(vehicles, 'todo', { role: 'driver', personId: 'p-zhao' }).map((item) => item.id), ['v3', 'v4']);
-  assert.deepEqual(filterVehiclesByScope(vehicles, 'todo', { role: 'admin', personId: 'p-lin' }), []);
-});
-
-test('schedule scopes give the leader all items and others their own items', () => {
-  assert.deepEqual(scheduleScopes('leader'), [
-    { key: 'all', default: true },
-    { key: 'mine', default: false },
-  ]);
-  assert.deepEqual(scheduleScopes('admin'), [
-    { key: 'all', default: false },
-    { key: 'mine', default: true },
-  ]);
-  const data = seed();
-  const items = scheduleItems('2026-10-24', [meetingSource(data.meetings), vehicleSource(data.vehicles)], parseLocalDateTime('2026-10-24T09:20'));
-  assert.deepEqual(filterScheduleByScope(items, 'mine', { role: 'admin', personId: 'p-lin' }).map((item) => item.id), ['m2', 'v3', 'm3']);
-  assert.deepEqual(filterScheduleByScope(items, 'mine', { role: 'driver', personId: 'p-zhao' }).map((item) => item.id), ['v3']);
-  assert.deepEqual(filterScheduleByScope(items, 'all', { role: 'admin', personId: 'p-lin' }).map((item) => item.id), ['m2', 'v3', 'm3']);
+  const d = seed();
+  const dispatcher = actorFor('secretary');
+  const driver = actorFor('driver');
+  assert.equal(vehicleScopes(dispatcher).filter((x) => x.default).length, 1);
+  assert.equal(vehicleScopes(driver).find((x) => x.key === 'todo').default, true);
+  assert.deepEqual(
+    filterVehiclesByScope(d.vehicles, 'todo', { actor: dispatcher }).map((x) => x.id),
+    ['v4', 'v5'],
+  );
 });

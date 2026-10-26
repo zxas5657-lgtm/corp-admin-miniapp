@@ -1,4 +1,14 @@
-<view class="page">
+<view class="page {{seasonClass}}">
+  <state-view wx:if="{{phase === 'loading'}}" kind="loading" />
+  <state-view
+    wx:elif="{{phase === 'error'}}"
+    kind="error"
+    title="{{errorTitle}}"
+    body="{{errorBody}}"
+    action-text="{{retryText}}"
+    bind:action="onRetry"
+  />
+  <block wx:else>
   <text class="lead">{{i18n.visitors.lead}}</text>
   <view class="cell-group">
     <view class="skel-row">
@@ -6,21 +16,23 @@
         <text class="skel-title">{{i18n.visitors.bookingTitle}}</text>
         <text class="skel-body text-secondary">{{i18n.visitors.bookingBody}}</text>
       </view>
-      <status-pill class="pill-host" text="{{i18n.common.notAvailable}}" tone="mute" />
+      <status-pill class="pill-host" text="{{i18n.common.notAvailable}}" tone="plain" />
     </view>
     <view class="skel-row">
       <view class="skel-copy">
         <text class="skel-title">{{i18n.visitors.checkTitle}}</text>
         <text class="skel-body text-secondary">{{i18n.visitors.checkBody}}</text>
       </view>
-      <status-pill class="pill-host" text="{{i18n.common.notAvailable}}" tone="mute" />
+      <status-pill class="pill-host" text="{{i18n.common.notAvailable}}" tone="plain" />
     </view>
     <view class="skel-row">
       <view class="skel-copy">
         <text class="skel-title">{{i18n.visitors.recordTitle}}</text>
         <text class="skel-body text-secondary">{{i18n.visitors.recordBody}}</text>
       </view>
-      <status-pill class="pill-host" text="{{i18n.common.notAvailable}}" tone="mute" />
+      <status-pill class="pill-host" text="{{i18n.common.notAvailable}}" tone="plain" />
     </view>
   </view>
+  </block>
+  <privacy-sheet id="privacy-sheet" />
 </view>

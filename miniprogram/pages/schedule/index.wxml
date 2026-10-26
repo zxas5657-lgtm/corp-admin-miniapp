@@ -1,15 +1,15 @@
-<view class="page">
-  <block wx:if="{{loadFailed}}">
-    <state-view
-      kind="error"
-      title="{{i18n.state.genericErrorTitle}}"
-      body="{{i18n.state.genericErrorBody}}"
-      action-text="{{i18n.state.retry}}"
-      secondary-text="{{i18n.state.reset}}"
-      bind:action="onRetry"
-      bind:secondary="onReset"
-    />
-  </block>
+<view class="page {{seasonClass}}">
+  <state-view wx:if="{{phase === 'loading'}}" kind="loading" />
+  <state-view
+    wx:elif="{{phase === 'error'}}"
+    kind="error"
+    title="{{errorTitle}}"
+    body="{{errorBody}}"
+    action-text="{{retryText}}"
+    secondary-text="{{loadFailed ? i18n.state.reset : ''}}"
+    bind:action="onRetry"
+    bind:secondary="onReset"
+  />
   <block wx:elif="{{view}}">
     <view wx:if="{{banner}}" id="created-banner" class="created-banner">
       <notice-bar
@@ -23,6 +23,7 @@
     <view class="pad">
       <view class="head">
         <text class="date">{{view.dayHeading}}</text>
+        <text class="meetings-link" bindtap="onMeetings">{{meetingsLink}}</text>
         <text class="count">{{view.countText}}</text>
         <picker
           class="cal-picker"
@@ -105,7 +106,7 @@
           wx:for="{{view.items}}"
           wx:key="id"
           id="item-{{item.id}}"
-          class="card {{item.kind === 'vehicle' ? 'vehicle' : ''}} {{item.url ? 'is-link' : ''}} {{item.focused ? 'is-focus' : ''}}"
+          class="card {{item.url ? 'is-link' : ''}} {{item.focused ? 'is-focus' : ''}}"
           data-kind="{{item.kind}}"
           data-url="{{item.url}}"
           hover-class="{{item.url ? 'is-pressed' : 'none'}}"
@@ -116,10 +117,25 @@
             <status-pill class="pill-host" text="{{item.statusText}}" tone="{{item.tone}}" />
           </view>
           <view class="card-title">{{item.title}}</view>
-          <text class="card-sub text-secondary">{{item.subtitle}}</text>
+          <view class="type-line">
+            <image
+              class="type-icon"
+              src="/assets/icons/type-{{item.kind}}.svg"
+              mode="aspectFit"
+            />
+            <text class="type-label">
+              <text wx:if="{{item.kind === 'meeting'}}">{{i18n.type.meeting}}</text>
+              <text wx:elif="{{item.kind === 'trip'}}">{{i18n.type.trip}}</text>
+              <text wx:elif="{{item.kind === 'visit'}}">{{i18n.type.visit}}</text>
+              <text wx:elif="{{item.kind === 'milestone'}}">{{i18n.type.milestone}}</text>
+              <text wx:elif="{{item.kind === 'vehicle'}}">{{i18n.type.vehicle}}</text>
+              <text wx:if="{{item.subtitle}}"> · {{item.subtitle}}</text>
+            </text>
+          </view>
           <view wx:if="{{item.url}}" class="card-chev" aria-hidden="true"></view>
         </view>
       </block>
     </view>
   </block>
+  <privacy-sheet id="privacy-sheet" />
 </view>

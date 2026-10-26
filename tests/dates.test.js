@@ -53,11 +53,29 @@ test('compares dates, converts times, and finds weekdays', () => {
 
 test('builds Monday and Sunday weeks', () => {
   assert.deepEqual(dates.weekDays('2026-10-24', 1), [
-    '2026-10-19', '2026-10-20', '2026-10-21', '2026-10-22',
-    '2026-10-23', '2026-10-24', '2026-10-25',
+    '2026-10-19',
+    '2026-10-20',
+    '2026-10-21',
+    '2026-10-22',
+    '2026-10-23',
+    '2026-10-24',
+    '2026-10-25',
   ]);
   assert.deepEqual(dates.weekDays('2026-10-24', 0), [
-    '2026-10-18', '2026-10-19', '2026-10-20', '2026-10-21',
-    '2026-10-22', '2026-10-23', '2026-10-24',
+    '2026-10-18',
+    '2026-10-19',
+    '2026-10-20',
+    '2026-10-21',
+    '2026-10-22',
+    '2026-10-23',
+    '2026-10-24',
   ]);
+});
+
+test('diffDays counts calendar days across DST and month ends', () => {
+  const { diffDays } = require('../miniprogram/domain/dates');
+  assert.equal(diffDays('2026-11-30', '2026-12-01'), 1);
+  assert.equal(diffDays('2026-03-07', '2026-03-09'), 2);
+  assert.equal(diffDays('2026-12-08', '2026-12-01'), -7);
+  assert.throws(() => diffDays('2026-02-30', '2026-03-01'), RangeError);
 });

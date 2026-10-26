@@ -1,0 +1,8 @@
+{
+  "navigationBarTitleText": "",
+  "usingComponents": {
+    "state-view": "/components/state-view/index",
+    "privacy-sheet": "/components/privacy-sheet/index",
+    "app-tab-bar": "/components/app-tab-bar/index"
+  }
+}

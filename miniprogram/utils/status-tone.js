@@ -4,7 +4,8 @@ const MEETING = {
   upcoming: 'warn',
   ongoing: 'info',
   done: 'mute',
-  cancelled: 'mute'
+  // DESIGN.md v2: cancelled and withdrawn use the cancel tone, not "finished".
+  cancelled: 'danger'
 };
 
 const VEHICLE = {
@@ -12,7 +13,7 @@ const VEHICLE = {
   assigned: 'info',
   done: 'ok',
   rejected: 'danger',
-  withdrawn: 'mute'
+  withdrawn: 'danger'
 };
 
 function statusTone(group, status) {

@@ -1,4 +1,7 @@
 const i18n = require('../i18n/index');
+const season = require('../utils/season');
+const { getStore } = require('../store/index');
+const { session } = require('../utils/session');
 
 function readKeys(page) {
   const keys = page.data && page.data.i18nKeys;
@@ -10,25 +13,33 @@ function readTitleKey(page) {
   return typeof key === 'string' ? key : '';
 }
 
-function readTabIndex(page) {
-  const index = page.data && page.data.tabIndex;
-  return typeof index === 'number' ? index : null;
+function readTabKey(page) {
+  const key = page.data && page.data.tabKey;
+  return typeof key === 'string' ? key : '';
+}
+
+function readTabSurface(page) {
+  const value = page.data && page.data.tabSurface;
+  return value === 'canvas' ? 'canvas' : 'paper';
 }
 
 module.exports = Behavior({
   data: {
     i18n: {},
-    locale: 'zh-CN'
+    locale: 'zh-CN',
+    seasonClass: 'season-autumn'
   },
 
   lifetimes: {
     created() {
       this._shown = false;
       this._offLocale = null;
+      this._offSeason = null;
     },
     attached() {
       this._subscribe();
       this.applyI18n();
+      this.applySeason();
     },
     ready() {
       this._refreshTabBar();
@@ -43,6 +54,7 @@ module.exports = Behavior({
     show() {
       this._shown = true;
       this.applyI18n();
+      this.applySeason();
     },
     hide() {
       this._shown = false;
@@ -92,14 +104,36 @@ module.exports = Behavior({
       }
     },
 
+    applySeason() {
+      const next = season.seasonClass();
+      if (this.data.seasonClass !== next) this.setData({ seasonClass: next });
+      const bar = this._bar();
+      if (bar && typeof bar.setSeasonClass === 'function') bar.setSeasonClass(next);
+      if (bar && typeof bar.setSurface === 'function') bar.setSurface(readTabSurface(this));
+      if (typeof this.onSeasonChange === 'function') this.onSeasonChange();
+    },
+
+    _bar() {
+      let bar = null;
+      if (typeof this.getTabBar === 'function') bar = this.getTabBar();
+      if (!bar && typeof this.selectComponent === 'function') {
+        bar = this.selectComponent('#app-tab-bar');
+      }
+      return bar || null;
+    },
+
     _refreshTabBar() {
-      const bar = this.getTabBar && this.getTabBar();
+      const bar = this._bar();
       if (!bar) return;
-      bar.setTexts(i18n.dict('tab'));
+      if (typeof bar.sync === 'function') bar.sync(session(getStore()).actor);
+      if (typeof bar.setSeasonClass === 'function') {
+        bar.setSeasonClass(this.data.seasonClass || season.seasonClass());
+      }
+      if (typeof bar.setSurface === 'function') bar.setSurface(readTabSurface(this));
       if (!this._shown) return;
-      const index = readTabIndex(this);
-      if (typeof index !== 'number') return;
-      bar.setSelected(index);
+      const key = readTabKey(this);
+      if (!key || typeof bar.setSelected !== 'function') return;
+      bar.setSelected(key);
     },
 
     _subscribe() {
@@ -108,12 +142,18 @@ module.exports = Behavior({
       this._offLocale = i18n.onChange(function () {
         page.applyI18n();
       });
+      this._offSeason = season.onChange(function () {
+        page.applySeason();
+      });
     },
 
     _unsubscribe() {
       const off = this._offLocale;
       this._offLocale = null;
       if (typeof off === 'function') off();
+      const offSeason = this._offSeason;
+      this._offSeason = null;
+      if (typeof offSeason === 'function') offSeason();
     }
   }
 });

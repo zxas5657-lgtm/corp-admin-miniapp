@@ -1,71 +1,70 @@
 'use strict';
 
 const { meetingStatus } = require('./meeting');
+const tz = require('./tz');
 
-function scheduleItems(date, sources, now) {
+function sourceItem(record, now, viewerTz, date, kind) {
+  if (kind === 'meeting') {
+    if (record.status === 'cancelled' || record.cancelled) return null;
+    const days = tz.spanDays(new Date(record.startAt), new Date(record.endAt), viewerTz);
+    if (!days.includes(date)) return null;
+    return {
+      kind,
+      id: record.id,
+      date,
+      startAt: record.startAt,
+      status: meetingStatus(record, now),
+      ref: record,
+    };
+  }
+  if (record.status === 'rejected') return null;
+  if (tz.dayKey(new Date(record.departAt), viewerTz) !== date) return null;
+  return {
+    kind,
+    id: record.id,
+    date,
+    startAt: record.departAt,
+    status: record.status,
+    ref: record,
+  };
+}
+function scheduleItems(date, sources, now, viewerTz) {
   const items = [];
   for (const source of sources || []) {
     for (const record of source.items || []) {
-      const item = source.toScheduleItem(record, now);
-      if (item && item.date === date) items.push(item);
+      const item = source.toScheduleItem(record, now, viewerTz, date);
+      if (item) items.push(item);
     }
   }
-  return items.sort((left, right) => (
-    left.start.localeCompare(right.start)
-    || left.kind.localeCompare(right.kind)
-    || String(left.id).localeCompare(String(right.id))
-  ));
+  return items.sort(
+    (left, right) =>
+      String(left.startAt).localeCompare(String(right.startAt)) ||
+      left.kind.localeCompare(right.kind) ||
+      String(left.id).localeCompare(String(right.id)),
+  );
 }
-
-function meetingSource(meetings) {
+function meetingSource(items) {
   return {
     kind: 'meeting',
-    items: meetings || [],
-    toScheduleItem(meeting, now) {
-      if (meeting.cancelled) return null;
-      return {
-        kind: 'meeting',
-        id: meeting.id,
-        date: meeting.date,
-        start: meeting.start,
-        end: meeting.end,
-        status: meetingStatus(meeting, now),
-        ref: meeting,
-      };
+    items: (items || []).filter((item) => item.kind === 'meeting'),
+    toScheduleItem(item, now, viewerTz, date) {
+      return sourceItem(item, now, viewerTz, date, 'meeting');
     },
   };
 }
-
 function vehicleSource(vehicles) {
   return {
     kind: 'vehicle',
     items: vehicles || [],
-    toScheduleItem(vehicle) {
-      if (vehicle.status === 'rejected') return null;
-      return {
-        kind: 'vehicle',
-        id: vehicle.id,
-        date: vehicle.date,
-        start: vehicle.time,
-        end: null,
-        status: vehicle.status,
-        ref: vehicle,
-      };
+    toScheduleItem(item, now, viewerTz, date) {
+      return sourceItem(item, now, viewerTz, date, 'vehicle');
     },
   };
 }
-
-function datesWithItems(sources, dates, now) {
+function datesWithItems(sources, dates, now, viewerTz) {
   const result = new Set();
-  for (const date of dates || []) {
-    if (scheduleItems(date, sources, now).length > 0) result.add(date);
-  }
+  for (const date of dates || [])
+    if (scheduleItems(date, sources, now, viewerTz).length > 0) result.add(date);
   return result;
 }
-
-module.exports = {
-  scheduleItems,
-  meetingSource,
-  vehicleSource,
-  datesWithItems,
-};
+module.exports = { scheduleItems, meetingSource, vehicleSource, datesWithItems };

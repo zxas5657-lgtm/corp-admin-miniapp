@@ -1,0 +1,10 @@
+<view class="page {{seasonClass}}">
+  <state-view
+    kind="{{kind}}"
+    title="{{title}}"
+    body="{{body}}"
+    action-text="{{actionText}}"
+    bind:action="onRetry"
+  />
+  <privacy-sheet id="privacy-sheet" />
+</view>

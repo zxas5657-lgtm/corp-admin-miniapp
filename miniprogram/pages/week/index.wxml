@@ -1,0 +1,267 @@
+<view class="page {{seasonClass}} {{locale === 'en' ? 'is-en' : ''}}">
+  <view class="canvas-bg"></view>
+  <view
+    class="nav"
+    style="height: {{chrome.navHeight}}px; padding-top: {{chrome.statusBarHeight}}px; padding-right: {{chrome.padRight}}px;"
+  >
+    <view class="who" style="height: {{chrome.menuHeight}}px;">
+      <view class="avatar" aria-hidden="true">{{initial}}</view>
+      <text class="who-name">{{name}}</text>
+    </view>
+  </view>
+
+  <view class="body" style="padding-top: {{chrome.navHeight}}px;">
+    <state-view wx:if="{{phase === 'loading'}}" kind="loading" surface="canvas" />
+    <state-view
+      wx:elif="{{phase === 'error'}}"
+      kind="error"
+      surface="canvas"
+      title="{{errorTitle}}"
+      body="{{errorBody}}"
+      action-text="{{retryText}}"
+      secondary-text="{{loadFailed ? i18n.state.reset : ''}}"
+      bind:action="onRetry"
+      bind:secondary="onReset"
+    />
+    <block wx:elif="{{view}}">
+      <view
+        class="hero enter {{motionOn && motion.hero ? 'is-play' : ''}}"
+        style="{{motion.hero}}"
+      >
+        <notice-bar
+          wx:if="{{notice}}"
+          kind="error"
+          text="{{notice}}"
+          closable="{{true}}"
+          close-label="{{i18n.a11y.closeSheet}}"
+          bind:close="onCloseNotice"
+        />
+        <view class="hero-row">
+          <view class="hero-copy">
+            <text class="hero-title">{{view.title}}</text>
+            <text class="range">{{view.rangeLabel}}</text>
+          </view>
+          <picker mode="date" value="{{selectedDate}}" bindchange="onPickDate">
+            <view class="cal" aria-role="button" aria-label="{{i18n.a11y.weekPicker}}">
+              <view class="cal-icon" aria-hidden="true">
+                <view class="cal-bar"></view>
+              </view>
+            </view>
+          </picker>
+        </view>
+        <view
+          wx:if="{{backText}}"
+          class="back"
+          aria-role="button"
+          hover-class="is-pressed"
+          bindtap="onBackToday"
+        >{{backText}}</view>
+      </view>
+
+      <view
+        class="modes enter {{motionOn && motion.modes ? 'is-play' : ''}}"
+        style="{{motion.modes}}"
+      >
+        <view
+          class="mode {{view.mode === 'today' ? 'is-on' : ''}}"
+          data-mode="today"
+          aria-role="button"
+          hover-class="is-pressed"
+          bindtap="onMode"
+        >{{i18n.week.today}}</view>
+        <view
+          class="mode {{view.mode !== 'today' ? 'is-on' : ''}}"
+          data-mode="week"
+          aria-role="button"
+          hover-class="is-pressed"
+          bindtap="onMode"
+        >{{i18n.week.thisWeek}}</view>
+      </view>
+
+      <view
+        wx:if="{{strip}}"
+        class="strip enter {{motionOn && motion.strip ? 'is-play' : ''}}"
+        style="{{motion.strip}}"
+      >
+        <view
+          class="nav-chev"
+          data-date="{{strip.prevDate}}"
+          aria-role="button"
+          hover-class="is-pressed"
+          bindtap="onSelectDate"
+        >
+          <view class="chevron is-left" aria-hidden="true"></view>
+        </view>
+        <view class="days">
+          <view
+            wx:for="{{strip.days}}"
+            wx:key="date"
+            class="day {{item.isSelected ? 'is-on' : ''}} {{item.isToday && !item.isSelected ? 'is-today' : ''}}"
+            data-date="{{item.date}}"
+            aria-role="button"
+            hover-class="is-pressed"
+            bindtap="onSelectDate"
+          >
+            <text class="weekday">{{item.weekday}}</text>
+            <text class="day-num">{{item.dayNum}}</text>
+            <view class="dot {{item.hasItems ? 'is-on' : ''}}"></view>
+          </view>
+        </view>
+        <view
+          class="nav-chev"
+          data-date="{{strip.nextDate}}"
+          aria-role="button"
+          hover-class="is-pressed"
+          bindtap="onSelectDate"
+        >
+          <view class="chevron is-right" aria-hidden="true"></view>
+        </view>
+      </view>
+
+      <view class="tiles" wx:if="{{view.overview.length}}">
+        <view
+          wx:for="{{view.overview}}"
+          wx:for-item="tile"
+          wx:for-index="tileIndex"
+          wx:key="key"
+          class="tile enter {{tile.active ? 'is-on' : ''}} {{motionOn && motion.tiles[tileIndex] ? 'is-play' : ''}}"
+          style="{{motion.tiles[tileIndex]}}"
+          data-key="{{tile.key}}"
+          aria-role="button"
+          hover-class="is-pressed"
+          bindtap="onTile"
+        >
+          <image
+            wx:if="{{tile.icon}}"
+            class="tile-icon"
+            src="/assets/icons/type-{{tile.icon}}.svg"
+            mode="aspectFit"
+          />
+          <view wx:else class="tile-mark" aria-hidden="true"></view>
+          <text class="tile-count">{{tile.count}}</text>
+          <text class="tile-label">{{tile.label}}</text>
+        </view>
+      </view>
+
+      <state-view
+        wx:if="{{weekEmpty}}"
+        kind="empty"
+        surface="canvas"
+        title="{{i18n.week.emptyTitle}}"
+        body="{{i18n.week.emptyBody}}"
+      />
+      <block wx:else>
+        <view
+          wx:for="{{view.days}}"
+          wx:for-item="day"
+          wx:for-index="dayIndex"
+          wx:key="key"
+          class="day-block enter {{motionOn && motion.days[dayIndex] ? 'is-play' : ''}}"
+          style="{{motion.days[dayIndex]}}"
+        >
+          <text wx:if="{{day.empty && day.label}}" class="empty-line">{{day.label}}</text>
+          <text wx:elif="{{day.empty}}" class="empty-line">{{day.heading}} {{i18n.week.emptyDay}}</text>
+          <block wx:else>
+            <text class="day-heading">{{day.heading}}</text>
+            <view
+              wx:for="{{day.items}}"
+              wx:for-item="item"
+              wx:key="id"
+              id="item-{{day.date}}-{{item.id}}"
+              class="item-card {{expandedId === item.id ? 'is-open' : ''}} {{item.showCancelled ? 'is-cancelled' : ''}}"
+              data-id="{{item.id}}"
+              hover-class="is-pressed"
+              bindtap="onToggle"
+            >
+              <view class="item-main">
+                <view class="time-col">
+                  <text class="when">{{item.timeLabel}}</text>
+                  <text wx:if="{{item.zoneLine}}" class="zone">{{item.zoneLine}}</text>
+                </view>
+                <view class="item-copy">
+                  <text class="item-title {{item.showImportant ? 'is-important' : ''}} {{item.showCancelled ? 'is-strike' : ''}}">{{item.title}}</text>
+                  <view wx:if="{{item.meta}}" class="meta">
+                    <image class="type-icon" src="/assets/icons/type-{{item.icon}}.svg" mode="aspectFit" />
+                    <text class="meta-text">{{item.meta}}</text>
+                  </view>
+                </view>
+                <view class="marks">
+                  <text wx:if="{{item.showPending}}" class="pill pill-pending">{{i18n.week.marker.pending}}</text>
+                  <view wx:if="{{item.showUpdated}}" class="updated">
+                    <view class="updated-dot" aria-hidden="true"></view>
+                    <text class="updated-text">{{i18n.week.marker.updated}}</text>
+                  </view>
+                  <text wx:if="{{item.showImportant}}" class="pill pill-important">{{i18n.week.marker.important}}</text>
+                  <text wx:if="{{item.showCancelled}}" class="pill pill-cancelled">{{i18n.week.marker.cancelled}}</text>
+                </view>
+              </view>
+              <view class="detail {{expandedId === item.id ? 'is-open' : ''}}">
+                <view wx:for="{{item.lines}}" wx:for-item="line" wx:key="key" class="line">
+                  <text class="line-label">{{line.label}}</text>
+                  <text class="line-value">{{line.value}}</text>
+                </view>
+              </view>
+              <view wx:if="{{item.canConfirm}}" class="pair" catchtap="onHold">
+                <view
+                  class="btn-solid {{writing ? 'is-disabled' : ''}}"
+                  data-id="{{item.id}}"
+                  aria-role="button"
+                  catchtap="onConfirm"
+                >{{i18n.week.confirm}}</view>
+                <view
+                  class="btn-glass {{writing ? 'is-disabled' : ''}}"
+                  data-id="{{item.id}}"
+                  aria-role="button"
+                  catchtap="onQuestion"
+                >{{i18n.week.question}}</view>
+              </view>
+            </view>
+          </block>
+        </view>
+      </block>
+    </block>
+  </view>
+
+  <bottom-sheet
+    show="{{noteOpen}}"
+    title="{{i18n.week.note.title}}"
+    cancel-text="{{i18n.common.cancel}}"
+    confirm-text="{{i18n.week.note.send}}"
+    confirm-disabled="{{writing}}"
+    mask-label="{{i18n.a11y.closeSheet}}"
+    bind:close="onCloseNote"
+    bind:confirm="onSendNote"
+  >
+    <textarea
+      class="sheet-area"
+      maxlength="200"
+      value="{{noteText}}"
+      placeholder="{{i18n.week.note.placeholder}}"
+      bindinput="onNoteInput"
+    />
+    <view class="sheet-meta">
+      <text wx:if="{{noteError}}" class="sheet-error">{{noteError}}</text>
+      <text class="sheet-count">{{noteCounter}}</text>
+    </view>
+  </bottom-sheet>
+
+  <bottom-sheet
+    show="{{questionOpen}}"
+    title="{{i18n.week.questionSheet.title}}"
+    cancel-text="{{i18n.common.cancel}}"
+    confirm-text="{{i18n.week.questionSheet.send}}"
+    confirm-disabled="{{writing}}"
+    mask-label="{{i18n.a11y.closeSheet}}"
+    bind:close="onCloseQuestion"
+    bind:confirm="onSendQuestion"
+  >
+    <textarea
+      class="sheet-area"
+      value="{{questionReason}}"
+      placeholder="{{i18n.week.questionSheet.placeholder}}"
+      bindinput="onQuestionInput"
+    />
+    <text wx:if="{{questionError}}" class="sheet-error">{{questionError}}</text>
+  </bottom-sheet>
+  <privacy-sheet id="privacy-sheet" />
+</view>

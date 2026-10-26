@@ -1,65 +1,81 @@
 'use strict';
 
-const { can } = require('./permissions');
+const { can, normalizeRole } = require('./permissions');
 
+function actorValue(actor) {
+  return typeof actor === 'string'
+    ? { role: normalizeRole(actor), personId: null, dispatcher: false }
+    : actor || {};
+}
 function roleHome(role) {
-  return role === 'driver' ? 'vehicles' : 'schedule';
+  return normalizeRole(role) === 'driver' ? 'vehicles' : 'schedule';
 }
-
-function vehicleBadgeCount(role, personId, vehicles) {
-  if (role !== 'driver') return 0;
-  // TODO: add read tracking for requester-side "my requests that changed" counts.
-  return (vehicles || []).filter((vehicle) => vehicle.status === 'pending').length;
+function vehicleBadgeCount(actorInput, vehicles) {
+  const actor = actorValue(actorInput);
+  if (actor.dispatcher || can(actor, 'vehicle.dispatch'))
+    return (vehicles || []).filter((vehicle) => vehicle.status === 'pending').length;
+  if (normalizeRole(actor.role) === 'driver')
+    return (vehicles || []).filter(
+      (vehicle) => vehicle.status === 'assigned' && vehicle.driverId === actor.personId,
+    ).length;
+  return 0;
 }
-
-function vehicleScopes(role) {
-  const dispatcher = can(role, 'vehicle.dispatch');
+function vehicleScopes(actorInput) {
+  const actor = actorValue(actorInput);
+  const todo =
+    actor.dispatcher || can(actor, 'vehicle.dispatch') || normalizeRole(actor.role) === 'driver';
   return [
     { key: 'all', default: false },
-    { key: 'mine', default: !dispatcher },
-    ...(dispatcher ? [{ key: 'todo', default: true }] : []),
+    { key: 'mine', default: !todo },
+    ...(todo ? [{ key: 'todo', default: true }] : []),
   ];
 }
-
 function filterVehiclesByScope(vehicles, scope, options) {
-  const config = options || {};
+  const actor = actorValue(options && options.actor ? options.actor : options && options.role);
   if (scope === 'all') return [...(vehicles || [])];
-  if (scope === 'mine') {
-    return (vehicles || []).filter((vehicle) => vehicle.applicantId === config.personId);
-  }
-  if (scope === 'todo' && can(config.role, 'vehicle.dispatch')) {
-    return (vehicles || []).filter((vehicle) => (
-      vehicle.status === 'pending' ||
-      (vehicle.status === 'assigned' && vehicle.driverId === config.personId)
-    ));
+  if (scope === 'mine')
+    return (vehicles || []).filter((vehicle) => vehicle.applicantId === actor.personId);
+  if (scope === 'todo') {
+    return (vehicles || []).filter(
+      (vehicle) =>
+        ((actor.dispatcher || can(actor, 'vehicle.dispatch')) && vehicle.status === 'pending') ||
+        (normalizeRole(actor.role) === 'driver' &&
+          vehicle.status === 'assigned' &&
+          vehicle.driverId === actor.personId),
+    );
   }
   return [];
 }
-
-function scheduleScopes(role) {
-  const leader = role === 'leader';
+function scheduleScopes(actorInput) {
+  const actor = actorValue(actorInput);
+  const leader = normalizeRole(actor.role) === 'leader';
   return [
     { key: 'all', default: leader },
     { key: 'mine', default: !leader },
   ];
 }
-
 function filterScheduleByScope(items, scope, options) {
   if (scope === 'all') return [...(items || [])];
-  const config = options || {};
+  const actor = actorValue(options && options.actor ? options.actor : options && options.role);
   return (items || []).filter((item) => {
     const record = item.ref || item;
-    if (item.kind === 'meeting') {
-      return record.organizerId === config.personId
-        || (record.attendeeIds || []).includes(config.personId);
+    if (item.kind === 'meeting' || record.kind === 'meeting') {
+      return (
+        record.organizerId === actor.personId ||
+        (record.attendeeIds || []).includes(actor.personId) ||
+        (record.leaderIds || []).includes(actor.personId)
+      );
     }
-    if (item.kind === 'vehicle') {
-      return record.applicantId === config.personId || record.driverId === config.personId;
+    if (item.kind === 'vehicle' || record.departAt !== undefined) {
+      return (
+        record.applicantId === actor.personId ||
+        record.driverId === actor.personId ||
+        record.forLeaderId === actor.personId
+      );
     }
     return false;
   });
 }
-
 module.exports = {
   roleHome,
   vehicleBadgeCount,

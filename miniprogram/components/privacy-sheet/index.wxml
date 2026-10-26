@@ -1,0 +1,20 @@
+<view wx:if="{{open}}" class="sheet">
+  <view class="mask" catchtouchmove="preventMove"></view>
+  <view class="panel" aria-role="dialog" aria-label="{{title}}" catchtouchmove="preventMove">
+    <view class="handle" aria-hidden="true"></view>
+    <text class="title">{{title}}</text>
+    <text class="summary">{{summary}}</text>
+    <text class="link" catchtap="onPolicy">{{viewPolicy}}</text>
+    <view class="actions">
+      <view class="cancel" catchtap="onDisagree">{{disagreeLabel}}</view>
+      <button
+        id="privacy-agree"
+        class="agree"
+        open-type="agreePrivacyAuthorization"
+        hover-class="is-pressed"
+        bindagreeprivacyauthorization="onAgree"
+        bindtap="onAgree"
+      >{{agreeLabel}}</button>
+    </view>
+  </view>
+</view>

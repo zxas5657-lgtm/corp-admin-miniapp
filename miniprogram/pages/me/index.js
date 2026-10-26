@@ -1,10 +1,18 @@
 const i18nBehavior = require('../../behaviors/i18n');
 const i18n = require('../../i18n/index');
 const { getStore } = require('../../store/index');
-const { ROLES, ROLE_ORDER, personById } = require('../../data/reference');
+// Demo role list only. Bound profiles use directory refs.
+const { ROLE_ORDER, personById, actorFor } = require('../../data/reference');
 const { DEV_ROLE_SWITCH } = require('../../config');
 const { changeLocale } = require('../../utils/locale');
+const season = require('../../utils/season');
 const { refreshVehicleBadge } = require('../../utils/badge');
+const { session } = require('../../utils/session');
+const { isDemo } = require('../../utils/env');
+const { prepareTab } = require('../../utils/shell');
+const { homeUrl } = require('../../utils/tabs');
+const { currentMe } = require('../../utils/auth');
+const data = require('../../utils/data');
 
 function firstCharacter(value) {
   const chars = Array.from(value || '');
@@ -18,6 +26,30 @@ function initialFor(person) {
     return letter ? letter.toUpperCase() : '';
   }
   return firstCharacter(person.name['zh-CN']);
+}
+
+const APPEARANCE_IDS = ['auto', 'spring', 'summer', 'autumn', 'winter', 'brand'];
+
+function appearancePatch(page) {
+  const setting = season.getSetting();
+  const live = season.calendarSeason();
+  const options = [];
+  for (let i = 0; i < APPEARANCE_IDS.length; i += 1) {
+    const id = APPEARANCE_IDS[i];
+    let swatch = id;
+    if (id === 'auto') swatch = live;
+    if (id === 'brand') swatch = 'summer';
+    options.push({
+      id: id,
+      label: page.t('appearance.' + id),
+      swatch: swatch,
+      selected: id === setting
+    });
+  }
+  return {
+    appearanceLabel: page.t('appearance.' + setting),
+    appearanceOptions: options
+  };
 }
 
 function noticeFor(page, result) {
@@ -38,11 +70,22 @@ function setTabBarHidden(page, hidden) {
 Component({
   behaviors: [i18nBehavior],
   data: {
-    i18nKeys: ['nav', 'me', 'lang', 'role', 'demo', 'common', 'a11y', 'error', 'state'],
+    i18nKeys: [
+      'nav', 'me', 'lang', 'role', 'demo', 'common', 'a11y', 'error', 'state', 'appearance'
+    ],
     navTitleKey: 'nav.me',
-    tabIndex: 3,
-    devRoleSwitch: DEV_ROLE_SWITCH,
+    tabKey: 'me',
+    authReady: false,
+    phase: 'loading',
+    errorTitle: '',
+    errorBody: '',
+    errorCode: '',
+    retryText: '',
+    devRoleSwitch: false,
     languageOpen: false,
+    appearanceOpen: false,
+    appearanceLabel: '',
+    appearanceOptions: [],
     resetOpen: false,
     notice: '',
     roleId: '',
@@ -59,13 +102,14 @@ Component({
   },
   lifetimes: {
     attached() {
+      const page = this;
+      this._gate = data.createGate();
+      this._refs = null;
       if (!this._offStore) {
-        const page = this;
         this._offStore = getStore().subscribe(function () {
-          page.rebuild();
+          if (page.data.phase === 'ready') page.rebuild();
         });
       }
-      this.rebuild();
     },
     detached() {
       if (typeof this._offStore === 'function') this._offStore();
@@ -74,21 +118,79 @@ Component({
   },
   pageLifetimes: {
     show() {
-      this.rebuild();
-      setTabBarHidden(this, this.data.languageOpen || this.data.resetOpen);
+      const page = this;
+      prepareTab('me').then(function (ready) {
+        if (!ready.ok) return;
+        page.load();
+        const sheets = page.data.languageOpen || page.data.resetOpen || page.data.appearanceOpen;
+        setTabBarHidden(page, sheets);
+      });
     },
     hide() {
       setTabBarHidden(this, false);
     }
   },
   methods: {
+    onSeasonChange() {
+      if (this.data.phase === 'ready') this.rebuild();
+    },
+    onLocaleChange() {
+      if (this.data.phase === 'error') {
+        this.setData(data.failurePatch(this.data.errorCode, this.t.bind(this)));
+        return;
+      }
+      this.rebuild();
+    },
+    load(options) {
+      const opts = options || {};
+      const page = this;
+      if (typeof this.t !== 'function') return;
+      const token = this._gate.next();
+      const hadReady = this.data.phase === 'ready';
+      if (!hadReady) this.setData({ phase: 'loading' });
+      const span = data.catalogWindow(session(getStore()).viewerTz);
+      Promise.all([
+        data.loadDirectory({ fresh: Boolean(opts.fresh) }),
+        data.loadRange(span, { fresh: Boolean(opts.fresh) })
+      ]).then(function (results) {
+        if (!page._gate.isCurrent(token)) return;
+        if (!results[0].ok || !results[1].ok) {
+          if (hadReady) return;
+          const code = !results[0].ok ? results[0].code : results[1].code;
+          page.setData(data.failurePatch(code, page.t.bind(page)));
+          return;
+        }
+        page._refs = results[0].refs;
+        page.setData({ phase: 'ready', authReady: true });
+        page.rebuild();
+      });
+    },
+    onRetry() {
+      this.load({ fresh: true });
+    },
+    shownPerson(roleId) {
+      if (isDemo()) {
+        const currentActor = actorFor(roleId);
+        return currentActor ? personById(currentActor.personId) : null;
+      }
+      const me = currentMe();
+      const actorId = me && me.personId;
+      if (this._refs && actorId) {
+        const fromDirectory = this._refs.personById(actorId);
+        if (fromDirectory) return fromDirectory;
+      }
+      return me && me.employee ? me.employee : null;
+    },
     rebuild() {
       refreshVehicleBadge(this);
       if (typeof this.t !== 'function') return;
-      const roleId = getStore().getRole();
-      const person = personById(ROLES[roleId]);
+      const roleId = isDemo()
+        ? getStore().getRole()
+        : ((currentMe() && currentMe().role) || '');
+      const person = this.shownPerson(roleId);
       const roles = ROLE_ORDER.map(function (id) {
-        const item = personById(ROLES[id]);
+        const actor = actorFor(id);
+        const item = actor ? personById(actor.personId) : null;
         return {
           id: id,
           label: this.t('role.' + id + '.label'),
@@ -97,13 +199,18 @@ Component({
           selected: id === roleId
         };
       }, this);
+      const appearance = appearancePatch(this);
       this.setData({
         roleId: roleId,
         initial: initialFor(person),
         name: i18n.localName(person),
         title: i18n.displayText(person && person.title),
         roleLabel: this.t('role.' + roleId + '.label'),
-        roles: roles
+        roles: roles,
+        devRoleSwitch: isDemo() && DEV_ROLE_SWITCH,
+        showVehicleEntry: roleId === 'leader',
+        appearanceLabel: appearance.appearanceLabel,
+        appearanceOptions: appearance.appearanceOptions
       });
     },
     onOpenLanguage() {
@@ -112,7 +219,7 @@ Component({
     },
     onCloseLanguage() {
       this.setData({ languageOpen: false });
-      setTabBarHidden(this, this.data.resetOpen);
+      setTabBarHidden(this, this.data.resetOpen || this.data.appearanceOpen);
     },
     onPickLocale(event) {
       const locale = event.currentTarget.dataset.locale;
@@ -123,10 +230,33 @@ Component({
         languageOpen: false,
         notice: failed ? this.t('error.storage.writeFailed') : ''
       });
-      setTabBarHidden(this, this.data.resetOpen);
+      setTabBarHidden(this, this.data.resetOpen || this.data.appearanceOpen);
+    },
+    onOpenAppearance() {
+      this.setData({ appearanceOpen: true });
+      setTabBarHidden(this, true);
+    },
+    onCloseAppearance() {
+      this.setData({ appearanceOpen: false });
+      setTabBarHidden(this, this.data.languageOpen || this.data.resetOpen);
+    },
+    onPickAppearance(event) {
+      const setting = event.currentTarget.dataset.season;
+      const result = season.setSetting(setting);
+      const failed = !result || result.ok !== true;
+      const patch = failed ? {} : appearancePatch(this);
+      patch.notice = failed ? this.t('error.storage.writeFailed') : '';
+      this.setData(patch);
     },
     onCloseNotice() {
       this.setData({ notice: '' });
+    },
+    onVehicles() {
+      try {
+        wx.switchTab({ url: '/pages/vehicles/index' });
+      } catch (err) {
+        // Navigation must not break the page.
+      }
     },
     onEntry(event) {
       const url = event.currentTarget.dataset.url;
@@ -145,15 +275,16 @@ Component({
         this.setData({ notice: noticeFor(this, result) });
         return;
       }
+      data.resetSession();
       this.setData({ notice: '' });
       try {
         wx.showToast({ title: this.t('demo.switched'), icon: 'none' });
       } catch (err) {
         // The toast must not block the role home tab.
       }
-      const url = role === 'driver' ? '/pages/vehicles/index' : '/pages/schedule/index';
+      const url = homeUrl(actorFor(role));
       try {
-        wx.switchTab({ url: url });
+        wx.reLaunch({ url: url });
       } catch (err) {
         // Navigation must not break the page.
       }
@@ -164,16 +295,17 @@ Component({
     },
     onCloseReset() {
       this.setData({ resetOpen: false });
-      setTabBarHidden(this, this.data.languageOpen);
+      setTabBarHidden(this, this.data.languageOpen || this.data.appearanceOpen);
     },
     onConfirmReset() {
       const result = getStore().resetDemo();
       const failed = !result || result.ok !== true;
+      if (!failed) data.resetSession();
       this.setData({
         resetOpen: false,
         notice: failed ? noticeFor(this, result) : ''
       });
-      setTabBarHidden(this, this.data.languageOpen);
+      setTabBarHidden(this, this.data.languageOpen || this.data.appearanceOpen);
       if (failed) return;
       try {
         wx.showToast({ title: this.t('demo.resetNotice'), icon: 'none' });

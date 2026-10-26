@@ -1,25 +1,24 @@
 'use strict';
 
-const {
-  isDateStr,
-  isTimeStr,
-  nowParts,
-  toMinutes,
-} = require('./dates');
-const { can } = require('./permissions');
+const { isDateStr, isTimeStr, toMinutes } = require('./dates');
+const tzUtil = require('./tz');
+const { canEditItem } = require('./visibility');
 
-function dateTimeKey(date, time) {
-  return `${date}T${time}`;
+function asDate(value) {
+  const result = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(result.getTime()) ? null : result;
 }
-
-function meetingStatus(meeting, now) {
-  if (meeting.cancelled) return 'cancelled';
-  const current = nowParts(now);
-  const currentKey = dateTimeKey(current.date, current.time);
-  const startKey = dateTimeKey(meeting.date, meeting.start);
-  const endKey = dateTimeKey(meeting.date, meeting.end);
-  if (currentKey < startKey) return 'upcoming';
-  if (currentKey < endKey) return 'ongoing';
+function iso(value) {
+  return asDate(value).toISOString();
+}
+function meetingStatus(item, now) {
+  if (item.status === 'cancelled' || item.cancelled) return 'cancelled';
+  const current = asDate(now);
+  const start = asDate(item.startAt);
+  const end = asDate(item.endAt);
+  if (!current || !start || !end) return 'upcoming';
+  if (current.getTime() < start.getTime()) return 'upcoming';
+  if (current.getTime() < end.getTime()) return 'ongoing';
   return 'done';
 }
 
@@ -28,146 +27,180 @@ function validateMeeting(input, refs) {
   const errors = [];
   const roomById = refs && refs.roomById;
   const personById = refs && refs.personById;
-
-  if (typeof value.title !== 'string' || value.title.trim() === '') {
+  if (typeof value.title !== 'string' || value.title.trim() === '')
     errors.push({ field: 'title', code: 'meeting.title.required' });
-  } else if (value.title.trim().length > 40) {
+  else if (value.title.trim().length > 40)
     errors.push({ field: 'title', code: 'meeting.title.tooLong' });
-  }
-
-  if (!isDateStr(value.date)) {
-    errors.push({ field: 'date', code: 'meeting.date.required' });
-  }
-
+  if (!isDateStr(value.date)) errors.push({ field: 'date', code: 'meeting.date.required' });
   const startValid = isTimeStr(value.start);
   const endValid = isTimeStr(value.end);
   if (!startValid) errors.push({ field: 'start', code: 'meeting.time.required' });
   if (!endValid) errors.push({ field: 'end', code: 'meeting.time.required' });
-  if (startValid && endValid && toMinutes(value.end) <= toMinutes(value.start)) {
+  if (startValid && endValid && toMinutes(value.end) <= toMinutes(value.start))
     errors.push({ field: 'end', code: 'meeting.time.endBeforeStart' });
-  }
-
-  if (typeof roomById !== 'function' || !roomById(value.roomId)) {
+  if (typeof roomById !== 'function' || !roomById(value.roomId))
     errors.push({ field: 'roomId', code: 'meeting.room.required' });
-  }
-
-  if (!Array.isArray(value.attendeeIds) || value.attendeeIds.length === 0) {
+  if (!Array.isArray(value.attendeeIds) || value.attendeeIds.length === 0)
     errors.push({ field: 'attendeeIds', code: 'meeting.attendees.required' });
-  } else {
+  else {
     const uniqueIds = new Set(value.attendeeIds);
-    const hasUnknown = typeof personById !== 'function'
-      || value.attendeeIds.some((id) => !personById(id));
-    if (hasUnknown || uniqueIds.size !== value.attendeeIds.length) {
+    const hasUnknown =
+      typeof personById !== 'function' || value.attendeeIds.some((id) => !personById(id));
+    if (hasUnknown || uniqueIds.size !== value.attendeeIds.length)
       errors.push({ field: 'attendeeIds', code: 'meeting.attendees.required' });
-    }
   }
-
-  if (typeof value.agenda === 'string' && value.agenda.trim().length > 500) {
+  if (typeof value.agenda === 'string' && value.agenda.trim().length > 500)
     errors.push({ field: 'agenda', code: 'meeting.agenda.tooLong' });
-  }
-
+  if (value.category !== undefined && !['regular', 'special'].includes(value.category))
+    errors.push({ field: 'category', code: 'meeting.category.invalid' });
+  if (value.important !== undefined && typeof value.important !== 'boolean')
+    errors.push({ field: 'important', code: 'meeting.important.invalid' });
   return errors;
-}
-
-function canCancelMeeting(role, personId, meeting, now) {
-  return Boolean(
-    meeting &&
-    can(role, 'meeting.cancelOwn') &&
-    personId === meeting.organizerId &&
-    !meeting.cancelled &&
-    meetingStatus(meeting, now) === 'upcoming',
-  );
 }
 
 function createMeeting(input, options) {
   const value = input || {};
   const config = options || {};
-  const created = nowParts(config.now);
+  const actor = config.actor || {};
+  const zone = config.tz || 'Asia/Shanghai';
+  const start = tzUtil.fromZoned(value.date, value.start, zone);
+  const end = tzUtil.fromZoned(value.date, value.end, zone);
+  const now = asDate(config.now);
+  const startAt = start ? start.toISOString() : null;
+  const endAt = end ? end.toISOString() : null;
+  const leaderFn = typeof config.isLeader === 'function' ? config.isLeader : () => false;
+  const people = [...(value.attendeeIds || []), actor.personId];
+  const leaderIds = [...new Set(people.filter((personId) => leaderFn(personId)))];
+  const createdAt = now ? now.toISOString() : new Date().toISOString();
+  const leaders = leaderIds.map((leaderId) => {
+    const own = leaderId === actor.personId && leaderFn(actor.personId);
+    return {
+      leaderId,
+      confirm: own ? 'confirmed' : config.needsConfirm === false ? 'none' : 'pending',
+      confirmedAt: own ? createdAt : null,
+      declineReason: '',
+      changedAt: null,
+      changeNote: '',
+      seenAt: null,
+    };
+  });
   return {
     id: config.id,
-    title: String(value.title).trim(),
-    date: value.date,
-    start: value.start,
-    end: value.end,
+    kind: 'meeting',
+    title: String(value.title || '').trim(),
+    startAt,
+    endAt,
+    allDay: false,
+    tz: zone,
+    location: value.location || '',
     roomId: value.roomId,
-    attendeeIds: [...value.attendeeIds],
-    organizerId: config.organizerId,
-    agenda: typeof value.agenda === 'string' ? value.agenda.trim() : '',
-    cancelled: false,
-    createdAt: `${created.date}T${created.time}`,
+    attendeeIds: [...(value.attendeeIds || [])],
+    organizerId: actor.personId,
+    category: value.category || 'regular',
+    important: value.important === true,
+    parentId: null,
+    seriesId: null,
+    notes:
+      typeof value.notes === 'string'
+        ? value.notes.trim()
+        : typeof value.agenda === 'string'
+          ? value.agenda.trim()
+          : '',
+    noteId: null,
+    leaderIds,
+    status: 'active',
+    leaders,
+    createdBy: actor.personId,
+    createdAt,
+    updatedAt: createdAt,
+    updatedBy: actor.personId,
+    cancelledAt: null,
+    cancelledBy: null,
+    v: 1,
+    rev: 0,
   };
 }
 
-function cancelMeeting(meeting, options) {
+function canCancelMeeting(actor, item, now, ctx) {
+  return Boolean(
+    item &&
+      item.status !== 'cancelled' &&
+      canEditItem(actor, item, ctx) &&
+      meetingStatus(item, now) === 'upcoming',
+  );
+}
+
+function cancelMeeting(item, options) {
   const config = options || {};
-  if (meeting.cancelled) return { ok: false, code: 'meeting.cancel.alreadyCancelled' };
-  if (!config.role || !config.personId || meeting.organizerId !== config.personId) {
-    return { ok: false, code: 'meeting.cancel.notAllowed' };
-  }
-  if (meetingStatus(meeting, config.now) !== 'upcoming') {
+  if (item.status === 'cancelled') return { ok: false, code: 'meeting.cancel.alreadyCancelled' };
+  if (meetingStatus(item, config.now) !== 'upcoming')
     return { ok: false, code: 'meeting.cancel.alreadyStarted' };
-  }
-  if (!canCancelMeeting(config.role, config.personId, meeting, config.now)) {
+  if (!canCancelMeeting(config.actor, item, config.now, config.ctx))
     return { ok: false, code: 'meeting.cancel.notAllowed' };
-  }
-  const cancelledAt = nowParts(config.now);
+  const now = asDate(config.now);
+  const changedAt = now ? now.toISOString() : new Date().toISOString();
+  const actor = config.actor || {};
+  const leaders = (item.leaders || []).map((leader) =>
+    leader.leaderId === actor.personId
+      ? { ...leader }
+      : { ...leader, confirm: config.needsConfirm ? 'pending' : 'none', changedAt },
+  );
   return {
     ok: true,
-    meeting: {
-      ...meeting,
-      cancelled: true,
-      cancelledAt: `${cancelledAt.date}T${cancelledAt.time}`,
+    item: {
+      ...item,
+      status: 'cancelled',
+      leaders,
+      updatedAt: changedAt,
+      updatedBy: actor.personId,
+      cancelledAt: changedAt,
+      cancelledBy: actor.personId,
+      rev: (item.rev || 0) + 1,
     },
   };
 }
 
-function overlaps(left, right) {
-  return toMinutes(left.start) < toMinutes(right.end)
-    && toMinutes(right.start) < toMinutes(left.end);
-}
-
-function findConflicts(candidate, meetings, refs) {
+function findConflicts(candidate, items, refs) {
   const conflicts = [];
   const roomById = refs && refs.roomById;
-  for (const meeting of meetings || []) {
+  for (const item of items || []) {
+    if (item.kind !== 'meeting' || item.status === 'cancelled' || item.id === candidate.id)
+      continue;
     if (
-      (candidate.id !== undefined && candidate.id !== null && meeting.id === candidate.id) ||
-      meeting.cancelled ||
-      meeting.date !== candidate.date ||
-      !overlaps(candidate, meeting)
-    ) continue;
-
+      !tzUtil.overlaps(
+        new Date(candidate.startAt),
+        new Date(candidate.endAt),
+        new Date(item.startAt),
+        new Date(item.endAt),
+      )
+    )
+      continue;
     const room = typeof roomById === 'function' ? roomById(candidate.roomId) : null;
-    const otherRoom = typeof roomById === 'function' ? roomById(meeting.roomId) : null;
+    const otherRoom = typeof roomById === 'function' ? roomById(item.roomId) : null;
     if (
-      candidate.roomId === meeting.roomId &&
+      candidate.roomId === item.roomId &&
       !(room && room.online) &&
       !(otherRoom && otherRoom.online)
-    ) {
-      conflicts.push({ type: 'room', meetingId: meeting.id });
-    }
-
-    const otherAttendees = new Set(meeting.attendeeIds || []);
-    for (const personId of candidate.attendeeIds || []) {
-      if (otherAttendees.has(personId)) {
-        conflicts.push({ type: 'attendee', meetingId: meeting.id, personId });
-      }
-    }
+    )
+      conflicts.push({ type: 'room', meetingId: item.id });
+    const attendees = new Set(item.attendeeIds || []);
+    for (const personId of candidate.attendeeIds || [])
+      if (attendees.has(personId))
+        conflicts.push({ type: 'attendee', meetingId: item.id, personId });
   }
   return conflicts;
 }
 
-function sortMeetings(meetings) {
-  return [...(meetings || [])].sort((left, right) => (
-    left.date.localeCompare(right.date)
-    || left.start.localeCompare(right.start)
-    || String(left.id).localeCompare(String(right.id))
-  ));
+function sortMeetings(items) {
+  return [...(items || [])].sort(
+    (left, right) =>
+      String(left.startAt).localeCompare(String(right.startAt)) ||
+      String(left.id).localeCompare(String(right.id)),
+  );
 }
-
-function filterMeetings(meetings, filter, now) {
-  if (filter === 'all') return sortMeetings(meetings);
-  return sortMeetings((meetings || []).filter((meeting) => meetingStatus(meeting, now) === filter));
+function filterMeetings(items, filter, now) {
+  const sorted = sortMeetings(items);
+  return filter === 'all' ? sorted : sorted.filter((item) => meetingStatus(item, now) === filter);
 }
 
 module.exports = {

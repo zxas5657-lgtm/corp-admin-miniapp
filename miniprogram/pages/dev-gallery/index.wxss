@@ -36,7 +36,7 @@
 }
 
 .is-on {
-  background: var(--primary, #1F4E89);
+  background: var(--accent, #8A4A22);
   color: #FFFFFF;
 }
 

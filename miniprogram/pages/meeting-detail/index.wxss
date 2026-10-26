@@ -53,11 +53,11 @@
 }
 
 .schedule-link {
-  color: var(--primary, #1F4E89);
+  color: var(--accent, #8A4A22);
 }
 
 .cancel-link {
-  color: var(--danger, #9F1D1D);
+  color: var(--cancel, #9B2C3C);
 }
 
 .sheet-copy {

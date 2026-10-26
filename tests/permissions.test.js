@@ -1,39 +1,66 @@
 'use strict';
-
 const test = require('node:test');
 const assert = require('node:assert/strict');
-
+const { ROLE_CAPS, CAPS, can } = require('../miniprogram/domain/permissions');
+const ref = require('../miniprogram/data/reference');
+const { itemVisibleTo, vehicleVisibleTo } = require('../miniprogram/domain/visibility');
 const { seed } = require('../miniprogram/data/seed');
-const { parseLocalDateTime } = require('../miniprogram/domain/dates');
-const {
-  CAPS,
-  ROLE_CAPS,
-  can,
-  meetingVisibleTo,
-} = require('../miniprogram/domain/permissions');
-const { canCancelMeeting } = require('../miniprogram/domain/meeting');
-
-const now = parseLocalDateTime('2026-10-24T09:20');
-
-test('exposes the role capability map and rejects unknown capabilities', () => {
-  assert.deepEqual(ROLE_CAPS.leader, ['meeting.create', 'meeting.cancelOwn', 'vehicle.request', 'schedule.viewAll']);
-  assert.equal(CAPS.includes('meeting.create'), true);
-  assert.equal(can('admin', 'meeting.create'), true);
-  assert.equal(can('driver', 'meeting.create'), false);
-  assert.equal(can('nobody', 'vehicle.request'), false);
-  assert.equal(can('admin', 'unknown'), false);
+const ctx = { supports: ref.SUPPORTS, isLeader: ref.isLeader };
+test('six roles and flag capabilities are explicit', () => {
+  assert.deepEqual(Object.keys(ROLE_CAPS), [
+    'leader',
+    'secretary',
+    'secretaryAdmin',
+    'receptionist',
+    'receptionAdmin',
+    'driver',
+  ]);
+  assert.equal(can('leader', 'meeting.create'), true);
+  assert.equal(can('leader', 'item.create'), true);
+  assert.equal(can('leader', 'note.create'), true);
+  assert.equal(can('secretary', 'item.create'), true);
+  assert.equal(can('receptionist', 'visit.create'), true);
+  assert.equal(can('receptionAdmin', 'visit.create'), true);
+  assert.equal(can('driver', 'visit.create'), false);
+  assert.equal(can('driver', 'vehicle.complete'), true);
+  assert.equal(can(ref.actorFor('secretary'), 'vehicle.dispatch'), true);
+  assert.equal(can(ref.actorFor('secretaryAdmin'), 'admin.manage'), true);
+  assert.equal(CAPS.includes('admin.manage'), true);
 });
-
-test('only the organizer with the capability can cancel an upcoming meeting', () => {
-  const meeting = seed().meetings[3];
-  assert.equal(canCancelMeeting('admin', 'p-chen', meeting, now), true);
-  assert.equal(canCancelMeeting('leader', 'p-chen', meeting, now), true);
-  assert.equal(canCancelMeeting('leader', 'p-lin', meeting, now), false);
-  assert.equal(canCancelMeeting('leader', 'p-chen', { ...meeting, cancelled: true }, now), false);
-  assert.equal(canCancelMeeting('leader', 'p-chen', seed().meetings[1], now), false);
+test('visibility matrix enforces leaders, supported secretaries, and staff admins', () => {
+  const d = seed();
+  const m1 = d.items.find((x) => x.id === 'm1');
+  const m6 = d.items.find((x) => x.id === 'm6');
+  assert.equal(itemVisibleTo(ref.actorFor('leader'), m1, ctx), true);
+  assert.equal(itemVisibleTo(ref.actorFor('leader'), m6, ctx), false);
+  assert.equal(
+    itemVisibleTo(
+      ref.actorFor('leader'),
+      d.items.find((x) => x.id === 'm4'),
+      ctx,
+    ),
+    true,
+  );
+  assert.equal(itemVisibleTo(ref.actorFor('leader'), m6, ctx), false);
+  assert.equal(itemVisibleTo(ref.actorFor('secretary'), m1, ctx), true);
+  assert.equal(itemVisibleTo({ ...ref.actorFor('secretary'), dispatcher: false }, m6, ctx), false);
+  assert.equal(itemVisibleTo(ref.actorFor('secretaryAdmin'), m6, ctx), true);
+  assert.equal(
+    itemVisibleTo(
+      ref.actorFor('receptionist'),
+      d.items.find((x) => x.id === 'm5'),
+      ctx,
+    ),
+    true,
+  );
 });
-
-test('meetingVisibleTo is the v1 everyone-visible hook', () => {
-  assert.equal(meetingVisibleTo('leader', 'p-chen', seed().meetings[0]), true);
-  assert.equal(meetingVisibleTo('unknown', 'unknown', seed().meetings[0]), true);
+test('vehicle visibility keeps leader requests private and exposes staff requests', () => {
+  const d = seed();
+  const leaderRequest = d.vehicles.find((x) => x.id === 'v5');
+  const staffRequest = d.vehicles.find((x) => x.id === 'v4');
+  assert.equal(vehicleVisibleTo(ref.actorFor('leader'), leaderRequest, ctx), true);
+  assert.equal(vehicleVisibleTo(ref.actorFor('leader'), staffRequest, ctx), false);
+  assert.equal(vehicleVisibleTo(ref.actorFor('driver'), leaderRequest, ctx), false);
+  assert.equal(vehicleVisibleTo(ref.actorFor('secretaryAdmin'), leaderRequest, ctx), true);
+  assert.equal(vehicleVisibleTo(ref.actorFor('receptionist'), staffRequest, ctx), true);
 });

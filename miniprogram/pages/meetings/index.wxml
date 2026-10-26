@@ -1,5 +1,14 @@
-<view class="page">
-  <block wx:if="{{view}}">
+<view class="page {{seasonClass}}">
+  <state-view wx:if="{{phase === 'loading'}}" kind="loading" />
+  <state-view
+    wx:elif="{{phase === 'error'}}"
+    kind="error"
+    title="{{errorTitle}}"
+    body="{{errorBody}}"
+    action-text="{{retryText}}"
+    bind:action="onRetry"
+  />
+  <block wx:elif="{{view}}">
     <scroll-view class="filters" scroll-x aria-label="{{i18n.a11y.filterMeetings}}">
       <view
         wx:for="{{view.filters}}"
@@ -34,9 +43,16 @@
         >
           <view class="card-line">
             <view class="card-title {{meeting.cancelled ? 'is-strike' : ''}}">{{meeting.title}}</view>
-            <status-pill class="pill-host" text="{{meeting.statusText}}" tone="{{meeting.tone}}" />
+            <status-pill
+              class="pill-host"
+              text="{{meeting.statusText}}"
+              tone="{{meeting.cancelled ? 'cancel' : meeting.tone}}"
+            />
           </view>
-          <text class="meta text-secondary">{{meeting.timeText}} · {{meeting.roomName}}</text>
+          <view class="type-line">
+            <image class="type-icon" src="/assets/icons/type-meeting.svg" mode="aspectFit" />
+            <text class="type-label">{{i18n.type.meeting}} · {{meeting.timeText}} · {{meeting.roomName}}</text>
+          </view>
           <text class="meta text-secondary">{{meeting.organizerName}}</text>
         </view>
       </view>

@@ -1,0 +1,7 @@
+<view class="page {{seasonClass}}">
+  <text class="title">{{title}}</text>
+  <view class="section" wx:for="{{sections}}" wx:key="id" id="{{item.id}}">
+    <text class="heading">{{item.heading}}</text>
+    <text class="body">{{item.body}}</text>
+  </view>
+</view>

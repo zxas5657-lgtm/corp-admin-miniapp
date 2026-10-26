@@ -1,5 +1,14 @@
-<view class="page">
-  <block wx:if="{{view}}">
+<view class="page {{seasonClass}}">
+  <state-view wx:if="{{phase === 'loading'}}" kind="loading" />
+  <state-view
+    wx:elif="{{phase === 'error'}}"
+    kind="error"
+    title="{{errorTitle}}"
+    body="{{errorBody}}"
+    action-text="{{retryText}}"
+    bind:action="onRetry"
+  />
+  <block wx:elif="{{view}}">
     <view class="segments" wx:if="{{view.scopes.length}}">
       <view
         wx:for="{{view.scopes}}"
@@ -36,7 +45,10 @@
             <view class="card-title">{{vehicle.title}}</view>
             <status-pill class="pill-host" text="{{vehicle.statusText}}" tone="{{vehicle.tone}}" />
           </view>
-          <text class="meta text-secondary">{{vehicle.whenText}}</text>
+          <view class="type-line">
+            <image class="type-icon" src="/assets/icons/type-vehicle.svg" mode="aspectFit" />
+            <text class="type-label">{{i18n.type.vehicle}} · {{vehicle.whenText}}</text>
+          </view>
           <text class="meta text-secondary">{{vehicle.destination}}</text>
           <text class="meta text-secondary">{{vehicle.applicantName}}</text>
         </view>
@@ -52,4 +64,5 @@
       />
     </view>
   </block>
+  <privacy-sheet id="privacy-sheet" />
 </view>

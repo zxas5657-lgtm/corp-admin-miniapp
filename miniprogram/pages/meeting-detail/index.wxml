@@ -1,5 +1,14 @@
-<view class="page">
-  <block wx:if="{{view}}">
+<view class="page {{seasonClass}}">
+  <state-view wx:if="{{phase === 'loading'}}" kind="loading" />
+  <state-view
+    wx:elif="{{phase === 'error'}}"
+    kind="error"
+    title="{{errorTitle}}"
+    body="{{errorBody}}"
+    action-text="{{retryText}}"
+    bind:action="onRetry"
+  />
+  <block wx:elif="{{view}}">
     <state-view
       wx:if="{{view.notFound}}"
       kind="empty"
@@ -19,7 +28,11 @@
       />
       <view class="title-row">
         <text class="text-detail title {{view.cancelled ? 'is-strike' : ''}}">{{view.title}}</text>
-        <status-pill class="pill-host" text="{{view.statusText}}" tone="{{view.tone}}" />
+        <status-pill
+          class="pill-host"
+          text="{{view.statusText}}"
+          tone="{{view.cancelled ? 'cancel' : view.tone}}"
+        />
       </view>
       <view class="cell-group">
         <cell-row
@@ -56,6 +69,7 @@
         title="{{view.cancelSheet.title}}"
         cancel-text="{{view.cancelSheet.cancelText}}"
         confirm-text="{{view.cancelSheet.confirmText}}"
+        confirm-disabled="{{writing}}"
         danger="{{true}}"
         mask-label="{{i18n.a11y.closeSheet}}"
         bind:close="onCloseCancel"

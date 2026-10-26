@@ -1,0 +1,11 @@
+<view class="page {{seasonClass}}">
+  <state-view wx:if="{{!authReady}}" kind="loading" />
+  <state-view
+    wx:else
+    kind="empty"
+    title="{{i18n.todo.emptyTitle}}"
+    body="{{i18n.todo.emptyBody}}"
+  />
+  <privacy-sheet id="privacy-sheet" />
+  <app-tab-bar id="app-tab-bar" />
+</view>

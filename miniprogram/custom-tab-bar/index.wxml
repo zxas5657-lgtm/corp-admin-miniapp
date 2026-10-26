@@ -1,16 +1,22 @@
-<view class="tab-bar {{hidden ? 'is-hidden' : ''}}">
+<view class="tab-bar {{seasonClass}} {{surface === 'canvas' ? 'is-canvas' : ''}} {{hidden ? 'is-hidden' : ''}}">
   <view
-    class="tab-item {{selected === index ? 'is-on' : ''}}"
+    class="tab-item {{selected === index ? 'is-on' : ''}} {{item.plus ? 'is-plus' : ''}}"
     wx:for="{{list}}"
     wx:key="key"
     data-index="{{index}}"
     hover-class="none"
     bindtap="onTap"
   >
-    <view class="tab-icon-wrap">
-      <image class="tab-icon" src="{{selected === index ? item.activeIcon : item.icon}}" mode="aspectFit" />
-      <text class="tab-badge" wx:if="{{badges[index] > 0}}">{{badges[index]}}</text>
+    <view wx:if="{{item.plus}}" class="tab-plus" aria-role="button" aria-label="{{item.text}}">
+      <text class="plus-mark">+</text>
     </view>
-    <text class="tab-label">{{item.text}}</text>
+    <block wx:else>
+      <view class="tab-icon-wrap">
+        <image class="tab-icon" src="{{item.icon}}" mode="aspectFit" />
+        <text class="tab-badge" wx:if="{{badges[index] > 0}}">{{badges[index]}}</text>
+      </view>
+      <text class="tab-label">{{item.text}}</text>
+      <view wx:if="{{selected === index}}" class="tab-dot"></view>
+    </block>
   </view>
 </view>

@@ -1,6 +1,6 @@
 # PLAN — corp-admin-miniapp
 
-Owner: lead (Claude Code). Last updated: 2026-10-24.
+Owner: lead (Claude Code). Last updated: 2026-10-25.
 Input: `CLAUDE_REVIEW.md` (P0/P1/P2 findings). This plan records the decisions that review asked for and orders the work.
 
 ## 1. Decisions
@@ -10,7 +10,7 @@ Input: `CLAUDE_REVIEW.md` (P0/P1/P2 findings). This plan records the decisions t
   - The prototype already proved the UI, and the product is a mini-program.
   - Plain JS means the code runs in WeChat DevTools and in plain Node with no bundler.
 - **Freeze `prototype/` as a reference.** It is not ported to i18n and receives no new features.
-- **v1 has no real backend.** This is unchanged from `PROJECT_RULES.md` rule 6: no cloud functions, no WeChat login, local storage only.
+- **v1 had no real backend** (local storage only). **From Sprint 3 this changes** (owner decision 2026-10-25, §7): the backend is WeChat CloudBase, sign-in is plain WeChat login plus admin-issued invite codes, and `PROJECT_RULES.md` rule 6 was revised to allow it. No secrets and no real personal data go in the repo.
 
 ### 1.2 What "backend" means in this team
 v1 has no server, so **backend** means every layer below the UI that is free of the platform:
@@ -168,3 +168,83 @@ P2 items (contrast details, touch targets, spacing scale, toast vs. banner rule,
   - **Human step before S1-F7:** sign in once with a WeChat QR scan, and turn on Settings → Security → Service port so the CLI can open and screenshot the project.
 - Standing authorization: the liaison may approve Sprint 1 tool and runtime installs on this machine. Anything destructive, paid or outside this project still needs a status-update ask first.
 - ~~cursor-exec is not logged in.~~ Resolved 2026-10-24: logged in and trusted. S1-F1 is delegated. It codes against the i18n contract in `.team/tasks/S1-B2.md` while codex builds the runtime.
+- Sprint 3 owner inputs, still open: see §7.4.
+
+## 7. Sprint 3: go-live foundations (CloudBase, WeChat login, invite binding)
+
+### 7.1 Decisions (owner, 2026-10-25)
+- **Platform: plain WeChat (普通微信), not WeCom.** WeCom was chosen and then reversed the same day.
+- **Backend: WeChat CloudBase (云开发).** It is paid and the owner approved it. Cloud functions read the caller's openid from the server context, so no AppSecret is handled anywhere.
+- **Employee binding: admin-issued one-time invite codes.** First sign-in asks for the code; it binds the openid to an employee record, and the role comes from that record. Leavers are disabled by an admin, which removes the binding and keeps their history.
+- **`PROJECT_RULES.md` rule 6 revised:** a real backend and WeChat login are allowed; no secrets or real personal data in the repo; real data enters `prod` through the CloudBase console only.
+- **Data model:** `DATA_MODEL.md`. Every read and write goes through cloud functions; clients get no direct database access; `domain/` is shared with the functions so the rules exist once.
+
+### 7.1b Product definition (owner, 2026-10-25; S3-L0b)
+The north star changed from "admin self-service" to **leader itinerary first, admin tools second, low noise for leaders**. Full model in `DATA_MODEL.md` §0, §2, §4, §5.8.
+- **Leaders** see their own week: regular and special meetings, travel / out-of-office, visitors, milestones. Brief line in the calendar, expandable to detail (departure, stops and clients, return, meetings inside a trip). Leaders can create and edit their own items and leave rough notes for secretaries.
+- **Roles:** leader, secretary, secretaryAdmin, receptionist, receptionAdmin, driver; plus the flags `dispatcher` (派车管理员, final dispatch; usually a secretary or reception admin) and `sysAdmin`.
+- **Secretaries** serve one or more leaders (`supports`) and see and edit only those leaders' itineraries. Secretary admins see all leaders. Leaders never see each other's itineraries.
+- **Confirmation is secretary-judged:** on each create or change, the secretary chooses "needs leader confirmation" (→ pending) or not (→ updated, no confirmation; the leader still sees an "updated" badge). New items default to "needs confirmation". Leader-created items are confirmed.
+- **Time zone = the user's local zone.** Items store an instant plus their own zone; a secretary entering for a leader defaults to that leader's current zone, editable.
+- **Vehicles:** anyone except drivers may request. Requests for a leader are visible only to that leader, their mapped secretaries, secretary admins, dispatchers, the assigned driver and reception. Other requests are visible to secretaries, secretary admins, reception, dispatchers and drivers, never to leaders.
+- **Visitors** (no ID or phone numbers): name, organisation, headcount, host leader, time, purpose, transport (self-drive with plate, or pickup/drop-off), visitor type (government / customer / internal / partner), reception level (A / B / C).
+- **Reminders:** per item, default 15 minutes before, user-adjustable; itinerary digest at 08:00 and 18:00 local, user-adjustable.
+- **Channel:** plain WeChat one-off subscribe messages, limits accepted; WeCom is not reopened. Stronger notifications later.
+- Supplies and other daily-admin work stay deferred (post-launch).
+
+### 7.2 Backend / frontend split in Sprint 3
+- codex: the time model and role/item domain, `cloudfunctions/` (new top-level folder; `project.config.json` gets `cloudfunctionRoot`), shared `domain/` packaging, the remote store adapter, and tests.
+- cursor: the leader week view, item forms, secretary tools, the sign-in/binding screen, async loading/error/retry states, the privacy consent flow, and the production-build switches.
+- The local adapters stay, so `npm test` and the offline demo keep working without the network.
+
+### 7.3 Tasks
+
+| # | Task | Owner | Depends on | Status |
+| --- | --- | --- | --- | --- |
+| S3-L0 | Decisions into PLAN.md, rule 6 revised, data model (`DATA_MODEL.md`) | lead | — | **done** |
+| S3-L0b | Leader-first product definition: `DATA_MODEL.md` rewrite, §7.1b, `DESIGN.md` direction | lead | S3-L0 | **done** |
+| S3-B0 | Time-zone toolkit `domain/tz.js` (brief `.team/tasks/S3-B0.md`): offsets via `Intl` with a bundled zone-table fallback (US/EU/AU DST rules), zoned ↔ instant conversion incl. DST gaps/overlaps, day keys and multi-day spans, overlap, dual-zone data, meteorological season, device zone, a `probe()` for the real-phone check; tests independent of the machine zone. Pure module: consumers are switched in B0b | codex | S3-L0b | **done** (real-phone `probe()` run still due, at S3-L1 at the latest) |
+| S3-B0b-1 | Foundation (brief `.team/tasks/S3-B0b-1.md`): six roles + `dispatcher`/`sysAdmin` flags; `supports`-based visibility for items and vehicle requests; clock/viewer zone, schedule, meetings and vehicles switched to instants via `tz.js`; meetings stored as `items`; store v3 migration (date/time strings → instants in Asia/Shanghai); seed rewritten for the new roles; view-model outputs unchanged | codex | B0 | **done** |
+| S3-B0b-1F | Pages, components and utils adapted to the B0b-1 API (actor, viewer zone, `items`, dispatch with driver choice); screenshot pass. Committed together with B0b-1 so the app never breaks on a commit | cursor | B0b-1 | **done** (follow-ups for F4: build the dispatch driver rows in the view model; pass `viewerTz` to `dispatchSheetView`) |
+| S3-B0b-2 | New item kinds (travel with stop children, visit, milestone, all-day), weekly series, per-leader confirm/decline/seen state machine incl. secretary-judged changes, leader notes, reception visibility of visits and leaders' busy/free; pure domain + store + tests | codex | B0b-1 | **done** (pages still list meetings only; the new kinds reach the UI in S3-F3 and S3-F4) |
+| S3-B1 | CloudBase project wiring: `cloudfunctionRoot`, function skeletons (`auth`, `directory`, `items`, `notes`, `vehicles`, `prefs`, `admin`), shared `domain/`, a dev seed function, a collections/index/rules checklist matching `DATA_MODEL.md`, and Node tests for handlers with a fake DB | codex | B0b | **done** (real actions: `auth.whoami`, `directory.list`, `prefs.get/update`, `devSeed.run`; shared code is copied by `npm run sync` and guarded by a drift test; nothing deployed until the owner creates the `dev` env. For B2/B4: `directory.list` reads employees in one page of 100, enough for the pilot) |
+| S3-B2 | `auth`: whoami, invite redemption (transaction, hash, expiry, rate limit), disabled-employee handling; `admin`: issue/revoke invite, disable employee, flags, `supports`; audit log | codex | B1 | **done** (plus `admin.bootstrapInvite` for the first sysAdmin from the console, allowed only while no binding exists; invite `_id` = code hash; the fake DB enforces the SDK's transaction and `_id` limits) |
+| S3-B3 | Remote store adapter: async API, server error codes mapped to `error.*`, server ids; local adapters kept for tests and the demo | codex | B1 | **done** (`store/contract.js` is the action table B4 implements; `store/api.js` picks `local` or `remote` from `config.DATA_MODE`, still `local`; pages move to the async API in S3-F1/F3/F4) |
+| S3-B4 | `items`, `notes` and `vehicles` handlers: server-side visibility filtering, create/edit/cancel with `needsConfirm`, confirm/decline/seen, series, visits (pickup → linked car request, arrived), dispatcher-only dispatch, `rev` concurrency, car availability and seats in transactions | codex | B1, B3 | **done** (range queries, no whole-collection reads; the same scenarios run through the local and remote APIs; dispatch race guard via `locks` docs, see `DATA_MODEL.md` §5.9; notification jobs are S4-B1) |
+| S3-F3a | Design system v2 on the existing pages (`DESIGN.md`: seasonal tokens, season switching and the Me → Appearance setting, status markers, type icons instead of colour bars, tab bar, shared components; four-season screens) | cursor | B0b | **done** |
+| S3-B5 | `viewmodels/week.js`: the leader week view model (today-first days, merged empty days, overview tiles and filter, pending / updated / important / cancelled markers, confirm and decline flags, trip / meeting / visit / vehicle detail, dual-zone line) | codex | F3a | **done** |
+| S3-F3b | The leader week view on the canvas surface: whole week grouped by day, brief lines that expand to detail, important emphasis, pending / updated markers, confirm and decline, rough-note entry; dual-zone time labels | cursor | F3a | **done** |
+| S3-B6a | View models: staff mode of the week view (leader switcher, declined marker, edit flags, row keys) and the 待办 inbox | codex | F3b | **done** |
+| S3-F4a | Secretary 行程 with the leader switcher (paper surface) and the 待办 page (notes, pending, sent back) | cursor | B6a | not started |
+| S3-B6b | View models: item form for meeting / trip with stops / visit / milestone (zone, needs-confirmation, weekly repeat, edit scope, note conversion, busy-slot warnings); dispatch driver rows; car request "for leader" | codex | B6a | not started |
+| S3-F4b | Item form pages, meeting edit / reschedule, note conversion, car request "for leader", dispatch driver rows, visitor create and arrival | cursor | B6b, F4a | not started |
+| S3-F4 | (split into B6a, F4a, B6b, F4b above) Secretary and reception tools: leader switcher (supported leaders only), notes inbox, item forms (meeting incl. category and weekly repeat, trip with stops, visit, milestone) with the zone field and the "needs confirmation" switch; meeting edit/reschedule; car request "for leader" | cursor | B0b | not started |
+| S3-F1a | Bind screen (invite code entry and its errors), blocked page (disabled / offline / not configured), auth bootstrap and routing; role-specific tab sets per `DESIGN.md` 信息架构, with page access separate from tabs (leaders open their car requests from Me); release builds force remote data, the real clock and the prod env, and hide the role switch | cursor | B2, B3 | **done** (待办 is a placeholder until F4, leader ＋ until F3; 待办 and 来访 reuse the meetings icon) |
+| S3-B4b | `whoami` returns a secretary's supported leaders so client-side visibility matches the server in remote mode | codex | B4 | **done** |
+| S3-F1b | Pages on the async API (`store/api.js`): loading, network-error and retry on every page; writes through the API with submitting and error states | cursor | F1a | **done** |
+| S3-B4c | Local `listItems` uses the cloud visibility rule (secretary-organized meetings); `reassignVehicle` / `cancelDispatchVehicle` contract methods and cloud actions with lock moves | codex | F1b | **done** |
+| S3-F2 | Privacy consent flow and a privacy-policy page in both locales (what is stored: employee name, title, department, role, the openid binding; visitor name, organisation and plate entered by staff, plate cleared after the visit) | cursor | — | **done** (operator name, contact and effective date await the owner) |
+| S3-L1 | Screenshot pass against `dev`; trial build (体验版) on iOS and Android with the pilot group | lead + owner | all | not started |
+
+Quality gates for Sprint 3, on top of §5:
+- No secret, token or real personal data in any commit (lead checks every diff).
+- Clients never write to a collection directly.
+- Every function derives identity from the openid, never from client input.
+- Every state change is covered by a handler test, including a stale-`rev` case.
+- Every list handler has a visibility test per role, including "leader never sees another leader's items" and "leaders never see non-leader car requests".
+- Time tests cover at least Asia/Shanghai and America/Los_Angeles, including a DST change and an item crossing midnight in the viewer's zone.
+
+### 7.4 Owner inputs still open
+- Pilot list: names, titles, roles, flags, the secretary↔leader mapping, and one sysAdmin; plus the real rooms and cars. Needed before S3-L1, imported into `prod` only.
+- Who has access to the mini-program admin console and the CloudBase console (to create envs, collections and rules).
+- Account owner type (enterprise or personal) and who does the 小程序备案 filing.
+- Audit log retention: 1 year proposed. Visitor plate retention: 30 days proposed.
+- ~~Meeting visibility~~: resolved by §7.1b (need-to-know, `DATA_MODEL.md` §4).
+- ~~Design direction questions~~: resolved 2026-10-25. `DESIGN.md` 设计系统 v2: soft glass on a dark canvas for leaders, light paper for work screens; seasonal brand colours (per-user auto by season in the user's local zone, personal override incl. brand blue `#093F9C`); leader tabs 行程 · ＋ · 我的.
+- Defaults the owner may still change (`DATA_MODEL.md`, marked "owner may change"): reception sees leaders' busy/free only; leaders see co-attending leaders' names; a secretary supporting one of several leaders on an item may edit it; a leader editing a pending item confirms it; series confirm applies to future occurrences; driver completes, dispatcher dispatches/rejects; pickup visits create a linked car request; reception level is a label only.
+
+### 7.5 Sprint 4 (proposed, after S3)
+- S4-B1 notifications on a timer trigger, in this priority: confirmation requests and same-day changes; digests (08:00 / 18:00 local); per-item reminders (default 15 min); visitor arrived; car assigned / dispatched / rejected. Subscribe prompt on app open, remaining allowances tracked per template. Needs the owner's template choice.
+- S4-F1 reminder settings (offset, digest times, on/off) and per-item override; a reception "today's visitors" view.
+- S4-B2 / S4-F2 minimal sysAdmin screen: invites, disable, flags, `supports`, rooms and cars.
+- S4-L1 production env: monitoring, logs, backups, release and rollback steps.

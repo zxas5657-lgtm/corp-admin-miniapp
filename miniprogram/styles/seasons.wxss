@@ -1,0 +1,39 @@
+.season-spring {
+  --accent: #1F6B5C;
+  --accent-press: #17544A;
+  --accent-soft: #E3F0EC;
+  --canvas-a: #1D4A42;
+  --canvas-b: #1B3B44;
+  --highlight: #BFE3D2;
+  --on-highlight: #123A31;
+}
+
+.season-summer {
+  --accent: #093F9C;
+  --accent-press: #07327C;
+  --accent-soft: #E4ECF8;
+  --canvas-a: #0B3A86;
+  --canvas-b: #102F63;
+  --highlight: #BFD6F5;
+  --on-highlight: #0A2A5E;
+}
+
+.season-autumn {
+  --accent: #8A4A22;
+  --accent-press: #6E3A1A;
+  --accent-soft: #F5E9DF;
+  --canvas-a: #5A3320;
+  --canvas-b: #3A2A2C;
+  --highlight: #EBC9A6;
+  --on-highlight: #4A2A14;
+}
+
+.season-winter {
+  --accent: #2E3F5C;
+  --accent-press: #23314A;
+  --accent-soft: #E6EAF1;
+  --canvas-a: #34445E;
+  --canvas-b: #222E42;
+  --highlight: #C9D3E3;
+  --on-highlight: #1F2B40;
+}
