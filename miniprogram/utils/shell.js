@@ -2,6 +2,7 @@
 
 const { getStore } = require('../store/index');
 const { ready } = require('./auth');
+const privacy = require('./privacy');
 const { session } = require('./session');
 const { canOpen, homeUrl } = require('./tabs');
 
@@ -17,6 +18,7 @@ function prepareTab(key) {
       }
       return { ok: false };
     }
+    privacy.presentForBound();
     return { ok: true };
   });
 }

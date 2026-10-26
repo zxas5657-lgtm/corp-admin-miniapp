@@ -1,3 +1,6 @@
 {
-  "navigationBarTitleText": ""
+  "navigationBarTitleText": "",
+  "usingComponents": {
+    "privacy-sheet": "/components/privacy-sheet/index"
+  }
 }

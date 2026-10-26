@@ -217,7 +217,7 @@ The north star changed from "admin self-service" to **leader itinerary first, ad
 | S3-B4b | `whoami` returns a secretary's supported leaders so client-side visibility matches the server in remote mode | codex | B4 | **done** |
 | S3-F1b | Pages on the async API (`store/api.js`): loading, network-error and retry on every page; writes through the API with submitting and error states | cursor | F1a | **done** |
 | S3-B4c | Local `listItems` uses the cloud visibility rule (secretary-organized meetings); `reassignVehicle` / `cancelDispatchVehicle` contract methods and cloud actions with lock moves | codex | F1b | **done** |
-| S3-F2 | Privacy consent flow and a privacy-policy page in both locales (what is stored: employee name, title, department, role, the openid binding; visitor name, organisation and plate entered by staff, plate cleared after the visit) | cursor | — | not started |
+| S3-F2 | Privacy consent flow and a privacy-policy page in both locales (what is stored: employee name, title, department, role, the openid binding; visitor name, organisation and plate entered by staff, plate cleared after the visit) | cursor | — | **done** (operator name, contact and effective date await the owner) |
 | S3-L1 | Screenshot pass against `dev`; trial build (体验版) on iOS and Android with the pilot group | lead + owner | all | not started |
 
 Quality gates for Sprint 3, on top of §5:

@@ -34,6 +34,12 @@
       arrow="{{true}}"
       bind:press="onOpenLanguage"
     />
+    <cell-row
+      label="{{i18n.me.privacy}}"
+      arrow="{{true}}"
+      data-url="/pages/privacy/index"
+      bind:press="onEntry"
+    />
   </view>
 
   <view class="cell-group entries">
@@ -151,4 +157,5 @@
     <text class="sheet-copy">{{i18n.demo.resetBody}}</text>
   </bottom-sheet>
   </block>
+  <privacy-sheet id="privacy-sheet" />
 </view>

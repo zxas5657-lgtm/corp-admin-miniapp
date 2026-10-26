@@ -6,6 +6,7 @@ const { changeLocale } = require('./utils/locale');
 const { dataMode, isDemo, cloudEnv } = require('./utils/env');
 const auth = require('./utils/auth');
 const data = require('./utils/data');
+const privacy = require('./utils/privacy');
 
 function attachDevHook(app) {
   if (!isDemo() || !DEV_ROLE_SWITCH) return;
@@ -58,8 +59,23 @@ function attachDevHook(app) {
     },
     bootstrap() {
       return auth.bootstrap();
-    }
+    },
+    setPrivacyAccepted(value) {
+      return privacy.setAccepted(Boolean(value));
+    },
   };
+}
+
+function registerPrivacyAuth() {
+  try {
+    if (typeof wx !== 'undefined' && typeof wx.onNeedPrivacyAuthorization === 'function') {
+      wx.onNeedPrivacyAuthorization(function (resolve) {
+        privacy.onNeedPrivacyAuthorization(resolve);
+      });
+    }
+  } catch (err) {
+    // Our own consent sheet still runs if the WeChat hook is missing.
+  }
 }
 
 function initCloud() {
@@ -81,6 +97,7 @@ App({
   },
 
   onLaunch() {
+    registerPrivacyAuth();
     clock.setDemoMode(isDemo());
     initCloud();
     const store = getStore();

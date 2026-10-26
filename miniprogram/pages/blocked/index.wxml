@@ -6,4 +6,5 @@
     action-text="{{actionText}}"
     bind:action="onRetry"
   />
+  <privacy-sheet id="privacy-sheet" />
 </view>

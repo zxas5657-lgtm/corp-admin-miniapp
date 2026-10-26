@@ -2,6 +2,11 @@ const i18nBehavior = require('../../behaviors/i18n');
 const { isDemo } = require('../../utils/env');
 const { normalizeInviteCode, formatInviteCode } = require('../../utils/invite-code');
 const auth = require('../../utils/auth');
+const privacy = require('../../utils/privacy');
+
+function canSend(page) {
+  return page.data.code.length === 8 && page.data.agreed === true && !page.data.locked;
+}
 
 Component({
   behaviors: [i18nBehavior],
@@ -12,6 +17,10 @@ Component({
     display: '',
     code: '',
     canSubmit: false,
+    agreed: false,
+    consentLead: '',
+    consentPolicy: '',
+    consentA11y: '',
     submitting: false,
     locked: false,
     error: '',
@@ -44,6 +53,9 @@ Component({
           title: page.t('bind.title'),
           lead: page.t('bind.lead'),
           footer: page.t('bind.footer'),
+          consentLead: page.t('bind.consentLead'),
+          consentPolicy: page.t('bind.consentPolicy'),
+          consentA11y: page.t('bind.consentA11y'),
           retryLabel: page.t('state.retry'),
           submitLabel: page.data.submitting
             ? page.t('bind.submitting')
@@ -57,10 +69,22 @@ Component({
       this.setData({
         code: code,
         display: formatInviteCode(code),
-        canSubmit: code.length === 8,
+        canSubmit: code.length === 8 && this.data.agreed === true && !this.data.locked,
         error: '',
         errorCode: ''
       });
+    },
+    onToggleConsent() {
+      if (this.data.locked || this.data.submitting) return;
+      const agreed = !this.data.agreed;
+      this.setData({ agreed: agreed, canSubmit: this.data.code.length === 8 && agreed });
+    },
+    onOpenPolicy() {
+      try {
+        wx.navigateTo({ url: '/pages/privacy/index' });
+      } catch (err) {
+        // Navigation must not break the form.
+      }
     },
     onSubmit() {
       if (this.data.locked || this.data.submitting || !this.data.canSubmit) return;
@@ -79,6 +103,7 @@ Component({
     },
     applyRedeem(result) {
       if (result && result.ok === true && result.bound !== false) {
+        privacy.accept();
         auth.accept(result);
         auth.bootstrap().then(function (next) {
           auth.open(next || { state: 'bound', me: auth.currentMe() });
@@ -101,7 +126,7 @@ Component({
       this.setData({
         submitting: false,
         locked: code === 'auth.tooManyAttempts',
-        canSubmit: code === 'auth.tooManyAttempts' ? false : this.data.code.length === 8,
+        canSubmit: code === 'auth.tooManyAttempts' ? false : canSend(this),
         error: this.t('error.' + shown),
         errorCode: shown,
         submitLabel: this.t('bind.submit')

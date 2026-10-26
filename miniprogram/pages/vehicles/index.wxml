@@ -61,4 +61,5 @@
       />
     </view>
   </block>
+  <privacy-sheet id="privacy-sheet" />
 </view>

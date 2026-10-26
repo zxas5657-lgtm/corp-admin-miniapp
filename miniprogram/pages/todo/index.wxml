@@ -6,4 +6,5 @@
     title="{{i18n.todo.emptyTitle}}"
     body="{{i18n.todo.emptyBody}}"
   />
+  <privacy-sheet id="privacy-sheet" />
 </view>

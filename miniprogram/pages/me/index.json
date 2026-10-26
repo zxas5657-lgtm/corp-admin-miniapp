@@ -4,6 +4,7 @@
     "cell-row": "/components/cell-row/index",
     "bottom-sheet": "/components/bottom-sheet/index",
     "notice-bar": "/components/notice-bar/index",
-    "state-view": "/components/state-view/index"
+    "state-view": "/components/state-view/index",
+    "privacy-sheet": "/components/privacy-sheet/index"
   }
 }

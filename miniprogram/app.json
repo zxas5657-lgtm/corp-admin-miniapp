@@ -13,7 +13,8 @@
     "pages/vehicle-form/index",
     "pages/todo/index",
     "pages/bind/index",
-    "pages/blocked/index"
+    "pages/blocked/index",
+    "pages/privacy/index"
   ],
   "window": {
     "navigationBarBackgroundColor": "#FFFFFF",

@@ -26,6 +26,7 @@ module.exports = {
     todo: 'To-do',
     bind: 'Bind account',
     blocked: 'Unavailable',
+    privacy: 'Privacy policy',
   },
   role: {
     leader: {
@@ -370,6 +371,7 @@ module.exports = {
   },
   me: {
     language: '语言 / Language',
+    privacy: 'Privacy policy',
     reset: 'Reset demo data',
     visitorsHint: 'Appointments, check-in, and records',
     dailyHint: 'Supplies, repairs, and seals',
@@ -427,6 +429,42 @@ module.exports = {
     footer: "Don't have a code? Ask your administrator.",
     demoLead: 'This demo is already signed in, so no invite code is needed.',
     demoHome: 'Back home',
+    consentLead: 'I have read and agree to the',
+    consentPolicy: 'Privacy Policy',
+    consentA11y: 'I have read and agree to the Privacy Policy',
+  },
+  privacy: {
+    pending: 'To be provided',
+    // Owner input (PLAN §7.4): replace with the real date before release.
+    effectiveDate: 'To be provided',
+    operatorHeading: 'Who operates this',
+    operatorBody: '{operator} operates this service. Contact: {contact}.',
+    staffHeading: 'Staff information we store',
+    staffBody: 'We store your name, job title, department, and role, and the '
+      + 'WeChat openid binding created when an invite code is redeemed. We '
+      + 'also store schedule items, notes, and vehicle requests you create '
+      + 'or are part of.',
+    visitorHeading: 'Visitor details staff enter',
+    visitorBody: 'Staff enter a visitor\'s name, organisation, and plate '
+      + 'number. The plate is cleared {plateDays} days after the visit.',
+    purposeHeading: 'Why we store it',
+    purposeBody: 'This is only for the company\'s scheduling, meeting rooms, '
+      + 'vehicles, and visitor reception. We do not advertise, sell, or share '
+      + 'it outside the company, except with the host, Tencent CloudBase.',
+    retentionHeading: 'Where it is kept, and for how long',
+    retentionBody: 'Data is stored on Tencent CloudBase in mainland China. '
+      + 'Operation logs are kept for {auditDays} days. A disabled employee\'s '
+      + 'data is kept until an administrator deletes it.',
+    choicesHeading: 'Your choices',
+    choicesBody: 'Ask an administrator to correct or delete your data. '
+      + 'Contact: {contact}.',
+    versionHeading: 'Version',
+    versionBody: 'Policy version {version}. Effective date: {date}.',
+    sheetTitle: 'Privacy policy',
+    sheetSummary: 'Read how we store staff and visitor information before you continue.',
+    viewPolicy: 'View privacy policy',
+    agree: 'Agree',
+    disagree: 'Disagree',
   },
   blocked: {
     disabledTitle: 'This account has been disabled. Contact your administrator.',

@@ -110,6 +110,7 @@ async function resetSeed(mini, locale, role) {
   }
   await dev(mini, 'clearFocus');
   await dev(mini, 'setAuthStub', null);
+  await dev(mini, 'setPrivacyAccepted', true);
 }
 
 async function openPage(mini, url) {
@@ -712,6 +713,7 @@ const SCENARIOS = [
       if (await page.data('display') !== 'ABCD-2345') {
         throw new Error('code display: ' + await page.data('display'));
       }
+      await callPage(page, 'onToggleConsent');
       if (await page.data('canSubmit') !== true) throw new Error('complete code stays disabled');
       await saveShot(mini, locale, this.id + '.png');
     },
@@ -762,6 +764,7 @@ const SCENARIOS = [
       });
       const page = await openPage(mini, '/pages/bind/index');
       await callPage(page, 'onCode', { detail: { value: 'ABCD2345' } });
+      await callPage(page, 'onToggleConsent');
       await callPage(page, 'onSubmit');
       if (await page.data('submitting') !== true) throw new Error('submit did not start');
       await saveShot(mini, locale, this.id + '.png');
@@ -892,6 +895,126 @@ const SCENARIOS = [
       await saveShot(mini, locale, this.id + '.png');
     },
   },
+  {
+    id: '57-privacy-top',
+    title: 'Privacy policy, top',
+    async run(mini, locale) {
+      await resetSeed(mini, locale, 'secretary');
+      const page = await openPage(mini, '/pages/privacy/index');
+      const sections = await page.data('sections');
+      if (!sections || sections.length !== 7) {
+        throw new Error('privacy sections: ' + (sections && sections.length));
+      }
+      const pending = locale === 'en' ? 'To be provided' : '待填写';
+      if (sections[0].body.indexOf(pending) < 0) {
+        throw new Error('operator placeholder missing: ' + sections[0].body);
+      }
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '58-privacy-end',
+    title: 'Privacy policy, scrolled to the end',
+    async run(mini, locale) {
+      await resetSeed(mini, locale, 'secretary');
+      const page = await openPage(mini, '/pages/privacy/index');
+      await mini.evaluate(function () {
+        return new Promise(function (resolve) {
+          wx.pageScrollTo({
+            selector: '#privacy-end',
+            duration: 0,
+            complete: function () { resolve(true); },
+          });
+        });
+      });
+      await page.waitFor(PAUSE_MS);
+      const sections = await page.data('sections');
+      const last = sections && sections[sections.length - 1];
+      const dateText = locale === 'en'
+        ? 'Effective date to be provided'
+        : '生效日期待填写';
+      if (!last || last.id !== 'privacy-end' || last.body.indexOf(dateText) < 0) {
+        throw new Error('effective date placeholder missing');
+      }
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '59-bind-consent-off',
+    title: 'Bind page, consent unchecked',
+    async run(mini, locale) {
+      await resetSeed(mini, locale, 'secretary');
+      await dev(mini, 'setAuthStub', { whoami: { ok: true, bound: false } });
+      const page = await openPage(mini, '/pages/bind/index');
+      await callPage(page, 'onCode', { detail: { value: 'ABCD2345' } });
+      if (await page.data('agreed') !== false || await page.data('canSubmit') !== false) {
+        throw new Error('unchecked consent can still submit');
+      }
+      if (!await page.data('consentLead')) throw new Error('consent line is missing');
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '60-bind-consent-on',
+    title: 'Bind page, consent checked',
+    async run(mini, locale) {
+      await resetSeed(mini, locale, 'secretary');
+      await dev(mini, 'setAuthStub', { whoami: { ok: true, bound: false } });
+      const page = await openPage(mini, '/pages/bind/index');
+      await callPage(page, 'onCode', { detail: { value: 'ABCD2345' } });
+      await callPage(page, 'onToggleConsent');
+      if (await page.data('agreed') !== true || await page.data('canSubmit') !== true) {
+        throw new Error('checked consent did not enable submit');
+      }
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '61-consent-sheet',
+    title: 'Home tab, privacy consent sheet',
+    async run(mini, locale) {
+      await resetSeed(mini, locale, 'secretary');
+      await dev(mini, 'setPrivacyAccepted', false);
+      const page = await openPage(mini, '/pages/schedule/index');
+      let open = false;
+      for (let i = 0; i < 25 && !open; i += 1) {
+        open = await mini.evaluate(function () {
+          var pages = getCurrentPages();
+          var top = pages[pages.length - 1];
+          var sheet = top && top.selectComponent && top.selectComponent('#privacy-sheet');
+          return Boolean(sheet && sheet.data && sheet.data.open);
+        });
+        if (!open) await page.waitFor(200);
+      }
+      if (!open) throw new Error('consent sheet did not open');
+      const title = await mini.evaluate(function () {
+        var pages = getCurrentPages();
+        var top = pages[pages.length - 1];
+        var sheet = top.selectComponent('#privacy-sheet');
+        return sheet && sheet.data ? sheet.data.title : '';
+      });
+      const expected = locale === 'en' ? 'Privacy policy' : '隐私政策';
+      if (title !== expected) throw new Error('consent title: ' + title);
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '62-me-privacy',
+    title: 'Me, privacy policy row',
+    async run(mini, locale) {
+      await resetSeed(mini, locale, 'secretary');
+      const page = await openPage(mini, '/pages/me/index');
+      let label = '';
+      for (let i = 0; i < 25; i += 1) {
+        label = await page.data('i18n.me.privacy');
+        if (label && await page.data('phase') === 'ready') break;
+        await page.waitFor(200);
+      }
+      const expected = locale === 'en' ? 'Privacy policy' : '隐私政策';
+      if (label !== expected) throw new Error('privacy row: ' + label);
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
 ];
 
 async function showBindError(mini, locale, code) {
@@ -902,6 +1025,7 @@ async function showBindError(mini, locale, code) {
   });
   const page = await openPage(mini, '/pages/bind/index');
   await callPage(page, 'onCode', { detail: { value: 'ABCD2345' } });
+  await callPage(page, 'onToggleConsent');
   await callPage(page, 'onSubmit');
   if (await page.data('errorCode') !== code) {
     throw new Error('expected ' + code + ', got ' + await page.data('errorCode'));

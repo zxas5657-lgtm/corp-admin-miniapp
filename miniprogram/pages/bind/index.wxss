@@ -60,6 +60,59 @@
   font-weight: 600;
 }
 
+.consent {
+  display: flex;
+  align-items: flex-start;
+  margin-top: var(--space-8, 8px);
+  margin-bottom: var(--space-8, 8px);
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin-top: 1px;
+  margin-right: var(--space-8, 8px);
+  box-sizing: border-box;
+  border: 1.5px solid var(--line, #E6E9EE);
+  border-radius: 4px;
+  background: #FFFFFF;
+}
+
+.check.is-on {
+  border-color: var(--primary, #1F4E89);
+  background: var(--primary, #1F4E89);
+}
+
+.tick-mark {
+  width: 6px;
+  height: 10px;
+  margin-top: calc(-1 * var(--space-2, 2px));
+  border-right: 2px solid #FFFFFF;
+  border-bottom: 2px solid #FFFFFF;
+  transform: rotate(45deg);
+}
+
+.consent-copy {
+  flex: 1;
+  min-width: 0;
+  color: var(--ink, #1C2430);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.policy {
+  color: var(--primary, #1F4E89);
+  font-weight: 600;
+}
+
+.policy.is-gap {
+  margin-left: 4px;
+}
+
 .btn-primary {
   display: flex;
   align-items: center;

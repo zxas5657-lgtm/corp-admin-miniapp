@@ -1,0 +1,36 @@
+.page {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 100vh;
+  padding: var(--space-24, 24px) var(--space-16, 16px) 96px;
+  background: var(--bg, #F3F5F8);
+}
+
+.title {
+  display: block;
+  margin-bottom: var(--space-16, 16px);
+  color: var(--ink, #1C2430);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.section {
+  margin-bottom: var(--space-24, 24px);
+}
+
+.heading {
+  display: block;
+  margin-bottom: var(--space-8, 8px);
+  color: var(--ink, #1C2430);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.body {
+  display: block;
+  color: var(--ink-2, #5C6778);
+  font-size: 15px;
+  line-height: 1.6;
+}

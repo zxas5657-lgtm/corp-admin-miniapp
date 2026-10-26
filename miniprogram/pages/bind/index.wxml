@@ -21,6 +21,24 @@
       aria-role="button"
       bindtap="onRetry"
     >{{retryLabel}}</view>
+    <view class="consent">
+      <view
+        class="check {{agreed ? 'is-on' : ''}}"
+        aria-role="checkbox"
+        aria-checked="{{agreed}}"
+        aria-label="{{consentA11y}}"
+        catchtap="onToggleConsent"
+      >
+        <view wx:if="{{agreed}}" class="tick-mark"></view>
+      </view>
+      <view class="consent-copy">
+        <text catchtap="onToggleConsent">{{consentLead}}</text>
+        <text
+          class="policy {{locale === 'en' ? 'is-gap' : ''}}"
+          catchtap="onOpenPolicy"
+        >{{consentPolicy}}</text>
+      </view>
+    </view>
     <view
       class="btn-primary {{canSubmit && !submitting && !locked ? '' : 'is-disabled'}}"
       aria-role="button"
@@ -31,4 +49,5 @@
     </view>
     <text class="footer">{{footer}}</text>
   </block>
+  <privacy-sheet id="privacy-sheet" />
 </view>
