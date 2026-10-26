@@ -176,6 +176,21 @@ module.exports = {
       mine: 'My schedule',
     },
   },
+  week: {
+    title: 'My week',
+    range: '{start} - {end}',
+    monthDay: '{month}/{day}',
+    allDay: 'All day',
+    emptyDay: 'No plans',
+    emptyDays: '{start} - {end}: no plans',
+    relative: { next: 'next day', previous: 'previous day' },
+    overview: {
+      pending: 'Pending confirmation',
+      meetings: 'Meetings',
+      trips: 'Trips',
+      visits: 'Visits',
+    },
+  },
   meeting: {
     form: {
       title: 'Meeting subject',

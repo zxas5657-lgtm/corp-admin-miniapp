@@ -149,6 +149,21 @@ module.exports = {
     backToToday: '回到今天',
     scope: { all: '全部日程', mine: '我的日程' },
   },
+  week: {
+    title: '我的一周',
+    range: '{start} - {end}',
+    monthDay: '{month}月{day}日',
+    allDay: '全天',
+    emptyDay: '无安排',
+    emptyDays: '{start} - {end}：无安排',
+    relative: { next: '次日', previous: '前一日' },
+    overview: {
+      pending: '待确认',
+      meetings: '会议',
+      trips: '出差',
+      visits: '来访',
+    },
+  },
   meeting: {
     form: {
       title: '会议主题',
