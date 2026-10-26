@@ -23,6 +23,8 @@ const CONTRACT = Object.freeze([
   { method: 'listVehicles', fn: 'vehicles', action: 'list' },
   { method: 'requestVehicle', fn: 'vehicles', action: 'request' },
   { method: 'dispatchVehicle', fn: 'vehicles', action: 'dispatch' },
+  { method: 'reassignVehicle', fn: 'vehicles', action: 'reassign' },
+  { method: 'cancelDispatchVehicle', fn: 'vehicles', action: 'cancelDispatch' },
   { method: 'rejectVehicle', fn: 'vehicles', action: 'reject' },
   { method: 'completeVehicle', fn: 'vehicles', action: 'complete' },
   { method: 'withdrawVehicle', fn: 'vehicles', action: 'withdraw' },

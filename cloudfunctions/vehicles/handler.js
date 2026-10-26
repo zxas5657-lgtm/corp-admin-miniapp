@@ -68,7 +68,17 @@ function createHandler(config) {
 
   async function dispatch(event, contextValue) {
     const action = event && event.action;
-    const actions = ['list', 'get', 'request', 'dispatch', 'reject', 'complete', 'withdraw'];
+    const actions = [
+      'list',
+      'get',
+      'request',
+      'dispatch',
+      'reassign',
+      'cancelDispatch',
+      'reject',
+      'complete',
+      'withdraw',
+    ];
     if (!actions.includes(action)) return fail('action.unknown');
     const caller = await loadCaller(db, contextValue && contextValue.openid);
     if (!caller.ok) return caller;
@@ -157,10 +167,13 @@ function createHandler(config) {
       .filter((person) => activeEmployee(person) && person.role === 'driver')
       .map((person) => person._id);
 
-    if (action === 'dispatch') {
+    if (action === 'dispatch' || action === 'reassign') {
       if (!actor.dispatcher) return fail('permission.denied');
-      if (!event.carId) return fail('vehicle.car.required');
-      if (!event.driverId) return fail('vehicle.driver.required');
+      const targetCarId = action === 'reassign' ? event.carId || opened.carId : event.carId;
+      const targetDriverId =
+        action === 'reassign' ? event.driverId || opened.driverId : event.driverId;
+      if (!targetCarId) return fail('vehicle.car.required');
+      if (!targetDriverId) return fail('vehicle.driver.required');
       const departAt = instant(opened.departAt);
       if (!departAt) return fail('vehicle.alreadyHandled');
       const windowStart = new Date(departAt.getTime() - 24 * 60 * 60 * 1000);
@@ -168,35 +181,35 @@ function createHandler(config) {
       const carRequests = await fetchAll(
         db.collection('vehicle_requests').where({
           status: 'assigned',
-          carId: event.carId,
+          carId: targetCarId,
           departAt: db.command.and(db.command.gte(windowStart), db.command.lt(windowEnd)),
         }),
       );
       const driverRequests = await fetchAll(
         db.collection('vehicle_requests').where({
           status: 'assigned',
-          driverId: event.driverId,
+          driverId: targetDriverId,
           departAt: db.command.and(db.command.gte(windowStart), db.command.lt(windowEnd)),
         }),
       );
       const carVehicles = carRequests.map(toDomain);
       const driverVehicles = driverRequests.map(toDomain);
       const currentVehicles = [...carVehicles, ...driverVehicles];
-      const carRaw = await getDoc(db, 'cars', event.carId);
-      const driverRaw = await getDoc(db, 'employees', event.driverId);
+      const carRaw = await getDoc(db, 'cars', targetCarId);
+      const driverRaw = await getDoc(db, 'employees', targetDriverId);
       if (!carRaw || carRaw.active === false) return fail('vehicle.car.inactive');
       if (!driverRaw || !activeEmployee(driverRaw) || driverRaw.role !== 'driver')
         return fail('vehicle.driver.inactive');
       if (Number(opened.passengers) > Number(carRaw.seats || 0))
         return fail('vehicle.seats.exceeded');
       if (
-        resourceBusy(carVehicles, 'carId', event.carId, opened.departAt, {
+        resourceBusy(carVehicles, 'carId', targetCarId, opened.departAt, {
           excludeVehicleId: opened.id,
         })
       )
         return fail('vehicle.car.busy');
       if (
-        resourceBusy(driverVehicles, 'driverId', event.driverId, opened.departAt, {
+        resourceBusy(driverVehicles, 'driverId', targetDriverId, opened.departAt, {
           excludeVehicleId: opened.id,
         })
       )
@@ -209,23 +222,37 @@ function createHandler(config) {
           const current = toDomain(currentRaw);
           if (event.expectedRev !== undefined && event.expectedRev !== current.rev)
             throw codedError('vehicle.alreadyHandled');
+          const transitionPayload =
+            action === 'reassign'
+              ? { ...event, carId: targetCarId, driverId: targetDriverId }
+              : event;
           result = transition(
             current,
-            'dispatch',
-            event,
+            action,
+            transitionPayload,
             optionsFor(actor, at, { cars, drivers, vehicles: currentVehicles }),
           );
           if (!result.ok) throw codedError(result.code);
-          const carLock = lockId('car', event.carId, current.departAt, current.tz);
-          const driverLock = lockId('driver', event.driverId, current.departAt, current.tz);
           const day = tz.toZoned(new Date(current.departAt), current.tz).date;
-          await bumpLock(tx, carLock, 'car', event.carId, day, at);
-          await bumpLock(tx, driverLock, 'driver', event.driverId, day, at);
+          const lockSpecs = new Map();
+          for (const [type, resourceId] of [
+            ['car', current.carId],
+            ['driver', current.driverId],
+            ['car', result.vehicle.carId],
+            ['driver', result.vehicle.driverId],
+          ]) {
+            if (!resourceId) continue;
+            const id = lockId(type, resourceId, current.departAt, current.tz);
+            lockSpecs.set(id, { type, resourceId });
+          }
+          for (const [id, spec] of lockSpecs) {
+            await bumpLock(tx, id, spec.type, spec.resourceId, day, at);
+          }
           await setRecord(tx, 'vehicle_requests', result.vehicle);
           await auditWrite(
             tx,
             actor.personId,
-            'vehicle.dispatch',
+            `vehicle.${action}`,
             'vehicle_request',
             result.vehicle.id,
             {
@@ -242,7 +269,8 @@ function createHandler(config) {
       }
     }
 
-    if (!['reject', 'complete', 'withdraw'].includes(action)) return fail('action.unknown');
+    if (!['cancelDispatch', 'reject', 'complete', 'withdraw'].includes(action))
+      return fail('action.unknown');
     try {
       let result;
       await db.runTransaction(async (tx) => {
@@ -262,14 +290,37 @@ function createHandler(config) {
           }),
         );
         if (!result.ok) throw codedError(result.code);
+        if (action === 'cancelDispatch') {
+          const day = tz.toZoned(new Date(current.departAt), current.tz).date;
+          const lockSpecs = [
+            ['car', current.carId],
+            ['driver', current.driverId],
+          ];
+          for (const [type, resourceId] of lockSpecs) {
+            if (!resourceId) continue;
+            await bumpLock(
+              tx,
+              lockId(type, resourceId, current.departAt, current.tz),
+              type,
+              resourceId,
+              day,
+              at,
+            );
+          }
+        }
         await setRecord(tx, 'vehicle_requests', result.vehicle);
+        const changes = { status: result.vehicle.status };
+        if (action === 'cancelDispatch') {
+          changes.carId = result.vehicle.carId;
+          changes.driverId = result.vehicle.driverId;
+        }
         await auditWrite(
           tx,
           actor.personId,
           `vehicle.${action}`,
           'vehicle_request',
           result.vehicle.id,
-          { status: result.vehicle.status },
+          changes,
           at,
         );
       });

@@ -92,12 +92,9 @@ function createLocalApi(options) {
 
   function visibleRange(from, to) {
     const role = normalizeRole(actor.role);
-    const supported = context.supports[actor.personId] || [];
     return visibleItems(actor, state().items, context)
       .filter((item) => {
         if (role === 'receptionist' || role === 'receptionAdmin') return item.kind === 'visit';
-        if (role === 'secretary')
-          return (item.leaderIds || []).some((leaderId) => supported.includes(leaderId));
         return true;
       })
       .filter((item) => inRange(item, from, to));
@@ -423,7 +420,15 @@ function createLocalApi(options) {
       return { ok: false, code: 'permission.denied' };
     if (value.expectedRev !== undefined && value.expectedRev !== vehicle.rev)
       return { ok: false, code: 'vehicle.alreadyHandled' };
-    const result = transition(vehicle, method, value, {
+    const transitionPayload =
+      method === 'reassign'
+        ? {
+            ...value,
+            carId: value.carId || vehicle.carId,
+            driverId: value.driverId || vehicle.driverId,
+          }
+        : value;
+    const result = transition(vehicle, method, transitionPayload, {
       actor,
       now: now(),
       cars: reference.CARS,
@@ -548,6 +553,8 @@ function createLocalApi(options) {
     }),
     requestVehicle: requestVehicleApi,
     dispatchVehicle: (payload) => transitionVehicle('dispatch', payload),
+    reassignVehicle: (payload) => transitionVehicle('reassign', payload),
+    cancelDispatchVehicle: (payload) => transitionVehicle('cancelDispatch', payload),
     rejectVehicle: (payload) => transitionVehicle('reject', payload),
     completeVehicle: (payload) => transitionVehicle('complete', payload),
     withdrawVehicle: (payload) => transitionVehicle('withdraw', payload),

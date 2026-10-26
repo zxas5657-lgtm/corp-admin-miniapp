@@ -2,10 +2,8 @@ const i18nBehavior = require('../../behaviors/i18n');
 const { getStore } = require('../../store/index');
 const clock = require('../../domain/clock');
 const i18n = require('../../i18n/index');
-const { transition } = require('../../domain/vehicle');
 const { session } = require('../../utils/session');
 const { ready } = require('../../utils/auth');
-const { isDemo } = require('../../utils/env');
 const data = require('../../utils/data');
 const {
   vehicleDetailView,
@@ -21,6 +19,8 @@ const CONFIRM_ACTIONS = {
 
 const API_ACTIONS = {
   dispatch: 'dispatchVehicle',
+  reassign: 'reassignVehicle',
+  cancelDispatch: 'cancelDispatchVehicle',
   reject: 'rejectVehicle',
   complete: 'completeVehicle',
   withdraw: 'withdrawVehicle'
@@ -327,27 +327,6 @@ Component({
       if (this._writing) return;
       this.runTransition({});
     },
-    // reassign and cancelDispatch are not contract methods yet (see the lead note).
-    localTransition(action, payload) {
-      const vehicle = findVehicle(this._state, this._id);
-      if (!vehicle) return Promise.resolve({ ok: false, code: 'vehicle.notFound' });
-      const current = session(getStore());
-      const refs = this._refs || {};
-      const result = transition(vehicle, action, payload, {
-        actor: current.actor,
-        now: clock.now(),
-        cars: refs.CARS || [],
-        drivers: refs.DRIVERS || [],
-        vehicles: this._state.vehicles || []
-      });
-      if (!result || result.ok !== true) return Promise.resolve(result);
-      const saved = getStore().updateVehicle(result.vehicle);
-      if (!saved || saved.ok !== true) {
-        return Promise.resolve(saved || { ok: false, code: 'storage.writeFailed' });
-      }
-      data.invalidate();
-      return Promise.resolve(result);
-    },
     runTransition(payload) {
       const vehicle = findVehicle(this._state, this._id);
       if (!vehicle) {
@@ -370,8 +349,6 @@ Component({
           id: vehicle.id,
           expectedRev: vehicle.rev
         }, payload));
-      } else if (isDemo()) {
-        pending = this.localTransition(action, payload);
       } else {
         pending = Promise.resolve({ ok: false, code: 'action.unknown' });
       }

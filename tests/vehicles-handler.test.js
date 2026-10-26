@@ -428,3 +428,144 @@ test('dispatch checks car and driver occupancy at the two-hour boundary', async 
     true,
   );
 });
+
+test('reassign moves locks and cancel-dispatch releases them', async () => {
+  const { db, handler } = await setup();
+  const request = await handler(
+    { action: 'request', input: input('2027-05-01', 1) },
+    { openid: 'secretary' },
+  );
+  const dispatched = await handler(
+    {
+      action: 'dispatch',
+      id: request.vehicle.id,
+      carId: 'gl8a',
+      driverId: 'p-zhao',
+      expectedRev: 0,
+    },
+    { openid: 'secretary' },
+  );
+  assert.equal(dispatched.ok, true);
+  const reassigned = await handler(
+    {
+      action: 'reassign',
+      id: request.vehicle.id,
+      carId: 'gl8b',
+      driverId: 'p-qian',
+      expectedRev: 1,
+    },
+    { openid: 'secretary' },
+  );
+  assert.equal(reassigned.ok, true);
+  assert.equal(reassigned.vehicle.carId, 'gl8b');
+  assert.equal(reassigned.vehicle.driverId, 'p-qian');
+  const movedLocks = db._dump().locks;
+  assert.equal(movedLocks.find((lock) => lock._id === 'car:gl8a:2027-05-01').rev, 2);
+  assert.equal(movedLocks.find((lock) => lock._id === 'driver:p-zhao:2027-05-01').rev, 2);
+  assert.equal(movedLocks.find((lock) => lock._id === 'car:gl8b:2027-05-01').rev, 1);
+  assert.equal(movedLocks.find((lock) => lock._id === 'driver:p-qian:2027-05-01').rev, 1);
+  assert.deepEqual(
+    await handler(
+      {
+        action: 'reassign',
+        id: request.vehicle.id,
+        carId: 'gl8a',
+        driverId: 'p-zhao',
+        expectedRev: 1,
+      },
+      { openid: 'leader' },
+    ),
+    { ok: false, code: 'permission.denied' },
+  );
+
+  const cancelled = await handler(
+    { action: 'cancelDispatch', id: request.vehicle.id, expectedRev: 2 },
+    { openid: 'secretary' },
+  );
+  assert.equal(cancelled.ok, true);
+  assert.equal(cancelled.vehicle.status, 'pending');
+  assert.equal(cancelled.vehicle.carId, null);
+  assert.equal(cancelled.vehicle.driverId, null);
+  const releasedLocks = db._dump().locks;
+  assert.equal(releasedLocks.find((lock) => lock._id === 'car:gl8b:2027-05-01').rev, 2);
+  assert.equal(releasedLocks.find((lock) => lock._id === 'driver:p-qian:2027-05-01').rev, 2);
+  assert.deepEqual(
+    await handler(
+      { action: 'cancelDispatch', id: request.vehicle.id, expectedRev: 2 },
+      { openid: 'secretary' },
+    ),
+    { ok: false, code: 'vehicle.alreadyHandled' },
+  );
+});
+
+test('reassign rejects locked cars and drivers without changing the request', async () => {
+  const { handler } = await setup();
+  const first = await handler(
+    { action: 'request', input: input('2027-06-01', 1) },
+    { openid: 'secretary' },
+  );
+  const second = await handler(
+    { action: 'request', input: input('2027-06-01', 1) },
+    { openid: 'secretary' },
+  );
+  assert.equal(
+    (
+      await handler(
+        {
+          action: 'dispatch',
+          id: first.vehicle.id,
+          carId: 'gl8a',
+          driverId: 'p-zhao',
+          expectedRev: 0,
+        },
+        { openid: 'secretary' },
+      )
+    ).ok,
+    true,
+  );
+  assert.equal(
+    (
+      await handler(
+        {
+          action: 'dispatch',
+          id: second.vehicle.id,
+          carId: 'gl8b',
+          driverId: 'p-qian',
+          expectedRev: 0,
+        },
+        { openid: 'secretary' },
+      )
+    ).ok,
+    true,
+  );
+  assert.deepEqual(
+    await handler(
+      {
+        action: 'reassign',
+        id: first.vehicle.id,
+        carId: 'gl8b',
+        driverId: 'p-zhao',
+        expectedRev: 1,
+      },
+      { openid: 'secretary' },
+    ),
+    { ok: false, code: 'vehicle.car.busy' },
+  );
+  assert.deepEqual(
+    await handler(
+      {
+        action: 'reassign',
+        id: first.vehicle.id,
+        carId: 'gl8a',
+        driverId: 'p-qian',
+        expectedRev: 1,
+      },
+      { openid: 'secretary' },
+    ),
+    { ok: false, code: 'vehicle.driver.busy' },
+  );
+  const current = await handler({ action: 'get', id: first.vehicle.id }, { openid: 'secretary' });
+  assert.equal(current.vehicle.carId, 'gl8a');
+  assert.equal(current.vehicle.driverId, 'p-zhao');
+  assert.equal(current.vehicle.rev, 1);
+});

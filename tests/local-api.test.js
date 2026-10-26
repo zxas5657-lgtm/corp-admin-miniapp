@@ -60,10 +60,8 @@ test('local visibility follows role needs to know rules', async () => {
 
   const secretary = await makeLocal('secretary').api.listItems({});
   assert.ok(secretary.items.length > 0);
-  assert.equal(
-    secretary.items.every((item) => item.leaderIds.includes('p-chen')),
-    true,
-  );
+  assert.equal(secretary.items.some((item) => item.id === 'm2'), true);
+  assert.equal(secretary.items.some((item) => item.id === 'm3'), true);
 
   const receptionistApi = makeLocal('receptionist').api;
   const visits = await receptionistApi.listItems({});
@@ -361,6 +359,32 @@ test('items notes and vehicles contract actions stay usable through local and re
   };
   assert.equal((await local.leader.listItems({})).ok, true);
   assert.equal((await remote.leader.listItems({})).ok, true);
+  const parityWindow = {
+    from: '2026-10-01T00:00:00.000Z',
+    to: '2026-11-01T00:00:00.000Z',
+  };
+  const localSecretaryItems = await local.secretary.listItems(parityWindow);
+  const remoteSecretaryItems = await remote.secretary.listItems(parityWindow);
+  assert.equal(localSecretaryItems.items.some((item) => item.id === 'm2'), true);
+  assert.equal(localSecretaryItems.items.some((item) => item.id === 'm3'), true);
+  assert.equal(remoteSecretaryItems.items.some((item) => item.id === 'm2'), true);
+  assert.equal(remoteSecretaryItems.items.some((item) => item.id === 'm3'), true);
+  const localLeaderItems = await local.leader.listItems(parityWindow);
+  const remoteLeaderItems = await remote.leader.listItems(parityWindow);
+  assert.deepEqual(
+    localLeaderItems.items.map((item) => item.id).sort(),
+    remoteLeaderItems.items.map((item) => item.id).sort(),
+  );
+  assert.equal(localLeaderItems.items.some((item) => ['m2', 'm3'].includes(item.id)), false);
+  assert.equal(remoteLeaderItems.items.some((item) => ['m2', 'm3'].includes(item.id)), false);
+  const localReceptionistItems = await local.receptionist.listItems(parityWindow);
+  const remoteReceptionistItems = await remote.receptionist.listItems(parityWindow);
+  assert.deepEqual(
+    localReceptionistItems.items.map((item) => item.id).sort(),
+    remoteReceptionistItems.items.map((item) => item.id).sort(),
+  );
+  assert.equal(localReceptionistItems.items.every((item) => item.kind === 'visit'), true);
+  assert.equal(remoteReceptionistItems.items.every((item) => item.kind === 'visit'), true);
   const itemInput = {
     title: 'Parity milestone',
     allDay: true,
@@ -473,6 +497,58 @@ test('items notes and vehicles contract actions stay usable through local and re
     (await remote.driver.completeVehicle({ id: remoteVehicle.vehicle.id, expectedRev: 1 })).ok,
     true,
   );
+  const localReassignRequest = await local.leader.requestVehicle({ input: vehicleInput });
+  const remoteReassignRequest = await remote.leader.requestVehicle({ input: vehicleInput });
+  assert.equal(
+    (
+      await local.secretary.dispatchVehicle({
+        id: localReassignRequest.vehicle.id,
+        carId: 'gl8a',
+        driverId: 'p-zhao',
+        expectedRev: 0,
+      })
+    ).ok,
+    true,
+  );
+  assert.equal(
+    (
+      await remote.secretary.dispatchVehicle({
+        id: remoteReassignRequest.vehicle.id,
+        carId: 'gl8a',
+        driverId: 'p-zhao',
+        expectedRev: 0,
+      })
+    ).ok,
+    true,
+  );
+  const localReassigned = await local.secretary.reassignVehicle({
+    id: localReassignRequest.vehicle.id,
+    carId: 'gl8b',
+    driverId: 'p-qian',
+    expectedRev: 1,
+  });
+  const remoteReassigned = await remote.secretary.reassignVehicle({
+    id: remoteReassignRequest.vehicle.id,
+    carId: 'gl8b',
+    driverId: 'p-qian',
+    expectedRev: 1,
+  });
+  assert.equal(localReassigned.ok, true);
+  assert.equal(remoteReassigned.ok, true);
+  assert.equal(localReassigned.vehicle.carId, remoteReassigned.vehicle.carId);
+  assert.equal(localReassigned.vehicle.driverId, remoteReassigned.vehicle.driverId);
+  const localCancelled = await local.secretary.cancelDispatchVehicle({
+    id: localReassignRequest.vehicle.id,
+    expectedRev: 2,
+  });
+  const remoteCancelled = await remote.secretary.cancelDispatchVehicle({
+    id: remoteReassignRequest.vehicle.id,
+    expectedRev: 2,
+  });
+  assert.equal(localCancelled.ok, true);
+  assert.equal(remoteCancelled.ok, true);
+  assert.equal(localCancelled.vehicle.status, remoteCancelled.vehicle.status);
+  assert.equal(localCancelled.vehicle.status, 'pending');
   const visitInput = {
     title: 'Parity visitor',
     date: '2027-01-22',

@@ -4,12 +4,8 @@ const clock = require('../domain/clock');
 const dates = require('../domain/dates');
 const i18n = require('../i18n/index');
 const tz = require('../domain/tz');
-const { visibleItems } = require('../domain/visibility');
-const { getStore } = require('../store/index');
 const { resetApi } = require('../store/api');
 const { api: authApi } = require('./auth');
-const { isDemo } = require('./env');
-const { session } = require('./session');
 
 // List pages have no date pager yet (S3-F4). Keep the window short: the cloud
 // list reads at most 1000 rows before it filters by visibility.
@@ -152,45 +148,6 @@ function rangeKey(window) {
   return window.from + '|' + window.to;
 }
 
-function itemInWindow(item, window) {
-  const start = new Date(window.from);
-  const end = new Date(window.to);
-  if (item && item.allDay) {
-    const zone = item.tz || 'Asia/Shanghai';
-    const dayStart = tz.fromZoned(item.date, '00:00', zone);
-    const next = item.date ? dates.addDays(item.date, 1) : '';
-    const dayEnd = next ? tz.fromZoned(next, '00:00', zone) : null;
-    return Boolean(dayStart && dayEnd && start < dayEnd && dayStart < end);
-  }
-  const itemStart = new Date(item && item.startAt);
-  const itemEnd = new Date(item && item.endAt);
-  return itemStart < end && start < itemEnd;
-}
-
-// Local listItems keeps only a secretary's supported leaders. The cloud list
-// and the view model also keep meetings that secretary organizes. Demo mode
-// adds those rows so both modes show the same page.
-function demoItems(window, listed) {
-  if (!isDemo() || factory || (apiStub && apiStub.listItems)) return listed;
-  const current = session(getStore());
-  const role = current.actor && current.actor.role;
-  if (role !== 'secretary') return listed;
-  const state = getStore().getState() || {};
-  const visible = visibleItems(current.actor, state.items || [], current.ctx);
-  const items = listed.slice();
-  const seen = new Set();
-  for (let i = 0; i < items.length; i += 1) {
-    if (items[i] && items[i].id) seen.add(items[i].id);
-  }
-  for (let i = 0; i < visible.length; i += 1) {
-    const item = visible[i];
-    if (!item || seen.has(item.id) || !itemInWindow(item, window)) continue;
-    seen.add(item.id);
-    items.push(item);
-  }
-  return items;
-}
-
 function loadRange(window, options) {
   if (!window || !window.from || !window.to) {
     return Promise.resolve({ ok: false, code: 'network.failed' });
@@ -213,7 +170,7 @@ function loadRange(window, options) {
     if (!results[0].ok) return { ok: false, code: results[0].code };
     if (!results[1].ok) return { ok: false, code: results[1].code };
     const state = {
-      items: demoItems(window, results[0].items || []),
+      items: results[0].items || [],
       vehicles: results[1].vehicles || []
     };
     rangeCache.set(key, state);

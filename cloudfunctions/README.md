@@ -28,6 +28,8 @@ Create these collections in CloudBase. Every collection has the security rule:
 | `audit_log`          | `entity + entityId + at`; `actorId + at`                                                                                                 |
 | `locks`              | none (dispatch race guard, read and written by id only)                                                                                  |
 
+Dispatch, reassignment, and cancel-dispatch update the relevant car and driver lock documents inside the vehicle transaction. Reassignment bumps both the old and new resources; cancelling a dispatch bumps the old resources so they are available for later requests.
+
 ## Upload
 
 Upload `auth`, `directory`, `items`, `notes`, `vehicles`, `prefs`, `admin`, and `devSeed`.

@@ -190,7 +190,7 @@ test('resetSession clears the shared API singleton', () => {
   assert.notEqual(first, second);
 });
 
-test('demo range keeps a secretary meeting the local list omits', async () => {
+test('demo range keeps a meeting the secretary organizes without a leader', async () => {
   const { getStore } = require('../miniprogram/store/index');
   const store = getStore();
   const previous = store.getRole();
