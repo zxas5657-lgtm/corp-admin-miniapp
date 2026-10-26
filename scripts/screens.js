@@ -108,6 +108,7 @@ async function resetSeed(mini, locale, role) {
     throw new Error('setRole failed for ' + role);
   }
   await dev(mini, 'clearFocus');
+  await dev(mini, 'setAuthStub', null);
 }
 
 async function openPage(mini, url) {
@@ -139,6 +140,16 @@ async function saveShot(mini, locale, fileName) {
 
 function eventWith(key, value) {
   return { currentTarget: { dataset: { [key]: value } } };
+}
+
+async function tabKeys(mini) {
+  return mini.evaluate(function () {
+    var pages = getCurrentPages();
+    var page = pages[pages.length - 1];
+    var bar = page && page.getTabBar && page.getTabBar();
+    var list = bar && bar.data && bar.data.list ? bar.data.list : [];
+    return list.map(function (item) { return item.key; });
+  });
 }
 
 function scheduleIds(view) {
@@ -496,7 +507,7 @@ const SCENARIOS = [
     id: '27-visitors',
     title: 'Visitors skeleton',
     async run(mini, locale) {
-      await resetSeed(mini, locale, 'secretary');
+      await resetSeed(mini, locale, 'receptionist');
       await openPage(mini, '/pages/visitors/index');
       await saveShot(mini, locale, this.id + '.png');
     },
@@ -572,6 +583,13 @@ const SCENARIOS = [
       if (ids.length !== 1 || ids[0] !== 'v5') {
         throw new Error('leader vehicle ids: ' + ids.join(','));
       }
+      const selected = await mini.evaluate(function () {
+        var pages = getCurrentPages();
+        var top = pages[pages.length - 1];
+        var bar = top && top.getTabBar && top.getTabBar();
+        return bar && bar.data ? bar.data.selected : 0;
+      });
+      if (selected !== -1) throw new Error('leader vehicles tab is selected');
       await saveShot(mini, locale, this.id + '.png');
     },
   },
@@ -606,7 +624,200 @@ const SCENARIOS = [
       await saveShot(mini, locale, this.id + '.png');
     },
   },
+  {
+    id: '36-home-leader',
+    title: 'Leader home tab set',
+    async run(mini, locale) {
+      await resetSeed(mini, locale, 'leader');
+      await openPage(mini, '/pages/schedule/index');
+      const keys = await tabKeys(mini);
+      if (keys.join(',') !== 'schedule,compose,me') {
+        throw new Error('leader tabs: ' + keys.join(','));
+      }
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '37-home-secretary',
+    title: 'Secretary home tab set',
+    async run(mini, locale) {
+      await resetSeed(mini, locale, 'secretary');
+      await openPage(mini, '/pages/schedule/index');
+      const keys = await tabKeys(mini);
+      if (keys.join(',') !== 'schedule,todo,vehicles,me') {
+        throw new Error('secretary tabs: ' + keys.join(','));
+      }
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '38-home-receptionist',
+    title: 'Receptionist home tab set',
+    async run(mini, locale) {
+      await resetSeed(mini, locale, 'receptionist');
+      await openPage(mini, '/pages/visitors/index');
+      const keys = await tabKeys(mini);
+      if (keys.join(',') !== 'visitors,vehicles,me') {
+        throw new Error('receptionist tabs: ' + keys.join(','));
+      }
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '39-home-driver',
+    title: 'Driver home tab set',
+    async run(mini, locale) {
+      await resetSeed(mini, locale, 'driver');
+      await openPage(mini, '/pages/vehicles/index');
+      const keys = await tabKeys(mini);
+      if (keys.join(',') !== 'vehicles,me') {
+        throw new Error('driver tabs: ' + keys.join(','));
+      }
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '40-todo-placeholder',
+    title: 'To-do placeholder',
+    async run(mini, locale) {
+      await resetSeed(mini, locale, 'secretary');
+      const page = await openPage(mini, '/pages/todo/index');
+      if (await page.data('authReady') !== true) throw new Error('todo did not open');
+      const title = await page.data('i18n.todo.emptyTitle');
+      if (!title) throw new Error('todo empty copy is missing');
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '41-bind-empty',
+    title: 'Bind page, empty',
+    async run(mini, locale) {
+      await resetSeed(mini, locale, 'secretary');
+      await dev(mini, 'setAuthStub', { whoami: { ok: true, bound: false } });
+      const page = await openPage(mini, '/pages/bind/index');
+      if (await page.data('demoOnly') !== false) throw new Error('demo copy replaced the form');
+      if (await page.data('canSubmit') !== false) throw new Error('empty code can submit');
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '42-bind-typed',
+    title: 'Bind page, code typed',
+    async run(mini, locale) {
+      await resetSeed(mini, locale, 'secretary');
+      await dev(mini, 'setAuthStub', { whoami: { ok: true, bound: false } });
+      const page = await openPage(mini, '/pages/bind/index');
+      await callPage(page, 'onCode', { detail: { value: 'ab cd-2345' } });
+      if (await page.data('display') !== 'ABCD-2345') {
+        throw new Error('code display: ' + await page.data('display'));
+      }
+      if (await page.data('canSubmit') !== true) throw new Error('complete code stays disabled');
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '43-bind-invalid',
+    title: 'Bind page, invalid invite',
+    async run(mini, locale) {
+      await showBindError(mini, locale, 'auth.inviteInvalid');
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '44-bind-expired',
+    title: 'Bind page, expired invite',
+    async run(mini, locale) {
+      await showBindError(mini, locale, 'auth.inviteExpired');
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '45-bind-locked',
+    title: 'Bind page, too many attempts',
+    async run(mini, locale) {
+      const page = await showBindError(mini, locale, 'auth.tooManyAttempts');
+      if (await page.data('locked') !== true || await page.data('canSubmit') !== false) {
+        throw new Error('too many attempts did not disable submit');
+      }
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '46-bind-offline',
+    title: 'Bind page, network error',
+    async run(mini, locale) {
+      await showBindError(mini, locale, 'network.failed');
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '47-bind-submitting',
+    title: 'Bind page, submitting',
+    async run(mini, locale) {
+      await resetSeed(mini, locale, 'secretary');
+      await dev(mini, 'setAuthStub', {
+        whoami: { ok: true, bound: false },
+        redeemInvite: { pending: true },
+      });
+      const page = await openPage(mini, '/pages/bind/index');
+      await callPage(page, 'onCode', { detail: { value: 'ABCD2345' } });
+      await callPage(page, 'onSubmit');
+      if (await page.data('submitting') !== true) throw new Error('submit did not start');
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '48-blocked-disabled',
+    title: 'Blocked, disabled account',
+    async run(mini, locale) {
+      await resetSeed(mini, locale, 'secretary');
+      const page = await openPage(mini, '/pages/blocked/index');
+      if (await page.data('actionText')) throw new Error('disabled state has an action');
+      if (!await page.data('title')) throw new Error('disabled copy is missing');
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '49-blocked-offline',
+    title: 'Blocked, offline',
+    async run(mini, locale) {
+      await resetSeed(mini, locale, 'secretary');
+      const page = await openPage(mini, '/pages/blocked/index?state=offline');
+      if (await page.data('kind') !== 'error' || !await page.data('actionText')) {
+        throw new Error('offline retry is missing');
+      }
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
+  {
+    id: '50-blocked-unconfigured',
+    title: 'Blocked, service not configured',
+    async run(mini, locale) {
+      await resetSeed(mini, locale, 'secretary');
+      const page = await openPage(mini, '/pages/blocked/index?state=unconfigured');
+      if (await page.data('kind') === 'error') {
+        throw new Error('unconfigured used the offline copy');
+      }
+      if (!await page.data('title')) throw new Error('unconfigured copy is missing');
+      await saveShot(mini, locale, this.id + '.png');
+    },
+  },
 ];
+
+async function showBindError(mini, locale, code) {
+  await resetSeed(mini, locale, 'secretary');
+  await dev(mini, 'setAuthStub', {
+    whoami: { ok: true, bound: false },
+    redeemInvite: { ok: false, code: code },
+  });
+  const page = await openPage(mini, '/pages/bind/index');
+  await callPage(page, 'onCode', { detail: { value: 'ABCD2345' } });
+  await callPage(page, 'onSubmit');
+  if (await page.data('errorCode') !== code) {
+    throw new Error('expected ' + code + ', got ' + await page.data('errorCode'));
+  }
+  return page;
+}
 
 function escapeHtml(value) {
   return String(value)

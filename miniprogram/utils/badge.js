@@ -12,7 +12,7 @@ function refreshVehicleBadge(page) {
     const current = session(store);
     const state = store.getState() || {};
     const visible = visibleVehicles(current.actor, state.vehicles || [], current.ctx);
-    bar.setBadge(2, vehicleBadgeCount(current.actor, visible));
+    bar.setBadge('vehicles', vehicleBadgeCount(current.actor, visible));
   } catch (err) {
     // A missing tab bar must not break the page.
   }

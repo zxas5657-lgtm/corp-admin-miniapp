@@ -1,0 +1,34 @@
+<view class="page">
+  <block wx:if="{{demoOnly}}">
+    <text class="title">{{title}}</text>
+    <text class="lead">{{demoLead}}</text>
+    <view class="btn-primary" aria-role="button" bindtap="onHome">{{demoHome}}</view>
+  </block>
+  <block wx:else>
+    <text class="title">{{title}}</text>
+    <text class="lead">{{lead}}</text>
+    <input
+      class="code"
+      value="{{display}}"
+      maxlength="9"
+      bindinput="onCode"
+      disabled="{{locked || submitting}}"
+    />
+    <text wx:if="{{error}}" class="err">{{error}}</text>
+    <view
+      wx:if="{{errorCode === 'network.failed'}}"
+      class="retry"
+      aria-role="button"
+      bindtap="onRetry"
+    >{{retryLabel}}</view>
+    <view
+      class="btn-primary {{canSubmit && !submitting && !locked ? '' : 'is-disabled'}}"
+      aria-role="button"
+      bindtap="onSubmit"
+    >
+      <view wx:if="{{submitting}}" class="spin"></view>
+      <text>{{submitLabel}}</text>
+    </view>
+    <text class="footer">{{footer}}</text>
+  </block>
+</view>

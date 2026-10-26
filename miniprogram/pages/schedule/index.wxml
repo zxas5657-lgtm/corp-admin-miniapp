@@ -1,5 +1,6 @@
 <view class="page">
-  <block wx:if="{{loadFailed}}">
+  <state-view wx:if="{{!authReady}}" kind="loading" />
+  <block wx:elif="{{loadFailed}}">
     <state-view
       kind="error"
       title="{{i18n.state.genericErrorTitle}}"
@@ -23,6 +24,7 @@
     <view class="pad">
       <view class="head">
         <text class="date">{{view.dayHeading}}</text>
+        <text class="meetings-link" bindtap="onMeetings">{{meetingsLink}}</text>
         <text class="count">{{view.countText}}</text>
         <picker
           class="cal-picker"

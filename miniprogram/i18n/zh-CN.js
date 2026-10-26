@@ -1,7 +1,10 @@
 'use strict';
 
 module.exports = {
-  tab: { schedule: '日程', meetings: '会议', vehicles: '用车', me: '我的' },
+  tab: {
+    schedule: '日程', meetings: '会议', vehicles: '用车', me: '我的',
+    todo: '待办', visitors: '来访', trips: '任务',
+  },
   nav: {
     back: '返回',
     schedule: '日程',
@@ -15,6 +18,9 @@ module.exports = {
     visitors: '来访接待',
     daily: '行政日常',
     devGallery: '组件预览',
+    todo: '待办',
+    bind: '绑定账号',
+    blocked: '暂时无法使用',
   },
   role: {
     leader: { label: '领导', hint: '可查看全部安排，可以建会，也可以申请用车。' },
@@ -310,6 +316,9 @@ module.exports = {
     reset: '恢复演示数据',
     visitorsHint: '预约、核验与接待记录',
     dailyHint: '申领、报修与用印',
+    meetings: '我的会议',
+    meetingsHint: '我发起或参加的会议',
+    vehicles: '我的用车',
   },
   lang: { zh: '简体中文', en: 'English' },
   a11y: {
@@ -327,7 +336,7 @@ module.exports = {
     resetConfirm: '确认恢复',
     switched: '已切换身份',
   },
-  common: { notAvailable: '未开放', cancel: '取消' },
+  common: { notAvailable: '未开放', cancel: '取消', comingSoon: '即将上线' },
   visitors: {
     lead: '当前版本只保留入口。预约、核验和接待记录以后再做。',
     bookingTitle: '预约来访',
@@ -345,6 +354,25 @@ module.exports = {
     repairBody: '会议室设备与办公设施',
     sealTitle: '用印',
     sealBody: '印章外带与盖章登记',
+  },
+  bind: {
+    title: '绑定账号',
+    lead: '请输入管理员给你的 8 位邀请码',
+    submit: '继续',
+    submitting: '提交中…',
+    footer: '没有邀请码？请联系管理员。',
+    demoLead: '演示环境已经登录，不需要邀请码。',
+    demoHome: '返回首页',
+  },
+  blocked: {
+    disabledTitle: '这个账号已停用。请联系管理员。',
+    disabledBody: '',
+    unconfiguredTitle: '服务还没有配置好。',
+    unconfiguredBody: '',
+  },
+  todo: {
+    emptyTitle: '这里还没有待办',
+    emptyBody: '领导留言和待确认事项以后会出现在这里。',
   },
   'meeting.detail.cancelAction': '取消会议',
   'vehicle.form.reasonPlaceholder': '请填写用车事由',

@@ -73,6 +73,25 @@
   text-overflow: clip;
 }
 
+.tab-plus {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line, #E6E9EE);
+  border-radius: 999px;
+  background: #FFFFFF;
+}
+
+.plus-mark {
+  color: var(--ink, #1C2430);
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 44px;
+}
+
 .tab-badge {
   position: absolute;
   top: calc(-1 * var(--space-4, 4px));

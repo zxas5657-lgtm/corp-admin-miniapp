@@ -1,4 +1,6 @@
 <view class="page">
+  <state-view wx:if="{{!authReady}}" kind="loading" />
+  <block wx:else>
   <text class="lead">{{i18n.visitors.lead}}</text>
   <view class="cell-group">
     <view class="skel-row">
@@ -23,4 +25,5 @@
       <status-pill class="pill-host" text="{{i18n.common.notAvailable}}" tone="mute" />
     </view>
   </view>
+  </block>
 </view>

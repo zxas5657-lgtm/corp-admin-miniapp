@@ -1,6 +1,7 @@
 {
   "navigationBarTitleText": "",
   "usingComponents": {
-    "status-pill": "/components/status-pill/index"
+    "status-pill": "/components/status-pill/index",
+    "state-view": "/components/state-view/index"
   }
 }

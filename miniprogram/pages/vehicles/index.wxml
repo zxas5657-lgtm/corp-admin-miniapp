@@ -1,5 +1,6 @@
 <view class="page">
-  <block wx:if="{{view}}">
+  <state-view wx:if="{{!authReady}}" kind="loading" />
+  <block wx:elif="{{view}}">
     <view class="segments" wx:if="{{view.scopes.length}}">
       <view
         wx:for="{{view.scopes}}"

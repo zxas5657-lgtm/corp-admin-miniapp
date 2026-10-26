@@ -5,6 +5,9 @@ const { ROLE_ORDER, personById, actorFor } = require('../../data/reference');
 const { DEV_ROLE_SWITCH } = require('../../config');
 const { changeLocale } = require('../../utils/locale');
 const { refreshVehicleBadge } = require('../../utils/badge');
+const { isDemo } = require('../../utils/env');
+const { prepareTab } = require('../../utils/shell');
+const { homeUrl } = require('../../utils/tabs');
 
 function firstCharacter(value) {
   const chars = Array.from(value || '');
@@ -40,8 +43,9 @@ Component({
   data: {
     i18nKeys: ['nav', 'me', 'lang', 'role', 'demo', 'common', 'a11y', 'error', 'state'],
     navTitleKey: 'nav.me',
-    tabIndex: 3,
-    devRoleSwitch: DEV_ROLE_SWITCH,
+    tabKey: 'me',
+    authReady: false,
+    devRoleSwitch: false,
     languageOpen: false,
     resetOpen: false,
     notice: '',
@@ -74,8 +78,13 @@ Component({
   },
   pageLifetimes: {
     show() {
-      this.rebuild();
-      setTabBarHidden(this, this.data.languageOpen || this.data.resetOpen);
+      const page = this;
+      prepareTab('me').then(function (ready) {
+        if (!ready.ok) return;
+        page.setData({ authReady: true });
+        page.rebuild();
+        setTabBarHidden(page, page.data.languageOpen || page.data.resetOpen);
+      });
     },
     hide() {
       setTabBarHidden(this, false);
@@ -105,7 +114,9 @@ Component({
         name: i18n.localName(person),
         title: i18n.displayText(person && person.title),
         roleLabel: this.t('role.' + roleId + '.label'),
-        roles: roles
+        roles: roles,
+        devRoleSwitch: isDemo() && DEV_ROLE_SWITCH,
+        showVehicleEntry: roleId === 'leader'
       });
     },
     onOpenLanguage() {
@@ -130,6 +141,13 @@ Component({
     onCloseNotice() {
       this.setData({ notice: '' });
     },
+    onVehicles() {
+      try {
+        wx.switchTab({ url: '/pages/vehicles/index' });
+      } catch (err) {
+        // Navigation must not break the page.
+      }
+    },
     onEntry(event) {
       const url = event.currentTarget.dataset.url;
       if (!url) return;
@@ -153,9 +171,9 @@ Component({
       } catch (err) {
         // The toast must not block the role home tab.
       }
-      const url = role === 'driver' ? '/pages/vehicles/index' : '/pages/schedule/index';
+      const url = homeUrl(actorFor(role));
       try {
-        wx.switchTab({ url: url });
+        wx.reLaunch({ url: url });
       } catch (err) {
         // Navigation must not break the page.
       }

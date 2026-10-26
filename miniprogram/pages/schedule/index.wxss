@@ -50,6 +50,16 @@
   white-space: nowrap;
 }
 
+.meetings-link {
+  flex: 1 0 100%;
+  order: 4;
+  min-height: 44px;
+  color: var(--primary, #1F4E89);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 44px;
+}
+
 .cal-picker {
   flex: 0 0 44px;
   order: 3;

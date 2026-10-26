@@ -6,6 +6,9 @@ module.exports = {
     meetings: 'Meetings',
     vehicles: 'Vehicles',
     me: 'Me',
+    todo: 'To-do',
+    visitors: 'Visitors',
+    trips: 'Trips',
   },
   nav: {
     back: 'Back',
@@ -20,6 +23,9 @@ module.exports = {
     visitors: 'Visitor reception',
     daily: 'Daily admin',
     devGallery: 'Component gallery',
+    todo: 'To-do',
+    bind: 'Bind account',
+    blocked: 'Unavailable',
   },
   role: {
     leader: {
@@ -366,6 +372,9 @@ module.exports = {
     reset: 'Reset demo data',
     visitorsHint: 'Appointments, check-in, and records',
     dailyHint: 'Supplies, repairs, and seals',
+    meetings: 'My meetings',
+    meetingsHint: 'Meetings you organize or attend',
+    vehicles: 'My car requests',
   },
   lang: {
     zh: '简体中文',
@@ -389,6 +398,7 @@ module.exports = {
   common: {
     notAvailable: 'Not available yet',
     cancel: 'Cancel',
+    comingSoon: 'Coming soon',
   },
   visitors: {
     lead: 'This version only keeps the entry. Appointments, check-in, and reception records will come later.',
@@ -407,6 +417,25 @@ module.exports = {
     repairBody: 'Meeting room equipment and office facilities',
     sealTitle: 'Use a seal',
     sealBody: 'Record taking a seal out and applying it',
+  },
+  bind: {
+    title: 'Bind your account',
+    lead: 'Enter the 8-character code from your administrator',
+    submit: 'Continue',
+    submitting: 'Continuing…',
+    footer: "Don't have a code? Ask your administrator.",
+    demoLead: 'This demo is already signed in, so no invite code is needed.',
+    demoHome: 'Back home',
+  },
+  blocked: {
+    disabledTitle: 'This account has been disabled. Contact your administrator.',
+    disabledBody: '',
+    unconfiguredTitle: 'The service is not set up yet.',
+    unconfiguredBody: '',
+  },
+  todo: {
+    emptyTitle: 'Nothing waiting here',
+    emptyBody: 'The notes inbox and pending confirmations will appear here.',
   },
   'meeting.detail.cancelAction': 'Cancel meeting',
   'vehicle.form.reasonPlaceholder': 'Enter a reason for the vehicle request',

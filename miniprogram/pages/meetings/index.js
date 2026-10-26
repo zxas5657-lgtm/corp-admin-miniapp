@@ -10,7 +10,6 @@ Component({
   data: {
     i18nKeys: ['a11y'],
     navTitleKey: 'nav.meetings',
-    tabIndex: 1,
     filter: 'all',
     view: null
   },

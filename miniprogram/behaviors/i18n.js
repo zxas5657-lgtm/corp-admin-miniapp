@@ -1,4 +1,6 @@
 const i18n = require('../i18n/index');
+const { getStore } = require('../store/index');
+const { session } = require('../utils/session');
 
 function readKeys(page) {
   const keys = page.data && page.data.i18nKeys;
@@ -10,9 +12,9 @@ function readTitleKey(page) {
   return typeof key === 'string' ? key : '';
 }
 
-function readTabIndex(page) {
-  const index = page.data && page.data.tabIndex;
-  return typeof index === 'number' ? index : null;
+function readTabKey(page) {
+  const key = page.data && page.data.tabKey;
+  return typeof key === 'string' ? key : '';
 }
 
 module.exports = Behavior({
@@ -95,11 +97,11 @@ module.exports = Behavior({
     _refreshTabBar() {
       const bar = this.getTabBar && this.getTabBar();
       if (!bar) return;
-      bar.setTexts(i18n.dict('tab'));
+      if (typeof bar.sync === 'function') bar.sync(session(getStore()).actor);
       if (!this._shown) return;
-      const index = readTabIndex(this);
-      if (typeof index !== 'number') return;
-      bar.setSelected(index);
+      const key = readTabKey(this);
+      if (!key || typeof bar.setSelected !== 'function') return;
+      bar.setSelected(key);
     },
 
     _subscribe() {

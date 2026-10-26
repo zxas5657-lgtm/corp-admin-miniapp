@@ -3,6 +3,7 @@ const { getStore } = require('../../store/index');
 const { vehicleListView } = require('../../viewmodels/vehicles');
 const { refreshVehicleBadge } = require('../../utils/badge');
 const { session } = require('../../utils/session');
+const { prepareTab } = require('../../utils/shell');
 
 function activeScope(view) {
   const scopes = (view && view.scopes) || [];
@@ -17,7 +18,8 @@ Component({
   data: {
     i18nKeys: ['a11y'],
     navTitleKey: 'nav.vehicles',
-    tabIndex: 2,
+    tabKey: 'vehicles',
+    authReady: false,
     view: null
   },
   lifetimes: {
@@ -38,7 +40,12 @@ Component({
   },
   pageLifetimes: {
     show() {
-      this.refresh();
+      const page = this;
+      prepareTab('vehicles').then(function (ready) {
+        if (!ready.ok) return;
+        page.setData({ authReady: true });
+        page.refresh();
+      });
     }
   },
   methods: {

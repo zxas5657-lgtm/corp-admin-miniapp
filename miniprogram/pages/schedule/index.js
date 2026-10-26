@@ -4,6 +4,7 @@ const clock = require('../../domain/clock');
 const { scheduleView } = require('../../viewmodels/schedule');
 const { session } = require('../../utils/session');
 const { refreshVehicleBadge } = require('../../utils/badge');
+const { prepareTab } = require('../../utils/shell');
 
 function activeScope(view) {
   const scopes = (view && view.scopes) || [];
@@ -37,7 +38,8 @@ Component({
   data: {
     i18nKeys: ['state', 'a11y'],
     navTitleKey: 'nav.schedule',
-    tabIndex: 0,
+    tabKey: 'schedule',
+    authReady: false,
     view: null,
     loadFailed: false,
     banner: ''
@@ -63,18 +65,23 @@ Component({
   },
   pageLifetimes: {
     show() {
-      const focus = getStore().ui.takePendingFocus();
-      const pending = focus && typeof focus === 'object' ? focus : null;
-      if (pending && pending.date) getStore().ui.setSelectedDate(pending.date);
-      this._focusId = pending && pending.meetingId ? pending.meetingId : null;
-      this.clearHighlight();
-      if (this._focusId) this.armHighlight();
-      this.refresh({
-        banner: Boolean(pending && pending.banner === true),
-        clearBanner: !(pending && pending.banner === true),
-        scrollId: this._focusId || ''
+      const page = this;
+      prepareTab('schedule').then(function (ready) {
+        if (!ready.ok) return;
+        page.setData({ authReady: true });
+        const focus = getStore().ui.takePendingFocus();
+        const pending = focus && typeof focus === 'object' ? focus : null;
+        if (pending && pending.date) getStore().ui.setSelectedDate(pending.date);
+        page._focusId = pending && pending.meetingId ? pending.meetingId : null;
+        page.clearHighlight();
+        if (page._focusId) page.armHighlight();
+        page.refresh({
+          banner: Boolean(pending && pending.banner === true),
+          clearBanner: !(pending && pending.banner === true),
+          scrollId: page._focusId || ''
+        });
+        page.startClock();
       });
-      this.startClock();
     },
     hide() {
       this.stopClock();
@@ -85,6 +92,13 @@ Component({
     }
   },
   methods: {
+    onMeetings() {
+      try {
+        wx.navigateTo({ url: '/pages/meetings/index' });
+      } catch (err) {
+        // Navigation must not break the page.
+      }
+    },
     onLocaleChange() {
       this.refresh({ refreshBanner: true });
     },
@@ -112,7 +126,8 @@ Component({
       if (!this._scope) this._scope = activeScope(view);
       const patch = {
         view: view,
-        loadFailed: readLoadFailed()
+        loadFailed: readLoadFailed(),
+        meetingsLink: this.t('me.meetings')
       };
       if (opts.banner) {
         patch.banner = this.t('meeting.created', { date: view.dayHeading });

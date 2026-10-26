@@ -10,7 +10,10 @@
     "pages/meeting-detail/index",
     "pages/meeting-form/index",
     "pages/vehicle-detail/index",
-    "pages/vehicle-form/index"
+    "pages/vehicle-form/index",
+    "pages/todo/index",
+    "pages/bind/index",
+    "pages/blocked/index"
   ],
   "window": {
     "navigationBarBackgroundColor": "#FFFFFF",
@@ -27,7 +30,8 @@
     "borderStyle": "white",
     "list": [
       { "pagePath": "pages/schedule/index", "text": "Schedule" },
-      { "pagePath": "pages/meetings/index", "text": "Meetings" },
+      { "pagePath": "pages/todo/index", "text": "To-do" },
+      { "pagePath": "pages/visitors/index", "text": "Visitors" },
       { "pagePath": "pages/vehicles/index", "text": "Vehicles" },
       { "pagePath": "pages/me/index", "text": "Me" }
     ]

@@ -1,0 +1,9 @@
+<view class="page">
+  <state-view
+    kind="{{kind}}"
+    title="{{title}}"
+    body="{{body}}"
+    action-text="{{actionText}}"
+    bind:action="onRetry"
+  />
+</view>

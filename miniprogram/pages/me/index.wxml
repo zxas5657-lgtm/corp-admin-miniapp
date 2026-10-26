@@ -1,4 +1,6 @@
 <view class="page">
+  <state-view wx:if="{{!authReady}}" kind="loading" />
+  <block wx:else>
   <notice-bar
     wx:if="{{notice}}"
     kind="error"
@@ -27,6 +29,21 @@
   </view>
 
   <view class="cell-group entries">
+    <cell-row
+      label="{{i18n.me.meetings}}"
+      stacked="{{true}}"
+      arrow="{{true}}"
+      data-url="/pages/meetings/index"
+      bind:press="onEntry"
+    >
+      <text class="text-secondary">{{i18n.me.meetingsHint}}</text>
+    </cell-row>
+    <cell-row
+      wx:if="{{showVehicleEntry}}"
+      label="{{i18n.me.vehicles}}"
+      arrow="{{true}}"
+      bind:press="onVehicles"
+    />
     <cell-row
       label="{{i18n.nav.visitors}}"
       stacked="{{true}}"
@@ -125,4 +142,5 @@
   >
     <text class="sheet-copy">{{i18n.demo.resetBody}}</text>
   </bottom-sheet>
+  </block>
 </view>

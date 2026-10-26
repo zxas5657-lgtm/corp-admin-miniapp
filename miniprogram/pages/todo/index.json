@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "",
+  "usingComponents": {
+    "state-view": "/components/state-view/index"
+  }
+}
